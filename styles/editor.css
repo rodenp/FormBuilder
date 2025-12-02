@@ -1,0 +1,9 @@
+[data-placeholder]:empty:before {
+  content: attr(data-placeholder);
+  color: #9CA3AF;
+  pointer-events: none;
+}
+
+[data-placeholder]:focus:before {
+  content: "";
+}

@@ -1,0 +1,91 @@
+{
+  "id": "form-example-contact",
+  "settings": {
+    "title": "Contact Us",
+    "description": "We'd love to hear from you! Fill out the form below and we'll get back to you as soon as possible.",
+    "submitButtonText": "Send Message",
+    "gap": 4,
+    "submissionActions": [
+      {
+        "id": "webhook-1",
+        "type": "webhook",
+        "enabled": true,
+        "webhook": {
+          "id": "wh-1",
+          "url": "https://hooks.zapier.com/hooks/catch/123456/abcdef/",
+          "method": "POST",
+          "enabled": true
+        }
+      },
+      {
+        "id": "message-1",
+        "type": "message",
+        "enabled": true,
+        "message": "Thank you for contacting us! We'll get back to you within 24 hours.",
+        "messageType": "success"
+      }
+    ],
+    "primaryColor": "#3B82F6",
+    "buttonStyle": "rounded",
+    "inputBorderStyle": "rounded",
+    "formBackground": "#FFFFFF"
+  },
+  "elements": [
+    {
+      "id": "name-field",
+      "type": "text",
+      "label": "Full Name",
+      "name": "fullName",
+      "placeholder": "John Doe",
+      "required": true,
+      "width": 12,
+      "labelSize": "sm"
+    },
+    {
+      "id": "email-field",
+      "type": "email",
+      "label": "Email Address",
+      "name": "email",
+      "placeholder": "john@example.com",
+      "required": true,
+      "width": 12,
+      "labelSize": "sm"
+    },
+    {
+      "id": "phone-field",
+      "type": "text",
+      "label": "Phone Number",
+      "name": "phone",
+      "placeholder": "+1 (555) 123-4567",
+      "required": false,
+      "width": 12,
+      "labelSize": "sm"
+    },
+    {
+      "id": "subject-field",
+      "type": "select",
+      "label": "Subject",
+      "name": "subject",
+      "required": true,
+      "width": 12,
+      "labelSize": "sm",
+      "options": [
+        { "label": "General Inquiry", "value": "general" },
+        { "label": "Technical Support", "value": "support" },
+        { "label": "Sales Question", "value": "sales" },
+        { "label": "Partnership Opportunity", "value": "partnership" },
+        { "label": "Other", "value": "other" }
+      ]
+    },
+    {
+      "id": "message-field",
+      "type": "textarea",
+      "label": "Message",
+      "name": "message",
+      "placeholder": "Tell us more about how we can help you...",
+      "required": true,
+      "width": 12,
+      "labelSize": "sm"
+    }
+  ]
+}

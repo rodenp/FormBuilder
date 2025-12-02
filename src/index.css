@@ -1,0 +1,126 @@
+@import "tailwindcss";
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap');
+
+@theme {
+  --color-brand-50: #eff6ff;
+  --color-brand-100: #dbeafe;
+  --color-brand-200: #bfdbfe;
+  --color-brand-300: #93c5fd;
+  --color-brand-400: #60a5fa;
+  --color-brand-500: #3b82f6;
+  --color-brand-600: #2563eb;
+  --color-brand-700: #1d4ed8;
+  
+  --shadow-card: 0 4px 20px rgba(0, 0, 0, 0.05);
+  --shadow-soft: 0 2px 10px rgba(0, 0, 0, 0.03);
+  --shadow-floating: 0 10px 30px rgba(0, 0, 0, 0.08);
+}
+
+/* Custom Component Styles */
+.form-builder-canvas {
+  @apply bg-slate-100 p-8 overflow-auto;
+  height: calc(100vh - 0px);
+}
+
+.form-builder-canvas-inner {
+  @apply mx-auto;
+  max-width: 1200px;
+}
+
+.form-builder-canvas-empty-content {
+  @apply flex flex-col items-center justify-center text-center;
+  padding: 40px;
+}
+
+.form-builder-canvas-empty-icon {
+  @apply mb-4 p-4 bg-blue-100 text-blue-600 rounded-full;
+}
+
+.form-builder-canvas-empty-title {
+  @apply text-2xl font-bold text-slate-600 mb-3;
+}
+
+.form-builder-canvas-empty-text {
+  @apply text-slate-500 max-w-md leading-relaxed;
+}
+
+.container-content {
+  /* Don't use @apply here since it conflicts with inline classes */
+}
+
+.tabs {
+  @apply flex border-b border-slate-200;
+}
+
+.tabs button {
+  @apply flex-1 py-3 px-4 text-sm font-medium transition-colors relative;
+}
+
+.tabs button.active {
+  @apply text-brand-600;
+}
+
+.tabs button.active::after {
+  content: '';
+  position: absolute;
+  bottom: -1px;
+  left: 0;
+  right: 0;
+  height: 2px;
+  background-color: var(--color-brand-500);
+}
+
+.tabs button:not(.active) {
+  @apply text-slate-600 hover:text-slate-900;
+}
+
+.btn {
+  @apply px-4 py-2 rounded-lg font-medium transition-colors inline-flex items-center gap-2;
+}
+
+.btn-primary {
+  @apply bg-brand-600 text-white hover:bg-brand-700;
+}
+
+.btn-secondary {
+  @apply bg-white text-slate-700 border border-slate-300 hover:bg-slate-50;
+}
+
+.btn-ghost {
+  @apply text-slate-600 hover:text-slate-900 hover:bg-slate-100;
+}
+
+/* Custom scrollbar - always visible */
+::-webkit-scrollbar {
+  width: 8px;
+}
+
+::-webkit-scrollbar-track {
+  background: #f8fafc;
+}
+
+::-webkit-scrollbar-thumb {
+  background: #cbd5e1;
+  border-radius: 4px;
+}
+
+::-webkit-scrollbar-thumb:hover {
+  background: #94a3b8;
+}
+
+/* Properties Panel */
+.form-builder-properties {
+  @apply bg-white border-l border-slate-200 flex flex-col h-full shadow-[-4px_0_24px_rgba(0,0,0,0.02)];
+}
+
+.properties-header {
+  @apply p-6 border-b border-slate-100 flex items-center gap-3;
+}
+
+.properties-header-icon {
+  @apply w-8 h-8 bg-slate-100 text-slate-600 rounded-lg flex items-center justify-center;
+}
+
+.properties-header-title {
+  @apply text-lg font-bold text-slate-800 m-0;
+}

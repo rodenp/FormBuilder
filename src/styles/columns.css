@@ -1,0 +1,29 @@
+/* Responsive Columns CSS */
+.responsive-columns {
+  display: flex;
+  flex-direction: column;
+  gap: 1rem;
+}
+
+@media (min-width: 768px) {
+  .responsive-columns {
+    display: grid;
+    gap: 1rem;
+  }
+  
+  .responsive-columns.cols-1 {
+    grid-template-columns: 1fr;
+  }
+  
+  .responsive-columns.cols-2 {
+    grid-template-columns: repeat(2, 1fr);
+  }
+  
+  .responsive-columns.cols-3 {
+    grid-template-columns: repeat(3, 1fr);
+  }
+  
+  .responsive-columns.cols-4 {
+    grid-template-columns: repeat(4, 1fr);
+  }
+}
