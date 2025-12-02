@@ -16,7 +16,8 @@ import {
     GripVertical,
     Layout,
     Star,
-    Columns
+    Columns,
+    MousePointer2
 } from 'lucide-react';
 import type { FormElementType } from '../types';
 
@@ -158,6 +159,12 @@ export const Sidebar: React.FC = () => {
                         label="Hidden Field"
                         icon={<EyeOff size={18} />}
                         description="Invisible data field"
+                    />
+                    <SidebarItem
+                        type="button"
+                        label="Button"
+                        icon={<MousePointer2 size={18} />}
+                        description="Clickable button"
                     />
                 </div>
 

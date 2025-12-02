@@ -705,25 +705,6 @@ export default MyForm;`;
                         />
                     </div>
 
-                    <div>
-                        <div className="flex justify-between items-center mb-2">
-                            <label className="block text-xs font-semibold text-slate-500 uppercase tracking-wider">
-                                Grid Gap
-                            </label>
-                            <span className="text-xs font-medium text-slate-500 bg-slate-100 px-2 py-0.5 rounded">
-                                {settings.gap || 4}px
-                            </span>
-                        </div>
-                        <input
-                            type="range"
-                            min="0"
-                            max="12"
-                            step="1"
-                            value={settings.gap !== undefined ? settings.gap : 4}
-                            onChange={(e) => updateSettings({ gap: parseInt(e.target.value) })}
-                            className="w-full h-2 bg-slate-200 rounded-lg appearance-none cursor-pointer accent-slate-600"
-                        />
-                    </div>
 
                         </>
                     )}
@@ -1252,9 +1233,9 @@ export default MyForm;`;
             <div style={{padding: '24px 32px', gap: '12px', overflowY: 'auto', display: 'flex', flexDirection: 'column'}}>
                 {/* Define input types that need field name and placeholder */}
                 {(() => {
-                    const isInputType = !['container', 'columns', 'rich-text', 'star-rating'].includes(selectedElement.type);
+                    const isInputType = !['container', 'columns', 'rich-text', 'star-rating', 'button'].includes(selectedElement.type);
                     const needsFieldName = isInputType && selectedElement.type !== 'hidden';
-                    const needsPlaceholder = isInputType && !['hidden', 'checkbox', 'radio', 'star-rating', 'select', 'date', 'time', 'month'].includes(selectedElement.type);
+                    const needsPlaceholder = isInputType && !['hidden', 'checkbox', 'radio', 'star-rating', 'select', 'date', 'time', 'month', 'button'].includes(selectedElement.type);
 
                     return (
                         <>
@@ -1570,7 +1551,7 @@ export default MyForm;`;
                     </div>
                 )}
 
-                {selectedElement.type !== 'container' && selectedElement.type !== 'hidden' && selectedElement.type !== 'rich-text' && (
+                {selectedElement.type !== 'hidden' && selectedElement.type !== 'rich-text' && (
                     <>
                         <div>
                             <label className="block text-xs font-semibold text-slate-500 uppercase tracking-wider mb-2">
@@ -1646,8 +1627,57 @@ export default MyForm;`;
                                 </button>
                             </div>
                         </div>
+                        <div>
+                            <label className="block text-xs font-semibold text-slate-500 uppercase tracking-wider mb-2">
+                                Label to Content Gap
+                            </label>
+                            <input
+                                type="range"
+                                min="0"
+                                max="12"
+                                value={selectedElement.labelGap ?? 3}
+                                onChange={(e) => updateElement(selectedElement.id, { labelGap: parseInt(e.target.value) })}
+                                className="w-full h-2 bg-slate-200 rounded-lg appearance-none cursor-pointer"
+                            />
+                            <div className="flex justify-between text-xs text-slate-500 mt-1">
+                                <span>0 (No gap)</span>
+                                <span className="font-medium">{selectedElement.labelGap ?? 3}</span>
+                                <span>12 (Max gap)</span>
+                            </div>
+                        </div>
                     </>
                 )}
+
+                {/* Background Color Control */}
+                <div>
+                    <label className="block text-xs font-semibold text-slate-500 uppercase tracking-wider mb-2">
+                        Background Color
+                    </label>
+                    <div className="flex gap-3 items-center">
+                        <input
+                            type="color"
+                            value={selectedElement.backgroundColor || '#ffffff'}
+                            onChange={(e) => updateElement(selectedElement.id, { backgroundColor: e.target.value })}
+                            className="w-12 h-12 border border-slate-200 rounded-lg cursor-pointer"
+                        />
+                        <div className="flex-1">
+                            <input
+                                type="text"
+                                value={selectedElement.backgroundColor || '#ffffff'}
+                                onChange={(e) => updateElement(selectedElement.id, { backgroundColor: e.target.value })}
+                                placeholder="#ffffff"
+                                className="w-full p-3 bg-slate-50 border border-slate-200 rounded-lg text-sm text-slate-700 focus:ring-2 focus:ring-brand-500 focus:border-transparent transition-all outline-none font-mono"
+                            />
+                        </div>
+                        <button
+                            onClick={() => updateElement(selectedElement.id, { backgroundColor: undefined })}
+                            className="px-3 py-2 text-xs text-slate-600 hover:text-red-600 hover:bg-red-50 rounded-lg transition-colors"
+                            title="Reset to default"
+                        >
+                            Reset
+                        </button>
+                    </div>
+                </div>
                 
                 {/* Spacing Controls - Option 6: Clean Visual Editor */}
                 {!['hidden'].includes(selectedElement.type) && (() => {
@@ -1656,18 +1686,18 @@ export default MyForm;`;
                         const elementInCanvas = document.querySelector(`[data-element-id="${selectedElement.id}"]`);
                         if (elementInCanvas) {
                             const rect = elementInCanvas.getBoundingClientRect();
-                            // Convert from pixels to our spacing units (assuming 0.25rem per unit)
-                            const maxMarginX = Math.floor(rect.width / 16); // 16px = 1rem = 4 units
-                            const maxMarginY = Math.floor(rect.height / 16);
+                            // Allow much higher margin limits with minimum fallback
+                            const maxMarginX = Math.max(48, Math.floor(rect.width / 8)); // More generous calculation
+                            const maxMarginY = Math.max(32, Math.floor(rect.height / 8));
                             return {
-                                maxMarginX: Math.max(1, maxMarginX),
-                                maxMarginY: Math.max(1, maxMarginY),
+                                maxMarginX: Math.max(0, maxMarginX),
+                                maxMarginY: Math.max(0, maxMarginY),
                                 elementWidth: rect.width,
                                 elementHeight: rect.height
                             };
                         }
-                        // Fallback to reasonable defaults
-                        return { maxMarginX: 12, maxMarginY: 8, elementWidth: 300, elementHeight: 80 };
+                        // Fallback to reasonable defaults with higher limits
+                        return { maxMarginX: 48, maxMarginY: 32, elementWidth: 300, elementHeight: 80 };
                     };
 
                     const constraints = getActualConstraints();
@@ -1700,7 +1730,7 @@ export default MyForm;`;
                                                 // Use actual element constraints
                                                 const currentConstraints = getActualConstraints();
                                                 const maxMarginTop = Math.floor(currentConstraints.maxMarginY / 2); // Half the height for margin
-                                                const newMargin = Math.max(0, Math.min(maxMarginTop, startMargin + Math.round(deltaY / 6)));
+                                                const newMargin = Math.max(0, Math.min(maxMarginTop, startMargin + Math.round(deltaY / 4))); // More sensitive dragging
                                                 updateElement(selectedElement.id, { marginTop: newMargin });
                                             };
                                             
@@ -1727,7 +1757,7 @@ export default MyForm;`;
                                                 // Use actual element constraints
                                                 const currentConstraints = getActualConstraints();
                                                 const maxMarginRight = Math.floor(currentConstraints.maxMarginX / 2); // Half the width for margin
-                                                const newMargin = Math.max(0, Math.min(maxMarginRight, startMargin + Math.round(deltaX / 6)));
+                                                const newMargin = Math.max(0, Math.min(maxMarginRight, startMargin + Math.round(deltaX / 4))); // More sensitive dragging
                                                 updateElement(selectedElement.id, { marginRight: newMargin });
                                             };
                                             
@@ -1754,7 +1784,9 @@ export default MyForm;`;
                                                 // Use actual element constraints
                                                 const currentConstraints = getActualConstraints();
                                                 const maxMarginBottom = Math.floor(currentConstraints.maxMarginY / 2); // Half the height for margin
-                                                const newMargin = Math.max(0, Math.min(maxMarginBottom, startMargin + Math.round(deltaY / 6)));
+                                                // Much more sensitive - allow fractional changes and round to integer
+                                                const rawChange = deltaY / 2; // Very sensitive
+                                                const newMargin = Math.max(0, Math.min(maxMarginBottom, Math.round(startMargin + rawChange)));
                                                 updateElement(selectedElement.id, { marginBottom: newMargin });
                                             };
                                             
@@ -1781,7 +1813,7 @@ export default MyForm;`;
                                                 // Use actual element constraints
                                                 const currentConstraints = getActualConstraints();
                                                 const maxMarginLeft = Math.floor(currentConstraints.maxMarginX / 2); // Half the width for margin
-                                                const newMargin = Math.max(0, Math.min(maxMarginLeft, startMargin + Math.round(deltaX / 6)));
+                                                const newMargin = Math.max(0, Math.min(maxMarginLeft, startMargin + Math.round(deltaX / 4))); // More sensitive dragging
                                                 updateElement(selectedElement.id, { marginLeft: newMargin });
                                             };
                                             
@@ -1821,7 +1853,7 @@ export default MyForm;`;
                                                 // Use actual element constraints, padding should be more conservative
                                                 const currentConstraints = getActualConstraints();
                                                 const maxPaddingTop = Math.floor(currentConstraints.maxMarginY / 4); // Quarter the height for padding
-                                                const newPadding = Math.max(0, Math.min(maxPaddingTop, startPadding + Math.round(deltaY / 6)));
+                                                const newPadding = Math.max(0, Math.min(maxPaddingTop, startPadding + Math.round(deltaY / 4))); // More sensitive dragging
                                                 updateElement(selectedElement.id, { paddingTop: newPadding });
                                             };
                                             
@@ -1848,7 +1880,7 @@ export default MyForm;`;
                                                 // Use actual element constraints, padding should be more conservative
                                                 const currentConstraints = getActualConstraints();
                                                 const maxPaddingRight = Math.floor(currentConstraints.maxMarginX / 4); // Quarter the width for padding
-                                                const newPadding = Math.max(0, Math.min(maxPaddingRight, startPadding + Math.round(deltaX / 6)));
+                                                const newPadding = Math.max(0, Math.min(maxPaddingRight, startPadding + Math.round(deltaX / 4))); // More sensitive dragging
                                                 updateElement(selectedElement.id, { paddingRight: newPadding });
                                             };
                                             
@@ -1875,7 +1907,9 @@ export default MyForm;`;
                                                 // Use actual element constraints, padding should be more conservative
                                                 const currentConstraints = getActualConstraints();
                                                 const maxPaddingBottom = Math.floor(currentConstraints.maxMarginY / 4); // Quarter the height for padding
-                                                const newPadding = Math.max(0, Math.min(maxPaddingBottom, startPadding + Math.round(deltaY / 6)));
+                                                // Much more sensitive - allow fractional changes and round to integer
+                                                const rawChange = deltaY / 2; // Very sensitive
+                                                const newPadding = Math.max(0, Math.min(maxPaddingBottom, Math.round(startPadding + rawChange)));
                                                 updateElement(selectedElement.id, { paddingBottom: newPadding });
                                             };
                                             
@@ -1902,7 +1936,7 @@ export default MyForm;`;
                                                 // Use actual element constraints, padding should be more conservative
                                                 const currentConstraints = getActualConstraints();
                                                 const maxPaddingLeft = Math.floor(currentConstraints.maxMarginX / 4); // Quarter the width for padding
-                                                const newPadding = Math.max(0, Math.min(maxPaddingLeft, startPadding + Math.round(deltaX / 6)));
+                                                const newPadding = Math.max(0, Math.min(maxPaddingLeft, startPadding + Math.round(deltaX / 4))); // More sensitive dragging
                                                 updateElement(selectedElement.id, { paddingLeft: newPadding });
                                             };
                                             
@@ -1936,6 +1970,113 @@ export default MyForm;`;
                             
                             <div className="text-xs text-slate-400 text-center mt-3 italic">
                                 Hover to reveal handles • Drag to adjust spacing
+                            </div>
+
+                            {/* Direct Input Controls for Precise Values */}
+                            <div className="mt-4 pt-4 border-t border-slate-200">
+                                <div className="text-xs font-semibold text-slate-500 uppercase tracking-wider mb-3">
+                                    Precise Values
+                                </div>
+                                <div className="grid grid-cols-2 gap-4">
+                                    <div className="space-y-3">
+                                        <div className="text-xs font-medium text-amber-600 mb-2">Margin</div>
+                                        <div className="space-y-2">
+                                            <div className="flex items-center gap-2">
+                                                <label className="text-xs text-slate-500 w-8">Top</label>
+                                                <input
+                                                    type="number"
+                                                    min="0"
+                                                    max="50"
+                                                    value={selectedElement.marginTop ?? 0}
+                                                    onChange={(e) => updateElement(selectedElement.id, { marginTop: parseInt(e.target.value) || 0 })}
+                                                    className="w-full p-1 text-xs border border-slate-200 rounded"
+                                                />
+                                            </div>
+                                            <div className="flex items-center gap-2">
+                                                <label className="text-xs text-slate-500 w-8">Bottom</label>
+                                                <input
+                                                    type="number"
+                                                    min="0"
+                                                    max="50"
+                                                    value={selectedElement.marginBottom ?? 0}
+                                                    onChange={(e) => updateElement(selectedElement.id, { marginBottom: parseInt(e.target.value) || 0 })}
+                                                    className="w-full p-1 text-xs border border-slate-200 rounded"
+                                                />
+                                            </div>
+                                            <div className="flex items-center gap-2">
+                                                <label className="text-xs text-slate-500 w-8">Left</label>
+                                                <input
+                                                    type="number"
+                                                    min="0"
+                                                    max="50"
+                                                    value={selectedElement.marginLeft ?? 0}
+                                                    onChange={(e) => updateElement(selectedElement.id, { marginLeft: parseInt(e.target.value) || 0 })}
+                                                    className="w-full p-1 text-xs border border-slate-200 rounded"
+                                                />
+                                            </div>
+                                            <div className="flex items-center gap-2">
+                                                <label className="text-xs text-slate-500 w-8">Right</label>
+                                                <input
+                                                    type="number"
+                                                    min="0"
+                                                    max="50"
+                                                    value={selectedElement.marginRight ?? 0}
+                                                    onChange={(e) => updateElement(selectedElement.id, { marginRight: parseInt(e.target.value) || 0 })}
+                                                    className="w-full p-1 text-xs border border-slate-200 rounded"
+                                                />
+                                            </div>
+                                        </div>
+                                    </div>
+                                    <div className="space-y-3">
+                                        <div className="text-xs font-medium text-blue-600 mb-2">Padding</div>
+                                        <div className="space-y-2">
+                                            <div className="flex items-center gap-2">
+                                                <label className="text-xs text-slate-500 w-8">Top</label>
+                                                <input
+                                                    type="number"
+                                                    min="0"
+                                                    max="50"
+                                                    value={selectedElement.paddingTop ?? 0}
+                                                    onChange={(e) => updateElement(selectedElement.id, { paddingTop: parseInt(e.target.value) || 0 })}
+                                                    className="w-full p-1 text-xs border border-slate-200 rounded"
+                                                />
+                                            </div>
+                                            <div className="flex items-center gap-2">
+                                                <label className="text-xs text-slate-500 w-8">Bottom</label>
+                                                <input
+                                                    type="number"
+                                                    min="0"
+                                                    max="50"
+                                                    value={selectedElement.paddingBottom ?? 0}
+                                                    onChange={(e) => updateElement(selectedElement.id, { paddingBottom: parseInt(e.target.value) || 0 })}
+                                                    className="w-full p-1 text-xs border border-slate-200 rounded"
+                                                />
+                                            </div>
+                                            <div className="flex items-center gap-2">
+                                                <label className="text-xs text-slate-500 w-8">Left</label>
+                                                <input
+                                                    type="number"
+                                                    min="0"
+                                                    max="50"
+                                                    value={selectedElement.paddingLeft ?? 0}
+                                                    onChange={(e) => updateElement(selectedElement.id, { paddingLeft: parseInt(e.target.value) || 0 })}
+                                                    className="w-full p-1 text-xs border border-slate-200 rounded"
+                                                />
+                                            </div>
+                                            <div className="flex items-center gap-2">
+                                                <label className="text-xs text-slate-500 w-8">Right</label>
+                                                <input
+                                                    type="number"
+                                                    min="0"
+                                                    max="50"
+                                                    value={selectedElement.paddingRight ?? 0}
+                                                    onChange={(e) => updateElement(selectedElement.id, { paddingRight: parseInt(e.target.value) || 0 })}
+                                                    className="w-full p-1 text-xs border border-slate-200 rounded"
+                                                />
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
                             </div>
                         </div>
                     </div>
@@ -2005,6 +2146,95 @@ export default MyForm;`;
                     </div>
                 )}
 
+                {selectedElement.type === 'button' && (
+                    <div className="space-y-4">
+                        <div>
+                            <label className="block text-xs font-semibold text-slate-500 uppercase tracking-wider mb-2">
+                                Button Text
+                            </label>
+                            <input
+                                type="text"
+                                value={selectedElement.buttonText || ''}
+                                onChange={(e) => updateElement(selectedElement.id, { buttonText: e.target.value })}
+                                className="w-full p-3 bg-slate-50 border border-slate-200 rounded-lg text-sm text-slate-700 focus:ring-2 focus:ring-brand-500 focus:border-transparent transition-all outline-none"
+                                placeholder="Button text"
+                            />
+                        </div>
+                        <div>
+                            <label className="block text-xs font-semibold text-slate-500 uppercase tracking-wider mb-2">
+                                Button Type
+                            </label>
+                            <select
+                                value={selectedElement.buttonType || 'button'}
+                                onChange={(e) => updateElement(selectedElement.id, { buttonType: e.target.value as 'button' | 'submit' | 'reset' })}
+                                className="w-full p-3 bg-slate-50 border border-slate-200 rounded-lg text-sm text-slate-700 focus:ring-2 focus:ring-brand-500 focus:border-transparent transition-all outline-none"
+                            >
+                                <option value="button">Button</option>
+                                <option value="submit">Submit</option>
+                                <option value="reset">Reset</option>
+                            </select>
+                        </div>
+                        <div>
+                            <label className="block text-xs font-semibold text-slate-500 uppercase tracking-wider mb-2">
+                                Button Style
+                            </label>
+                            <select
+                                value={selectedElement.buttonStyle || 'primary'}
+                                onChange={(e) => updateElement(selectedElement.id, { buttonStyle: e.target.value as 'primary' | 'secondary' | 'outline' | 'text' })}
+                                className="w-full p-3 bg-slate-50 border border-slate-200 rounded-lg text-sm text-slate-700 focus:ring-2 focus:ring-brand-500 focus:border-transparent transition-all outline-none"
+                            >
+                                <option value="primary">Primary</option>
+                                <option value="secondary">Secondary</option>
+                                <option value="outline">Outline</option>
+                                <option value="text">Text</option>
+                            </select>
+                        </div>
+                        <div>
+                            <label className="block text-xs font-semibold text-slate-500 uppercase tracking-wider mb-2">
+                                Button Size
+                            </label>
+                            <select
+                                value={selectedElement.buttonSize || 'md'}
+                                onChange={(e) => updateElement(selectedElement.id, { buttonSize: e.target.value as 'sm' | 'md' | 'lg' })}
+                                className="w-full p-3 bg-slate-50 border border-slate-200 rounded-lg text-sm text-slate-700 focus:ring-2 focus:ring-brand-500 focus:border-transparent transition-all outline-none"
+                            >
+                                <option value="sm">Small</option>
+                                <option value="md">Medium</option>
+                                <option value="lg">Large</option>
+                            </select>
+                        </div>
+                        {selectedElement.buttonType === 'submit' && (
+                            <>
+                                <div>
+                                    <label className="block text-xs font-semibold text-slate-500 uppercase tracking-wider mb-2">
+                                        URL
+                                    </label>
+                                    <input
+                                        type="url"
+                                        value={selectedElement.buttonUrl || ''}
+                                        onChange={(e) => updateElement(selectedElement.id, { buttonUrl: e.target.value })}
+                                        className="w-full p-3 bg-slate-50 border border-slate-200 rounded-lg text-sm text-slate-700 focus:ring-2 focus:ring-brand-500 focus:border-transparent transition-all outline-none"
+                                        placeholder="https://example.com"
+                                    />
+                                </div>
+                                <div>
+                                    <label className="block text-xs font-semibold text-slate-500 uppercase tracking-wider mb-2">
+                                        Target
+                                    </label>
+                                    <select
+                                        value={selectedElement.buttonTarget || '_self'}
+                                        onChange={(e) => updateElement(selectedElement.id, { buttonTarget: e.target.value as '_blank' | '_self' })}
+                                        className="w-full p-3 bg-slate-50 border border-slate-200 rounded-lg text-sm text-slate-700 focus:ring-2 focus:ring-brand-500 focus:border-transparent transition-all outline-none"
+                                    >
+                                        <option value="_self">Same Tab</option>
+                                        <option value="_blank">New Tab</option>
+                                    </select>
+                                </div>
+                            </>
+                        )}
+                    </div>
+                )}
+
                 {selectedElement.type === 'columns' && (
                     <div className="space-y-4">
                         <div>
@@ -2051,7 +2281,7 @@ export default MyForm;`;
                     </div>
                 )}
 
-                {!['container', 'columns', 'rich-text', 'star-rating', 'hidden'].includes(selectedElement.type) && (
+                {!['container', 'columns', 'rich-text', 'star-rating', 'hidden', 'button'].includes(selectedElement.type) && (
                     <div className="flex items-center justify-between p-3 bg-slate-50 rounded-lg border border-slate-200">
                         <label htmlFor="required" className="text-sm font-medium text-slate-700">
                             Required Field

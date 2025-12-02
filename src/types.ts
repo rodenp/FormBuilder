@@ -14,7 +14,8 @@ export type FormElementType =
     | 'rich-text'
     | 'star-rating'
     | 'container'
-    | 'columns';
+    | 'columns'
+    | 'button';
 
 export interface FormElement {
     id: string;
@@ -49,6 +50,7 @@ export interface FormElement {
     // For Label styling
     labelSize?: 'xs' | 'sm' | 'base' | 'lg';
     labelWeight?: 'normal' | 'medium' | 'semibold' | 'bold';
+    labelGap?: number; // Gap between label and content
     // For Label formatting
     labelBold?: boolean;
     labelItalic?: boolean;
@@ -58,6 +60,16 @@ export interface FormElement {
     value?: string;
     // For Rich Text
     content?: string;
+    // For Button
+    buttonText?: string;
+    buttonType?: 'button' | 'submit' | 'reset';
+    buttonStyle?: 'primary' | 'secondary' | 'outline' | 'text';
+    buttonSize?: 'sm' | 'md' | 'lg';
+    buttonAction?: 'none' | 'submit' | 'url';
+    buttonUrl?: string;
+    buttonTarget?: '_blank' | '_self';
+    // Background color
+    backgroundColor?: string;
 }
 
 export interface WebhookAction {
@@ -86,7 +98,6 @@ export interface FormSettings {
     title: string;
     description?: string;
     submitButtonText: string;
-    gap?: number; // Grid gap in pixels (or tailwind class level)
     submissionActions: SubmissionAction[];
     // Legacy webhook support (deprecated)
     webhookUrl?: string;

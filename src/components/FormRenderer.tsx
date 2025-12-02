@@ -226,8 +226,14 @@ export const FormRenderer: React.FC<FormRendererProps> = ({
             return (
                 <div
                     key={element.id}
-                    className="prose prose-gray max-w-none mb-6"
-                    style={isRootLevel ? { width: `${widthPercentage}%` } : {}}
+                    className={clsx(
+                        "prose prose-gray max-w-none mb-6", 
+                        element.backgroundColor && "p-4 rounded-lg"
+                    )}
+                    style={{
+                        ...(isRootLevel ? { width: `${widthPercentage}%` } : {}),
+                        backgroundColor: element.backgroundColor || undefined
+                    }}
                     dangerouslySetInnerHTML={{ __html: element.content || '<p>Your rich text content here</p>' }}
                 />
             );
@@ -237,21 +243,65 @@ export const FormRenderer: React.FC<FormRendererProps> = ({
             return (
                 <div
                     key={element.id}
-                    className="p-6 border border-gray-200 rounded-xl bg-gray-50/50 mb-6"
-                    style={isRootLevel ? { width: `${widthPercentage}%` } : {}}
+                    style={{
+                        ...(isRootLevel ? { width: `${widthPercentage}%` } : {}),
+                        // Apply margins
+                        marginTop: element.marginTop ? `${element.marginTop * 0.25}rem` : undefined,
+                        marginRight: element.marginRight ? `${element.marginRight * 0.25}rem` : undefined,
+                        marginBottom: element.marginBottom !== undefined ? `${element.marginBottom * 0.25}rem` : undefined,
+                        marginLeft: element.marginLeft ? `${element.marginLeft * 0.25}rem` : undefined
+                    }}
                 >
-                    {element.label && element.label.trim() && !element.label.toLowerCase().includes('container') && (
-                        <h3 className="text-lg font-semibold text-gray-800 border-b border-gray-200 pb-4 mb-4">
-                            {element.label}
-                        </h3>
-                    )}
-                    {element.children && element.children.length > 0 && (
-                        <div className="space-y-4">
-                            {element.children.map((childElement: any) =>
-                                renderElement(childElement, false)
-                            )}
-                        </div>
-                    )}
+                    <div 
+                        className="rounded-lg"
+                        style={{
+                            backgroundColor: element.backgroundColor || undefined,
+                            // Only apply padding for container when values are explicitly set
+                            paddingTop: element.paddingTop !== undefined ? `${element.paddingTop * 0.25}rem` : undefined,
+                            paddingRight: element.paddingRight !== undefined ? `${element.paddingRight * 0.25}rem` : undefined,
+                            paddingBottom: element.paddingBottom !== undefined ? `${element.paddingBottom * 0.25}rem` : undefined,
+                            paddingLeft: element.paddingLeft !== undefined ? `${element.paddingLeft * 0.25}rem` : undefined
+                        }}
+                    >
+                        {element.label && element.label.trim() && (
+                            <div
+                                style={{ marginBottom: element.labelGap !== undefined ? `${element.labelGap * 0.25}rem` : '0.75rem' }}
+                            >
+                                <h3 className={clsx(
+                                    "text-gray-800",
+                                    element.labelSize === 'xs' && "text-xs",
+                                    element.labelSize === 'sm' && "text-sm",
+                                    element.labelSize === 'base' && "text-base",
+                                    element.labelSize === 'lg' && "text-lg",
+                                    !element.labelSize && "text-lg",
+                                    element.labelBold && "font-bold",
+                                    !element.labelBold && element.labelWeight === 'normal' && "font-normal",
+                                    !element.labelBold && element.labelWeight === 'medium' && "font-medium",
+                                    !element.labelBold && element.labelWeight === 'semibold' && "font-semibold",
+                                    !element.labelBold && element.labelWeight === 'bold' && "font-bold",
+                                    !element.labelBold && !element.labelWeight && "font-semibold",
+                                    element.labelItalic && "italic",
+                                    element.labelUnderline && "underline",
+                                    element.labelStrikethrough && "line-through"
+                                )}>
+                                    {element.label}
+                                </h3>
+                            </div>
+                        )}
+                        {element.children && element.children.length > 0 && (
+                            <div 
+                                style={{
+                                    display: 'flex',
+                                    flexDirection: 'column',
+                                    gap: `${(element.gap || 0) * 0.25}rem`
+                                }}
+                            >
+                                {element.children.map((childElement: any) =>
+                                    renderElement(childElement, false)
+                                )}
+                            </div>
+                        )}
+                    </div>
                 </div>
             );
         }
@@ -260,37 +310,100 @@ export const FormRenderer: React.FC<FormRendererProps> = ({
             return (
                 <div
                     key={element.id}
-                    className="mb-6"
-                    style={isRootLevel ? { width: `${widthPercentage}%` } : {}}
+                    style={{
+                        ...(isRootLevel ? { width: `${widthPercentage}%` } : {}),
+                        // Apply margins
+                        marginTop: element.marginTop ? `${element.marginTop * 0.25}rem` : undefined,
+                        marginRight: element.marginRight ? `${element.marginRight * 0.25}rem` : undefined,
+                        marginBottom: element.marginBottom !== undefined ? `${element.marginBottom * 0.25}rem` : undefined,
+                        marginLeft: element.marginLeft ? `${element.marginLeft * 0.25}rem` : undefined
+                    }}
                 >
-                    {element.label && element.label.trim() && !element.label.toLowerCase().includes('columns') && (
-                        <h3 className="text-lg font-semibold text-gray-800 mb-4">
-                            {element.label}
-                        </h3>
-                    )}
-                    {element.children && element.children.length > 0 && (
-                        <div className="grid gap-4"
-                            style={{
-                                gridTemplateColumns: `repeat(${element.columnCount || 2}, 1fr)`
-                            }}
-                        >
-                            {element.children.map((childElement: any) => (
-                                <div key={childElement.id}>
-                                    {renderElement(childElement, false)}
-                                </div>
-                            ))}
-                        </div>
-                    )}
+                    <div 
+                        className="rounded-lg"
+                        style={{
+                            backgroundColor: element.backgroundColor || undefined,
+                            // Only apply padding for columns when values are explicitly set
+                            paddingTop: element.paddingTop !== undefined ? `${element.paddingTop * 0.25}rem` : undefined,
+                            paddingRight: element.paddingRight !== undefined ? `${element.paddingRight * 0.25}rem` : undefined,
+                            paddingBottom: element.paddingBottom !== undefined ? `${element.paddingBottom * 0.25}rem` : undefined,
+                            paddingLeft: element.paddingLeft !== undefined ? `${element.paddingLeft * 0.25}rem` : undefined
+                        }}
+                    >
+                        {element.label && element.label.trim() && (
+                            <div
+                                style={{ marginBottom: element.labelGap !== undefined ? `${element.labelGap * 0.25}rem` : '0.75rem' }}
+                            >
+                                <h3 className={clsx(
+                                    "text-gray-800",
+                                    element.labelSize === 'xs' && "text-xs",
+                                    element.labelSize === 'sm' && "text-sm",
+                                    element.labelSize === 'base' && "text-base",
+                                    element.labelSize === 'lg' && "text-lg",
+                                    !element.labelSize && "text-lg",
+                                    element.labelBold && "font-bold",
+                                    !element.labelBold && element.labelWeight === 'normal' && "font-normal",
+                                    !element.labelBold && element.labelWeight === 'medium' && "font-medium",
+                                    !element.labelBold && element.labelWeight === 'semibold' && "font-semibold",
+                                    !element.labelBold && element.labelWeight === 'bold' && "font-bold",
+                                    !element.labelBold && !element.labelWeight && "font-semibold",
+                                    element.labelItalic && "italic",
+                                    element.labelUnderline && "underline",
+                                    element.labelStrikethrough && "line-through"
+                                )}>
+                                    {element.label}
+                                </h3>
+                            </div>
+                        )}
+                        {element.children && element.children.length > 0 && (
+                            <div className="grid"
+                                style={{
+                                    gridTemplateColumns: `repeat(${element.columnCount || 2}, 1fr)`,
+                                    gap: `${(element.gap || 0) * 0.25}rem`
+                                }}
+                            >
+                                {element.children.map((childElement: any) =>
+                                    renderElement(childElement, false)
+                                )}
+                            </div>
+                        )}
+                    </div>
                 </div>
             );
         }
 
         // Regular form elements and nested input handling
         return (
-            <div key={element.id} className="mb-6" style={isRootLevel ? { width: `${widthPercentage}%` } : {}}>
+            <div 
+                key={element.id} 
+                style={{
+                    ...(isRootLevel ? { width: `${widthPercentage}%` } : {}),
+                    // Apply margins - include default marginBottom like canvas
+                    marginTop: element.marginTop ? `${element.marginTop * 0.25}rem` : undefined,
+                    marginRight: element.marginRight ? `${element.marginRight * 0.25}rem` : undefined,
+                    marginBottom: element.marginBottom !== undefined ? `${element.marginBottom * 0.25}rem` : undefined,
+                    marginLeft: element.marginLeft ? `${element.marginLeft * 0.25}rem` : undefined
+                }}
+            >
+                <div 
+                    className="rounded-lg"
+                    style={{
+                        backgroundColor: element.backgroundColor || undefined
+                    }}
+                >
+                    <div style={{
+                        // Apply padding only if values are explicitly set
+                        paddingTop: element.paddingTop !== undefined ? `${element.paddingTop * 0.25}rem` : undefined,
+                        paddingRight: element.paddingRight !== undefined ? `${element.paddingRight * 0.25}rem` : undefined,
+                        paddingBottom: element.paddingBottom !== undefined ? `${element.paddingBottom * 0.25}rem` : undefined,
+                        paddingLeft: element.paddingLeft !== undefined ? `${element.paddingLeft * 0.25}rem` : undefined
+                    }}>
                 {element.label && element.label.trim() && element.type !== 'rich-text' && (
+                    <div
+                        style={{ marginBottom: element.labelGap !== undefined ? `${element.labelGap * 0.25}rem` : '0.25rem' }}
+                    >
                     <label className={clsx(
-                        "block text-gray-700 mb-1",
+                        "block text-gray-700",
                         element.labelSize === 'xs' && "text-xs",
                         element.labelSize === 'sm' && "text-sm",
                         element.labelSize === 'base' && "text-base",
@@ -311,6 +424,7 @@ export const FormRenderer: React.FC<FormRendererProps> = ({
                         {element.label}
                         {element.required && <span className="text-red-500 ml-1">*</span>}
                     </label>
+                    </div>
                 )}
 
                 {element.type === 'textarea' ? (
@@ -370,6 +484,46 @@ export const FormRenderer: React.FC<FormRendererProps> = ({
                             </button>
                         ))}
                     </div>
+                ) : element.type === 'button' ? (
+                    element.buttonType === 'submit' && element.buttonUrl ? (
+                        <a
+                            href={element.buttonUrl}
+                            target={element.buttonTarget || '_self'}
+                            rel={element.buttonTarget === '_blank' ? 'noopener noreferrer' : undefined}
+                            className={clsx(
+                                "inline-block font-medium transition-all rounded-lg border text-center cursor-pointer no-underline",
+                                element.buttonSize === 'sm' && "px-3 py-1.5 text-sm",
+                                element.buttonSize === 'lg' && "px-6 py-3 text-lg",
+                                (!element.buttonSize || element.buttonSize === 'md') && "px-4 py-2 text-base",
+                                element.buttonStyle === 'primary' && "bg-blue-600 border-blue-600 text-white hover:bg-blue-700",
+                                element.buttonStyle === 'secondary' && "bg-gray-600 border-gray-600 text-white hover:bg-gray-700",
+                                element.buttonStyle === 'outline' && "bg-transparent border-gray-300 text-gray-700 hover:bg-gray-50",
+                                element.buttonStyle === 'text' && "bg-transparent border-transparent text-blue-600 hover:bg-blue-50",
+                                (!element.buttonStyle || element.buttonStyle === 'primary') && "bg-blue-600 border-blue-600 text-white hover:bg-blue-700"
+                            )}
+                            style={getButtonStyle(settings)}
+                        >
+                            {element.buttonText || element.label || 'Button'}
+                        </a>
+                    ) : (
+                        <button
+                            type={element.buttonType || 'button'}
+                            className={clsx(
+                                "font-medium transition-all rounded-lg border",
+                                element.buttonSize === 'sm' && "px-3 py-1.5 text-sm",
+                                element.buttonSize === 'lg' && "px-6 py-3 text-lg",
+                                (!element.buttonSize || element.buttonSize === 'md') && "px-4 py-2 text-base",
+                                element.buttonStyle === 'primary' && "bg-blue-600 border-blue-600 text-white hover:bg-blue-700",
+                                element.buttonStyle === 'secondary' && "bg-gray-600 border-gray-600 text-white hover:bg-gray-700",
+                                element.buttonStyle === 'outline' && "bg-transparent border-gray-300 text-gray-700 hover:bg-gray-50",
+                                element.buttonStyle === 'text' && "bg-transparent border-transparent text-blue-600 hover:bg-blue-50",
+                                (!element.buttonStyle || element.buttonStyle === 'primary') && "bg-blue-600 border-blue-600 text-white hover:bg-blue-700"
+                            )}
+                            style={getButtonStyle(settings)}
+                        >
+                            {element.buttonText || element.label || 'Button'}
+                        </button>
+                    )
                 ) : (
                     <input
                         type={element.type}
@@ -385,6 +539,8 @@ export const FormRenderer: React.FC<FormRendererProps> = ({
                         This field is required
                     </p>
                 )}
+                    </div>
+                </div>
             </div>
         );
     };
@@ -522,7 +678,7 @@ export const FormRenderer: React.FC<FormRendererProps> = ({
                 ))}
 
                 {/* Form elements layout */}
-                <div className="flex flex-col gap-4 mb-6">
+                <div className="flex flex-col mb-6">
                     {elements.filter(el => el.type !== 'hidden').map((element) =>
                         renderElement(element, true)
                     )}

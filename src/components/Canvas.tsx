@@ -2,7 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { useDroppable } from '@dnd-kit/core';
 import { useStore } from '../store/useStore';
 import type { FormElement } from '../types';
-import { Trash2, Info, Copy, Star, EyeOff, Plus, ChevronUp, ChevronDown } from 'lucide-react';
+import { Trash2, Info, Copy, Star, EyeOff, Plus, ChevronUp, ChevronDown, Menu } from 'lucide-react';
 import { clsx } from 'clsx';
 
 interface SortableElementProps {
@@ -20,7 +20,7 @@ const ContainerContent: React.FC<{ element: FormElement }> = ({ element }) => {
     return (
         <div
             ref={setNodeRef}
-            className="container-content min-h-[120px] border-2 border-dashed border-slate-200 rounded-lg bg-slate-50/30 p-4 hover:border-brand-300 hover:bg-brand-50/20 transition-all"
+            className="container-content border-2 border-dashed border-slate-200 rounded-lg bg-slate-50/30 hover:border-brand-300 hover:bg-brand-50/20 transition-all"
         >
             {(!element.children || element.children.length === 0) ? (
                 <div 
@@ -31,8 +31,15 @@ const ContainerContent: React.FC<{ element: FormElement }> = ({ element }) => {
                     <p className="text-xs">Container is empty</p>
                 </div>
             ) : (
-                <div className="container-grid space-y-3">
-                    {element.children.map((child) => (
+                <div 
+                    className="container-grid"
+                    style={{
+                        display: 'flex',
+                        flexDirection: 'column',
+                        gap: `${(element.gap || 0) * 0.25}rem`
+                    }}
+                >
+                    {element.children.map((child, index) => (
                         <SortableElement key={child.id} element={child} parentId={element.id} />
                     ))}
                 </div>
@@ -47,6 +54,7 @@ const ColumnsContent: React.FC<{ element: FormElement }> = ({ element }) => {
         id: `columns-${element.id}`,
         data: { type: 'columns', containerId: element.id }
     });
+    const { selectElement } = useStore();
 
     useEffect(() => {
         const checkMobile = () => {
@@ -61,24 +69,24 @@ const ColumnsContent: React.FC<{ element: FormElement }> = ({ element }) => {
     return (
         <div
             ref={setNodeRef}
-            className="p-3 bg-slate-50 border border-slate-200 rounded-lg min-h-[100px]"
+            className="bg-slate-50 border border-slate-200 rounded-lg"
         >
-            <div className="grid" 
-                 style={{
-                     gridTemplateColumns: isMobile ? '1fr' : `repeat(${element.columnCount || 2}, 1fr)`,
-                     gap: `${(element.gap ?? 4) * 0.25}rem`
-                 }}>
+            <div 
+                className="grid" 
+                style={{
+                    gridTemplateColumns: isMobile ? '1fr' : `repeat(${element.columnCount || 2}, 1fr)`,
+                    gap: `${(element.gap || 0) * 0.25}rem`
+                }}
+            >
                 {(!element.children || element.children.length === 0) ? (
                     Array.from({ length: element.columnCount || 2 }).map((_, index) => (
-                        <div key={index} className="border-2 border-dashed border-slate-300 rounded p-4 text-center text-slate-400 text-sm min-h-[80px] flex items-center justify-center">
+                        <div key={index} className="border-2 border-dashed border-slate-300 rounded text-center text-slate-400 text-sm flex items-center justify-center" style={{ padding: '1rem', minHeight: '80px' }}>
                             Drop element here
                         </div>
                     ))
                 ) : (
                     element.children.map((child, index) => (
-                        <div key={child.id} className="w-full">
-                            <SortableElement element={child} parentId={element.id} />
-                        </div>
+                        <SortableElement key={child.id} element={child} parentId={element.id} />
                     ))
                 )}
             </div>
@@ -89,6 +97,7 @@ const ColumnsContent: React.FC<{ element: FormElement }> = ({ element }) => {
 const SortableElement: React.FC<SortableElementProps> = React.memo(({ element, parentId }) => {
     const { selectElement, selectedElementId, removeElement, duplicateElement, updateElement, moveElementUp, moveElementDown, elements } = useStore();
     const isSelected = selectedElementId === element.id;
+    const hasAnySelection = selectedElementId !== null;
 
     // Check if parent is a columns or container component
     const parentInfo = parentId && (() => {
@@ -191,23 +200,21 @@ const SortableElement: React.FC<SortableElementProps> = React.memo(({ element, p
     return (
         <div
             data-element-id={element.id}
-            {...(element.type !== 'container' && {
-                onClick: (e: React.MouseEvent) => {
-                    e.stopPropagation();
-                    selectElement(element.id);
-                    console.log('Element selected:', element.id, 'parentId:', parentId);
-                }
-            })}
+            onClick={(e: React.MouseEvent) => {
+                e.stopPropagation();
+                selectElement(element.id);
+                console.log('Element selected:', element.id, 'parentId:', parentId);
+            }}
             className={clsx(
-                "group relative bg-white rounded-xl border flex flex-col",
+                "group relative flex flex-col cursor-pointer",
                 isNested && "w-full", // Full width inside any container or columns
                 "opacity-100",
-                isSelected
-                    ? "border-brand-500 ring-4 ring-brand-500/10 shadow-md"
-                    : "border-transparent hover:border-slate-200 hover:shadow-sm",
-                isResizing && "z-50 ring-2 ring-brand-500 select-none",
+                isSelected && "z-10",
+                isResizing && "z-50 select-none",
                 parentId && "z-20", // Higher z-index for nested elements
-                "transition-[border,box-shadow,opacity] duration-200 ease-in-out"
+                "transition-all duration-200 ease-in-out",
+                // Hover highlighting with dashed border
+                !isSelected && "hover:border-2 hover:border-dashed hover:border-brand-500 hover:bg-brand-50/20 rounded-lg"
             )}
             style={{
                 ...(parentId ? { pointerEvents: 'auto', position: 'relative' } : {}),
@@ -227,18 +234,19 @@ const SortableElement: React.FC<SortableElementProps> = React.memo(({ element, p
                 </div>
             )}
 
-            {/* Move Up/Down Buttons */}
-            <div className="absolute left-2 top-2 flex flex-col gap-1 opacity-0 group-hover:opacity-100 transition-opacity z-10">
+
+            {/* Selected Element Toolbar - Only show for selected element */}
+            {isSelected && (
+                <div className="absolute left-0 -top-8 opacity-100 z-50 flex gap-1">
                 <button
                     onClick={(e) => {
                         e.stopPropagation();
                         moveElementUp(element.id, parentId);
                     }}
-                    className="p-1 text-slate-300 hover:text-slate-600 hover:bg-slate-100 rounded transition-colors"
+                    className="p-1 bg-white border border-slate-300 rounded shadow-sm text-slate-600 hover:text-blue-600 hover:bg-blue-50 transition-colors"
                     title="Move up"
                     disabled={(() => {
                         if (parentId) {
-                            // Find parent and check if this is the first child
                             const findParent = (elements: any[]): any => {
                                 for (const el of elements) {
                                     if (el.id === parentId) return el;
@@ -256,18 +264,17 @@ const SortableElement: React.FC<SortableElementProps> = React.memo(({ element, p
                         }
                     })()}
                 >
-                    <ChevronUp size={14} />
+                    <ChevronUp size={12} />
                 </button>
                 <button
                     onClick={(e) => {
                         e.stopPropagation();
                         moveElementDown(element.id, parentId);
                     }}
-                    className="p-1 text-slate-300 hover:text-slate-600 hover:bg-slate-100 rounded transition-colors"
+                    className="p-1 bg-white border border-slate-300 rounded shadow-sm text-slate-600 hover:text-blue-600 hover:bg-blue-50 transition-colors"
                     title="Move down"
                     disabled={(() => {
                         if (parentId) {
-                            // Find parent and check if this is the last child
                             const findParent = (elements: any[]): any => {
                                 for (const el of elements) {
                                     if (el.id === parentId) return el;
@@ -287,9 +294,30 @@ const SortableElement: React.FC<SortableElementProps> = React.memo(({ element, p
                         }
                     })()}
                 >
-                    <ChevronDown size={14} />
+                    <ChevronDown size={12} />
                 </button>
-            </div>
+                <button
+                    onClick={(e) => {
+                        e.stopPropagation();
+                        duplicateElement(element.id);
+                    }}
+                    className="p-1 bg-white border border-slate-300 rounded shadow-sm text-slate-600 hover:text-green-600 hover:bg-green-50 transition-colors"
+                    title="Duplicate"
+                >
+                    <Copy size={12} />
+                </button>
+                <button
+                    onClick={(e) => {
+                        e.stopPropagation();
+                        removeElement(element.id);
+                    }}
+                    className="p-1 bg-white border border-slate-300 rounded shadow-sm text-slate-600 hover:text-red-600 hover:bg-red-50 transition-colors"
+                    title="Delete"
+                >
+                    <Trash2 size={12} />
+                </button>
+                </div>
+            )}
 
             {/* Resize Handles - Hide for elements inside containers or columns */}
             {!isNested && (
@@ -298,7 +326,7 @@ const SortableElement: React.FC<SortableElementProps> = React.memo(({ element, p
                         "absolute right-0 top-0 bottom-0 w-4 cursor-e-resize flex items-center justify-center z-30 transition-all",
                         isResizing ? "opacity-100 bg-brand-100/80" : 
                         isSelected ? "opacity-80 hover:opacity-100 hover:bg-brand-50/50" :
-                        "opacity-0 group-hover:opacity-100 hover:bg-brand-50/50"
+                        hasAnySelection ? "opacity-0" : "opacity-0 group-hover:opacity-100 hover:bg-brand-50/50"
                     )}
                         onMouseDown={(e) => {
                             e.stopPropagation();
@@ -317,7 +345,7 @@ const SortableElement: React.FC<SortableElementProps> = React.memo(({ element, p
                         "absolute left-0 top-0 bottom-0 w-4 cursor-w-resize flex items-center justify-center z-30 transition-all",
                         isResizing ? "opacity-100 bg-brand-100/80" : 
                         isSelected ? "opacity-80 hover:opacity-100 hover:bg-brand-50/50" :
-                        "opacity-0 group-hover:opacity-100 hover:bg-brand-50/50"
+                        hasAnySelection ? "opacity-0" : "opacity-0 group-hover:opacity-100 hover:bg-brand-50/50"
                     )}
                         onMouseDown={(e) => {
                             e.stopPropagation();
@@ -336,17 +364,26 @@ const SortableElement: React.FC<SortableElementProps> = React.memo(({ element, p
             )}
 
 
+            {/* Visual wrapper around label and component */}
             <div 
-                className={`${element.type === 'hidden' || element.type === 'rich-text' ? 'p-6' : 'p-6 pl-10'} flex-1`}
+                className={clsx(
+                    "flex-1 relative rounded-lg transition-all",
+                    isSelected && "ring-2 ring-brand-400 ring-opacity-50"
+                )}
                 style={{
-                    paddingLeft: element.paddingLeft ? `${element.paddingLeft * 0.25 + (element.type === 'hidden' || element.type === 'rich-text' ? 1.5 : 2.5)}rem` : undefined,
-                    paddingRight: element.paddingRight ? `${element.paddingRight * 0.25 + 1.5}rem` : undefined,
-                    paddingTop: element.paddingTop ? `${element.paddingTop * 0.25 + 1.5}rem` : undefined,
-                    paddingBottom: element.paddingBottom ? `${element.paddingBottom * 0.25 + 1.5}rem` : undefined
+                    backgroundColor: (element.type === 'container' || element.type === 'columns') ? element.backgroundColor : undefined,
+                    // Only apply padding for container and columns, regular elements handle their own spacing
+                    paddingTop: (element.type === 'container' || element.type === 'columns') && element.paddingTop !== undefined ? `${element.paddingTop * 0.25}rem` : undefined,
+                    paddingRight: (element.type === 'container' || element.type === 'columns') && element.paddingRight !== undefined ? `${element.paddingRight * 0.25}rem` : undefined,
+                    paddingBottom: (element.type === 'container' || element.type === 'columns') && element.paddingBottom !== undefined ? `${element.paddingBottom * 0.25}rem` : undefined,
+                    paddingLeft: (element.type === 'container' || element.type === 'columns') && element.paddingLeft !== undefined ? `${element.paddingLeft * 0.25}rem` : undefined
                 }}
             >
-                {element.type !== 'hidden' && element.type !== 'rich-text' && element.type !== 'container' && element.type !== 'columns' && (
-                    <div className="flex justify-between items-start mb-3">
+                {element.type !== 'hidden' && element.type !== 'rich-text' && element.type !== 'container' && element.type !== 'columns' && element.label && element.label.trim() && (
+                    <div 
+                        className="flex justify-between items-start"
+                        style={{ marginBottom: element.labelGap !== undefined ? `${element.labelGap * 0.25}rem` : '0.75rem' }}
+                    >
                         <div>
                             <label className={clsx(
                                 "block text-slate-700",
@@ -370,37 +407,15 @@ const SortableElement: React.FC<SortableElementProps> = React.memo(({ element, p
                                 {element.label}
                                 {element.required && <span className="text-red-500 ml-1">*</span>}
                             </label>
-                            {!['star-rating'].includes(element.type) && (
-                                <span className="text-[10px] text-slate-400 font-mono">{element.name}</span>
-                            )}
-                        </div>
-                        <div className="flex items-center gap-1">
-                            <button
-                                onClick={(e) => {
-                                    e.stopPropagation();
-                                    duplicateElement(element.id);
-                                }}
-                                className="p-1.5 text-slate-400 hover:text-brand-600 hover:bg-brand-50 rounded-md opacity-0 group-hover:opacity-100 transition-all"
-                                title="Duplicate"
-                            >
-                                <Copy size={16} />
-                            </button>
-                            <button
-                                onClick={(e) => {
-                                    e.stopPropagation();
-                                    removeElement(element.id);
-                                }}
-                                className="p-1.5 text-slate-400 hover:text-red-500 hover:bg-red-50 rounded-md opacity-0 group-hover:opacity-100 transition-all"
-                                title="Delete"
-                            >
-                                <Trash2 size={16} />
-                            </button>
                         </div>
                     </div>
                 )}
 
-                {(element.type === 'container' || element.type === 'columns') && (
-                    <div className="flex justify-between items-start mb-3">
+                {(element.type === 'container' || element.type === 'columns') && element.label && element.label.trim() && (
+                    <div 
+                        className="flex justify-between items-start"
+                        style={{ marginBottom: element.labelGap !== undefined ? `${element.labelGap * 0.25}rem` : '0.75rem' }}
+                    >
                         <div>
                             <label 
                                 className={clsx(
@@ -431,68 +446,37 @@ const SortableElement: React.FC<SortableElementProps> = React.memo(({ element, p
                                 {element.required && <span className="text-red-500 ml-1">*</span>}
                             </label>
                         </div>
-                        <div className="flex items-center gap-1">
-                            <button
-                                onClick={(e) => {
-                                    e.stopPropagation();
-                                    duplicateElement(element.id);
-                                }}
-                                className="p-1.5 text-slate-400 hover:text-brand-600 hover:bg-brand-50 rounded-md opacity-0 group-hover:opacity-100 transition-all"
-                                title="Duplicate"
-                            >
-                                <Copy size={16} />
-                            </button>
-                            <button
-                                onClick={(e) => {
-                                    e.stopPropagation();
-                                    removeElement(element.id);
-                                }}
-                                className="p-1.5 text-slate-400 hover:text-red-500 hover:bg-red-50 rounded-md opacity-0 group-hover:opacity-100 transition-all"
-                                title="Delete"
-                            >
-                                <Trash2 size={16} />
-                            </button>
-                        </div>
-                    </div>
-                )}
-                
-                {(element.type === 'hidden' || element.type === 'rich-text') && (
-                    <div className="absolute top-2 right-2 flex items-center gap-1 opacity-0 group-hover:opacity-100 transition-all">
-                        <button
-                            onClick={(e) => {
-                                e.stopPropagation();
-                                duplicateElement(element.id);
-                            }}
-                            className="p-1.5 text-slate-400 hover:text-brand-600 hover:bg-brand-50 rounded-md transition-all"
-                            title="Duplicate"
-                        >
-                            <Copy size={16} />
-                        </button>
-                        <button
-                            onClick={(e) => {
-                                e.stopPropagation();
-                                removeElement(element.id);
-                            }}
-                            className="p-1.5 text-slate-400 hover:text-red-500 hover:bg-red-50 rounded-md transition-all"
-                            title="Delete"
-                        >
-                            <Trash2 size={16} />
-                        </button>
                     </div>
                 )}
 
                 {/* Element Content */}
-                <div className="pointer-events-none">
+                <div 
+                    className="pointer-events-none"
+                    style={{
+                        // Apply padding to regular form elements (not containers/columns) only if padding values are set
+                        paddingTop: (element.type !== 'container' && element.type !== 'columns' && element.paddingTop !== undefined) ? `${element.paddingTop * 0.25}rem` : undefined,
+                        paddingRight: (element.type !== 'container' && element.type !== 'columns' && element.paddingRight !== undefined) ? `${element.paddingRight * 0.25}rem` : undefined,
+                        paddingBottom: (element.type !== 'container' && element.type !== 'columns' && element.paddingBottom !== undefined) ? `${element.paddingBottom * 0.25}rem` : undefined,
+                        paddingLeft: (element.type !== 'container' && element.type !== 'columns' && element.paddingLeft !== undefined) ? `${element.paddingLeft * 0.25}rem` : undefined
+                    }}
+                >
                     {element.type === 'textarea' ? (
                         <textarea
-                            className="w-full p-3 bg-slate-50 border border-slate-200 rounded-lg text-slate-500 text-sm resize-none"
+                            className="w-full border border-slate-200 rounded-lg text-slate-500 text-sm resize-none"
+                            style={{
+                                backgroundColor: element.backgroundColor || '#f8fafc',
+                                padding: '0.75rem' // Default padding, can be overridden by element padding
+                            }}
                             placeholder={element.placeholder}
                             rows={3}
                             readOnly
                         />
                     ) : element.type === 'select' ? (
                         <div className="relative">
-                            <select className="w-full p-3 bg-slate-50 border border-slate-200 rounded-lg text-slate-500 text-sm appearance-none" disabled>
+                            <select className="w-full border border-slate-200 rounded-lg text-slate-500 text-sm appearance-none" style={{
+                                backgroundColor: element.backgroundColor || '#f8fafc',
+                                padding: '0.75rem'
+                            }} disabled>
                                 {element.options?.map((opt, idx) => (
                                     <option key={idx}>{opt.label}</option>
                                 ))}
@@ -504,12 +488,18 @@ const SortableElement: React.FC<SortableElementProps> = React.memo(({ element, p
                             </div>
                         </div>
                     ) : element.type === 'checkbox' ? (
-                        <div className="flex items-center p-3 bg-slate-50 border border-slate-200 rounded-lg">
+                        <div className="flex items-center border border-slate-200 rounded-lg" style={{
+                            backgroundColor: element.backgroundColor || '#f8fafc',
+                            padding: '0.75rem'
+                        }}>
                             <input type="checkbox" className="h-4 w-4 text-brand-600 rounded border-slate-300" disabled />
                             <span className="ml-3 text-sm text-slate-600">{element.placeholder || 'Checkbox option'}</span>
                         </div>
                     ) : element.type === 'radio' ? (
-                        <div className="space-y-2 p-3 bg-slate-50 border border-slate-200 rounded-lg">
+                        <div className="space-y-2 border border-slate-200 rounded-lg" style={{
+                            backgroundColor: element.backgroundColor || '#f8fafc',
+                            padding: '0.75rem'
+                        }}>
                             {(element.options || [{ label: 'Option 1', value: 'option1' }, { label: 'Option 2', value: 'option2' }]).map((opt, idx) => (
                                 <div key={idx} className="flex items-center">
                                     <input type="radio" name={`radio-${element.id}`} className="h-4 w-4 text-brand-600 border-slate-300 focus:ring-brand-500" disabled />
@@ -528,23 +518,58 @@ const SortableElement: React.FC<SortableElementProps> = React.memo(({ element, p
                     ) : element.type === 'columns' ? (
                         <ColumnsContent element={element} />
                     ) : element.type === 'hidden' ? (
-                        <div className="flex items-center p-3 bg-slate-100 border border-slate-300 rounded-lg opacity-60">
+                        <div className="flex items-center bg-slate-100 border border-slate-300 rounded-lg opacity-60" style={{ padding: '0.75rem' }}>
                             <div className="flex items-center gap-2 text-slate-500">
                                 <EyeOff size={16} />
                                 <span className="text-sm font-mono">Hidden: {element.value || 'No value'}</span>
                             </div>
                         </div>
                     ) : element.type === 'rich-text' ? (
-                        <div className="p-3 bg-slate-50 border border-slate-200 rounded-lg min-h-[100px]">
+                        <div className="border border-slate-200 rounded-lg min-h-[100px]" style={{
+                            backgroundColor: element.backgroundColor || '#f8fafc',
+                            padding: '0.75rem'
+                        }}>
                             <div 
                                 className="prose prose-sm max-w-none text-slate-600"
                                 dangerouslySetInnerHTML={{ __html: element.content || '<p>Your rich text content here</p>' }}
                             />
                         </div>
+                    ) : element.type === 'button' ? (
+                        <div className="relative">
+                            <button
+                                type={element.buttonType || 'button'}
+                                className={clsx(
+                                    "font-medium transition-all rounded-lg border",
+                                    element.buttonSize === 'sm' && "px-3 py-1.5 text-sm",
+                                    element.buttonSize === 'lg' && "px-6 py-3 text-lg",
+                                    (!element.buttonSize || element.buttonSize === 'md') && "px-4 py-2 text-base",
+                                    element.buttonStyle === 'primary' && "bg-blue-600 border-blue-600 text-white hover:bg-blue-700",
+                                    element.buttonStyle === 'secondary' && "bg-gray-600 border-gray-600 text-white hover:bg-gray-700",
+                                    element.buttonStyle === 'outline' && "bg-transparent border-gray-300 text-gray-700 hover:bg-gray-50",
+                                    element.buttonStyle === 'text' && "bg-transparent border-transparent text-blue-600 hover:bg-blue-50",
+                                    (!element.buttonStyle || element.buttonStyle === 'primary') && "bg-blue-600 border-blue-600 text-white hover:bg-blue-700"
+                                )}
+                                style={{
+                                    backgroundColor: element.backgroundColor && element.buttonStyle !== 'text' && element.buttonStyle !== 'outline' ? element.backgroundColor : undefined
+                                }}
+                                disabled
+                            >
+                                {element.buttonText || element.label || 'Button'}
+                            </button>
+                            {element.buttonType === 'submit' && (
+                                <div className="absolute -top-1 -right-1 w-3 h-3 bg-green-500 rounded-full flex items-center justify-center">
+                                    <span className="text-white text-xs">✓</span>
+                                </div>
+                            )}
+                        </div>
                     ) : (
                         <input
                             type={element.type}
-                            className="w-full p-3 bg-slate-50 border border-slate-200 rounded-lg text-slate-500 text-sm"
+                            className="w-full border border-slate-200 rounded-lg text-slate-500 text-sm"
+                            style={{
+                                backgroundColor: element.backgroundColor || '#f8fafc',
+                                padding: '0.75rem'
+                            }}
                             placeholder={element.placeholder}
                             readOnly
                         />
@@ -593,7 +618,6 @@ export const Canvas: React.FC = () => {
 
                             <div
                                 className="flex flex-col"
-                                style={{ gap: `${settings.gap || 4}px` }}
                             >
                                 {elements.map((element) => (
                                     <SortableElement key={element.id} element={element} />

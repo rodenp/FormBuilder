@@ -26,7 +26,6 @@ export const useStore = create<FormStore>((set) => ({
         title: 'My Form',
         description: '',
         submitButtonText: 'Submit',
-        gap: 4,
         submissionActions: [],
     },
 
@@ -47,10 +46,25 @@ export const useStore = create<FormStore>((set) => ({
             maxStars: type === 'star-rating' ? 5 : undefined,
             children: (type === 'container' || type === 'columns') ? [] : undefined,
             columnCount: type === 'columns' ? 2 : undefined,
+            gap: (type === 'container' || type === 'columns') ? 0 : undefined,
             labelSize: type !== 'hidden' && type !== 'rich-text' ? 'sm' : undefined,
             labelWeight: type !== 'hidden' && type !== 'rich-text' ? 'medium' : undefined,
             value: type === 'hidden' ? '' : undefined,
             content: type === 'rich-text' ? '<p>Your rich text content here</p>' : undefined,
+            buttonText: type === 'button' ? 'Click me' : undefined,
+            buttonType: type === 'button' ? 'button' : undefined,
+            buttonStyle: type === 'button' ? 'primary' : undefined,
+            buttonSize: type === 'button' ? 'md' : undefined,
+            buttonAction: type === 'button' ? 'none' : undefined,
+            buttonUrl: type === 'button' ? '' : undefined,
+            buttonTarget: type === 'button' ? '_self' : undefined,
+            // Set zero padding for containers and columns by default
+            paddingTop: (type === 'container' || type === 'columns') ? 0 : undefined,
+            paddingRight: (type === 'container' || type === 'columns') ? 0 : undefined,
+            paddingBottom: (type === 'container' || type === 'columns') ? 0 : undefined,
+            paddingLeft: (type === 'container' || type === 'columns') ? 0 : undefined,
+            // Add default top margin for spacing between components (except when in containers)
+            marginTop: !parentId ? 8 : 0,
         };
         
         if (parentId) {
