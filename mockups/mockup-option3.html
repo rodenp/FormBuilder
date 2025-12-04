@@ -1,0 +1,822 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Option 3: Ultra-Compact Inline Controls</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+            background-color: #f8fafc;
+            padding: 20px;
+            color: #334155;
+        }
+        
+        .container {
+            max-width: 400px;
+            margin: 0 auto;
+            background: white;
+            border-radius: 12px;
+            box-shadow: 0 4px 24px rgba(0, 0, 0, 0.06);
+            overflow: hidden;
+        }
+        
+        .header {
+            padding: 20px;
+            border-bottom: 1px solid #e2e8f0;
+        }
+        
+        .header h1 {
+            font-size: 24px;
+            font-weight: 700;
+            color: #0f172a;
+            margin-bottom: 8px;
+        }
+        
+        .header p {
+            font-size: 14px;
+            color: #64748b;
+        }
+        
+        /* Properties Panel Mockup */
+        .properties-panel {
+            padding: 20px;
+        }
+        
+        .section {
+            margin-bottom: 20px;
+        }
+        
+        .section-title {
+            font-size: 13px;
+            font-weight: 600;
+            color: #475569;
+            text-transform: uppercase;
+            letter-spacing: 0.05em;
+            margin-bottom: 12px;
+        }
+        
+        /* Compact Control Rows */
+        .control-row {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            margin-bottom: 12px;
+            min-height: 32px;
+        }
+        
+        .control-label {
+            font-size: 12px;
+            font-weight: 500;
+            color: #64748b;
+            flex: 0 0 80px;
+        }
+        
+        .control-content {
+            flex: 1;
+            display: flex;
+            align-items: center;
+            gap: 6px;
+        }
+        
+        /* Inline Button Groups */
+        .button-group {
+            display: flex;
+            border: 1px solid #e2e8f0;
+            border-radius: 6px;
+            overflow: hidden;
+            background: white;
+        }
+        
+        .button-group-btn {
+            padding: 6px 10px;
+            border: none;
+            background: white;
+            color: #64748b;
+            font-size: 11px;
+            cursor: pointer;
+            transition: all 0.15s;
+            border-right: 1px solid #e2e8f0;
+            min-width: 32px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+        
+        .button-group-btn:last-child {
+            border-right: none;
+        }
+        
+        .button-group-btn:hover {
+            background: #f1f5f9;
+            color: #3b82f6;
+        }
+        
+        .button-group-btn.active {
+            background: #3b82f6;
+            color: white;
+        }
+        
+        /* Compact Inputs */
+        .compact-input {
+            width: 44px;
+            height: 28px;
+            border: 1px solid #e2e8f0;
+            border-radius: 4px;
+            text-align: center;
+            font-size: 11px;
+            background: white;
+            padding: 0 4px;
+        }
+        
+        .compact-input:focus {
+            outline: none;
+            border-color: #3b82f6;
+            box-shadow: 0 0 0 2px rgba(59, 130, 246, 0.1);
+        }
+        
+        /* Slider Control */
+        .slider-container {
+            flex: 1;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+        
+        .compact-slider {
+            flex: 1;
+            height: 4px;
+            accent-color: #3b82f6;
+        }
+        
+        .slider-value {
+            font-size: 11px;
+            color: #64748b;
+            min-width: 24px;
+            text-align: right;
+        }
+        
+        /* Select Dropdown */
+        .compact-select {
+            height: 28px;
+            border: 1px solid #e2e8f0;
+            border-radius: 4px;
+            background: white;
+            font-size: 11px;
+            padding: 0 8px;
+            color: #334155;
+            min-width: 80px;
+        }
+        
+        .compact-select:focus {
+            outline: none;
+            border-color: #3b82f6;
+        }
+        
+        /* Spacing Quad Input */
+        .spacing-quad {
+            display: flex;
+            gap: 4px;
+            align-items: center;
+        }
+        
+        .spacing-quad input {
+            width: 36px;
+            height: 28px;
+            border: 1px solid #e2e8f0;
+            border-radius: 4px;
+            text-align: center;
+            font-size: 11px;
+            background: white;
+        }
+        
+        .spacing-quad input:focus {
+            outline: none;
+            border-color: #3b82f6;
+        }
+        
+        .spacing-sep {
+            color: #cbd5e1;
+            font-size: 10px;
+        }
+        
+        /* Toggle Switch */
+        .toggle-switch {
+            position: relative;
+            width: 36px;
+            height: 20px;
+            background: #e2e8f0;
+            border-radius: 10px;
+            cursor: pointer;
+            transition: all 0.2s;
+        }
+        
+        .toggle-switch.active {
+            background: #3b82f6;
+        }
+        
+        .toggle-switch::after {
+            content: '';
+            position: absolute;
+            top: 2px;
+            left: 2px;
+            width: 16px;
+            height: 16px;
+            background: white;
+            border-radius: 50%;
+            transition: transform 0.2s;
+        }
+        
+        .toggle-switch.active::after {
+            transform: translateX(16px);
+        }
+        
+        /* Icon buttons */
+        .icon-btn {
+            width: 28px;
+            height: 28px;
+            border: 1px solid #e2e8f0;
+            background: white;
+            border-radius: 4px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            cursor: pointer;
+            color: #64748b;
+            transition: all 0.15s;
+        }
+        
+        .icon-btn:hover {
+            border-color: #3b82f6;
+            color: #3b82f6;
+            background: #eff6ff;
+        }
+        
+        .icon-btn.active {
+            background: #3b82f6;
+            border-color: #3b82f6;
+            color: white;
+        }
+        
+        /* Collapsible sections */
+        .collapsible-header {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            cursor: pointer;
+            padding: 8px 0;
+            border-bottom: 1px solid #f1f5f9;
+            margin-bottom: 12px;
+        }
+        
+        .collapsible-header:hover {
+            color: #3b82f6;
+        }
+        
+        .chevron {
+            transition: transform 0.2s;
+        }
+        
+        .collapsed .chevron {
+            transform: rotate(-90deg);
+        }
+        
+        .collapsible-content {
+            margin-bottom: 16px;
+        }
+        
+        /* Current spacing indicator */
+        .current-spacing {
+            background: #f8fafc;
+            border: 1px solid #e2e8f0;
+            border-radius: 6px;
+            padding: 8px;
+            margin-bottom: 12px;
+        }
+        
+        .spacing-preview {
+            font-size: 11px;
+            color: #64748b;
+            text-align: center;
+        }
+        
+        /* Live Preview */
+        .live-preview {
+            margin-top: 20px;
+            padding: 16px;
+            background: #f8fafc;
+            border-radius: 8px;
+            border: 1px solid #e2e8f0;
+        }
+        
+        .preview-label {
+            font-size: 12px;
+            font-weight: 500;
+            color: #64748b;
+            margin-bottom: 12px;
+        }
+        
+        .preview-area {
+            background: white;
+            border: 1px solid #e2e8f0;
+            border-radius: 6px;
+            padding: 16px;
+            transition: all 0.3s ease;
+            min-height: 100px;
+            display: flex;
+            flex-wrap: wrap;
+        }
+        
+        .demo-element {
+            background: linear-gradient(135deg, #3b82f6, #1d4ed8);
+            color: white;
+            padding: 10px 14px;
+            border-radius: 4px;
+            font-size: 12px;
+            font-weight: 500;
+            box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+        }
+        
+        .css-output {
+            margin-top: 12px;
+            padding: 10px 12px;
+            background: #1e293b;
+            color: #e2e8f0;
+            border-radius: 4px;
+            font-size: 10px;
+            font-family: 'Monaco', 'Menlo', 'Ubuntu Mono', monospace;
+            line-height: 1.4;
+            max-height: 120px;
+            overflow-y: auto;
+        }
+        
+        .css-property {
+            color: #7dd3fc;
+        }
+        
+        .css-value {
+            color: #fbbf24;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h1>Option 3: Ultra-Compact Inline Controls</h1>
+            <p>Maximum density with inline controls</p>
+        </div>
+        
+        <div class="properties-panel">
+            <!-- Layout Section -->
+            <div class="section">
+                <div class="collapsible-header">
+                    <h3 class="section-title">Layout</h3>
+                    <span class="chevron">▼</span>
+                </div>
+                
+                <div class="collapsible-content">
+                    <!-- Text Alignment -->
+                    <div class="control-row">
+                        <label class="control-label">Align</label>
+                        <div class="control-content">
+                            <div class="button-group">
+                                <button class="button-group-btn active" title="Left">⬅</button>
+                                <button class="button-group-btn" title="Center">↔</button>
+                                <button class="button-group-btn" title="Right">➡</button>
+                                <button class="button-group-btn" title="Justify">☰</button>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <!-- Vertical Alignment -->
+                    <div class="control-row">
+                        <label class="control-label">V-Align</label>
+                        <div class="control-content">
+                            <div class="button-group">
+                                <button class="button-group-btn" title="Top">⬆</button>
+                                <button class="button-group-btn active" title="Middle">↕</button>
+                                <button class="button-group-btn" title="Bottom">⬇</button>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <!-- Display Type -->
+                    <div class="control-row">
+                        <label class="control-label">Display</label>
+                        <div class="control-content">
+                            <select class="compact-select">
+                                <option>Block</option>
+                                <option selected>Flex</option>
+                                <option>Grid</option>
+                                <option>Inline</option>
+                            </select>
+                        </div>
+                    </div>
+                    
+                    <!-- Flex Direction -->
+                    <div class="control-row">
+                        <label class="control-label">Direction</label>
+                        <div class="control-content">
+                            <div class="button-group">
+                                <button class="button-group-btn active" title="Row">→</button>
+                                <button class="button-group-btn" title="Column">↓</button>
+                                <button class="button-group-btn" title="Wrap">↩</button>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <!-- Gap -->
+                    <div class="control-row">
+                        <label class="control-label">Gap</label>
+                        <div class="control-content">
+                            <div class="slider-container">
+                                <input type="range" class="compact-slider" min="0" max="48" value="16">
+                                <span class="slider-value">16px</span>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            
+            <!-- Spacing Section -->
+            <div class="section">
+                <div class="collapsible-header">
+                    <h3 class="section-title">Spacing</h3>
+                    <span class="chevron">▼</span>
+                </div>
+                
+                <div class="collapsible-content">
+                    <!-- Current Spacing Preview -->
+                    <div class="current-spacing">
+                        <div class="spacing-preview">Margin: 8px | Padding: 16px</div>
+                    </div>
+                    
+                    <!-- Margin -->
+                    <div class="control-row">
+                        <label class="control-label">Margin</label>
+                        <div class="control-content">
+                            <div class="spacing-quad">
+                                <input type="text" value="8" placeholder="T">
+                                <span class="spacing-sep">|</span>
+                                <input type="text" value="8" placeholder="R">
+                                <span class="spacing-sep">|</span>
+                                <input type="text" value="8" placeholder="B">
+                                <span class="spacing-sep">|</span>
+                                <input type="text" value="8" placeholder="L">
+                            </div>
+                            <button class="icon-btn" title="Link values">🔗</button>
+                            <button class="icon-btn" title="Reset">↺</button>
+                        </div>
+                    </div>
+                    
+                    <!-- Padding -->
+                    <div class="control-row">
+                        <label class="control-label">Padding</label>
+                        <div class="control-content">
+                            <div class="spacing-quad">
+                                <input type="text" value="16" placeholder="T">
+                                <span class="spacing-sep">|</span>
+                                <input type="text" value="16" placeholder="R">
+                                <span class="spacing-sep">|</span>
+                                <input type="text" value="16" placeholder="B">
+                                <span class="spacing-sep">|</span>
+                                <input type="text" value="16" placeholder="L">
+                            </div>
+                            <button class="icon-btn active" title="Link values">🔗</button>
+                            <button class="icon-btn" title="Reset">↺</button>
+                        </div>
+                    </div>
+                    
+                    <!-- Quick Presets -->
+                    <div class="control-row">
+                        <label class="control-label">Presets</label>
+                        <div class="control-content">
+                            <div class="button-group">
+                                <button class="button-group-btn">None</button>
+                                <button class="button-group-btn">XS</button>
+                                <button class="button-group-btn active">S</button>
+                                <button class="button-group-btn">M</button>
+                                <button class="button-group-btn">L</button>
+                                <button class="button-group-btn">XL</button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            
+            <!-- Position Section -->
+            <div class="section">
+                <div class="collapsible-header">
+                    <h3 class="section-title">Position</h3>
+                    <span class="chevron">▼</span>
+                </div>
+                
+                <div class="collapsible-content">
+                    <!-- Position Type -->
+                    <div class="control-row">
+                        <label class="control-label">Position</label>
+                        <div class="control-content">
+                            <select class="compact-select">
+                                <option selected>Static</option>
+                                <option>Relative</option>
+                                <option>Absolute</option>
+                                <option>Fixed</option>
+                                <option>Sticky</option>
+                            </select>
+                        </div>
+                    </div>
+                    
+                    <!-- Z-Index -->
+                    <div class="control-row">
+                        <label class="control-label">Z-Index</label>
+                        <div class="control-content">
+                            <input type="text" class="compact-input" value="auto" placeholder="auto">
+                        </div>
+                    </div>
+                    
+                    <!-- Overflow -->
+                    <div class="control-row">
+                        <label class="control-label">Overflow</label>
+                        <div class="control-content">
+                            <div class="button-group">
+                                <button class="button-group-btn active">Visible</button>
+                                <button class="button-group-btn">Hidden</button>
+                                <button class="button-group-btn">Scroll</button>
+                                <button class="button-group-btn">Auto</button>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <!-- Responsive -->
+                    <div class="control-row">
+                        <label class="control-label">Responsive</label>
+                        <div class="control-content">
+                            <div class="toggle-switch active"></div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            
+            <!-- Live Preview -->
+            <div class="live-preview">
+                <div class="preview-label">Live Preview & Generated CSS</div>
+                <div class="preview-area" id="previewArea">
+                    <div class="demo-element">Element 1</div>
+                    <div class="demo-element">Element 2</div>
+                    <div class="demo-element">Element 3</div>
+                </div>
+                <div class="css-output" id="cssOutput">
+                    <span class="css-property">display:</span> <span class="css-value">flex;</span><br>
+                    <span class="css-property">flex-direction:</span> <span class="css-value">row;</span><br>
+                    <span class="css-property">justify-content:</span> <span class="css-value">flex-start;</span><br>
+                    <span class="css-property">gap:</span> <span class="css-value">16px;</span><br>
+                    <span class="css-property">margin:</span> <span class="css-value">8px;</span><br>
+                    <span class="css-property">padding:</span> <span class="css-value">16px;</span>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <script>
+        // Current state object
+        let currentState = {
+            display: 'flex',
+            flexDirection: 'row',
+            justifyContent: 'flex-start',
+            alignItems: 'center',
+            gap: 16,
+            marginTop: 8, marginRight: 8, marginBottom: 8, marginLeft: 8,
+            paddingTop: 16, paddingRight: 16, paddingBottom: 16, paddingLeft: 16,
+            position: 'static',
+            zIndex: 'auto',
+            overflow: 'visible',
+            responsive: true
+        };
+        
+        const previewArea = document.getElementById('previewArea');
+        const cssOutput = document.getElementById('cssOutput');
+        
+        // Update preview and CSS output
+        function updatePreview() {
+            const style = previewArea.style;
+            
+            // Apply styles
+            style.display = currentState.display;
+            style.flexDirection = currentState.flexDirection;
+            style.justifyContent = currentState.justifyContent;
+            style.alignItems = currentState.alignItems;
+            style.gap = `${currentState.gap}px`;
+            style.margin = `${currentState.marginTop}px ${currentState.marginRight}px ${currentState.marginBottom}px ${currentState.marginLeft}px`;
+            style.padding = `${currentState.paddingTop}px ${currentState.paddingRight}px ${currentState.paddingBottom}px ${currentState.paddingLeft}px`;
+            style.position = currentState.position;
+            style.zIndex = currentState.zIndex;
+            style.overflow = currentState.overflow;
+            
+            // Update spacing preview
+            document.querySelector('.spacing-preview').textContent = 
+                `Margin: ${currentState.marginTop}px | Padding: ${currentState.paddingTop}px`;
+            
+            // Generate CSS output
+            generateCSS();
+        }
+        
+        function generateCSS() {
+            let css = '';
+            
+            css += `<span class="css-property">display:</span> <span class="css-value">${currentState.display};</span><br>`;
+            
+            if (currentState.display === 'flex') {
+                css += `<span class="css-property">flex-direction:</span> <span class="css-value">${currentState.flexDirection};</span><br>`;
+                css += `<span class="css-property">justify-content:</span> <span class="css-value">${currentState.justifyContent};</span><br>`;
+                css += `<span class="css-property">align-items:</span> <span class="css-value">${currentState.alignItems};</span><br>`;
+                css += `<span class="css-property">gap:</span> <span class="css-value">${currentState.gap}px;</span><br>`;
+            }
+            
+            const marginShorthand = `${currentState.marginTop}px ${currentState.marginRight}px ${currentState.marginBottom}px ${currentState.marginLeft}px`;
+            const paddingShorthand = `${currentState.paddingTop}px ${currentState.paddingRight}px ${currentState.paddingBottom}px ${currentState.paddingLeft}px`;
+            
+            css += `<span class="css-property">margin:</span> <span class="css-value">${marginShorthand};</span><br>`;
+            css += `<span class="css-property">padding:</span> <span class="css-value">${paddingShorthand};</span><br>`;
+            
+            if (currentState.position !== 'static') {
+                css += `<span class="css-property">position:</span> <span class="css-value">${currentState.position};</span><br>`;
+            }
+            
+            if (currentState.zIndex !== 'auto') {
+                css += `<span class="css-property">z-index:</span> <span class="css-value">${currentState.zIndex};</span><br>`;
+            }
+            
+            if (currentState.overflow !== 'visible') {
+                css += `<span class="css-property">overflow:</span> <span class="css-value">${currentState.overflow};</span><br>`;
+            }
+            
+            cssOutput.innerHTML = css;
+        }
+        
+        // Toggle collapsible sections
+        document.querySelectorAll('.collapsible-header').forEach(header => {
+            header.addEventListener('click', () => {
+                const content = header.nextElementSibling;
+                const chevron = header.querySelector('.chevron');
+                
+                if (content.style.display === 'none') {
+                    content.style.display = 'block';
+                    chevron.textContent = '▼';
+                    header.parentElement.classList.remove('collapsed');
+                } else {
+                    content.style.display = 'none';
+                    chevron.textContent = '▶';
+                    header.parentElement.classList.add('collapsed');
+                }
+            });
+        });
+        
+        // Button group interactions
+        document.querySelectorAll('.button-group').forEach(group => {
+            group.querySelectorAll('.button-group-btn').forEach(btn => {
+                btn.addEventListener('click', () => {
+                    group.querySelectorAll('.button-group-btn').forEach(b => b.classList.remove('active'));
+                    btn.classList.add('active');
+                    
+                    const label = group.parentElement.querySelector('.control-label').textContent;
+                    
+                    if (label === 'Align') {
+                        if (btn.title === 'Left') currentState.justifyContent = 'flex-start';
+                        else if (btn.title === 'Center') currentState.justifyContent = 'center';
+                        else if (btn.title === 'Right') currentState.justifyContent = 'flex-end';
+                        else if (btn.title === 'Justify') currentState.justifyContent = 'space-between';
+                    } else if (label === 'V-Align') {
+                        if (btn.title === 'Top') currentState.alignItems = 'flex-start';
+                        else if (btn.title === 'Middle') currentState.alignItems = 'center';
+                        else if (btn.title === 'Bottom') currentState.alignItems = 'flex-end';
+                    } else if (label === 'Direction') {
+                        if (btn.title === 'Row') currentState.flexDirection = 'row';
+                        else if (btn.title === 'Column') currentState.flexDirection = 'column';
+                    } else if (label === 'Overflow') {
+                        currentState.overflow = btn.textContent.toLowerCase();
+                    } else if (label === 'Presets') {
+                        let values = { margin: 0, padding: 0 };
+                        switch (btn.textContent) {
+                            case 'None': values = { margin: 0, padding: 0 }; break;
+                            case 'XS': values = { margin: 2, padding: 4 }; break;
+                            case 'S': values = { margin: 4, padding: 8 }; break;
+                            case 'M': values = { margin: 8, padding: 16 }; break;
+                            case 'L': values = { margin: 12, padding: 24 }; break;
+                            case 'XL': values = { margin: 16, padding: 32 }; break;
+                        }
+                        
+                        currentState.marginTop = currentState.marginRight = 
+                        currentState.marginBottom = currentState.marginLeft = values.margin;
+                        currentState.paddingTop = currentState.paddingRight = 
+                        currentState.paddingBottom = currentState.paddingLeft = values.padding;
+                        
+                        // Update spacing inputs
+                        document.querySelectorAll('.spacing-quad input').forEach((input, index) => {
+                            const isMargin = input.closest('.control-row').querySelector('.control-label').textContent === 'Margin';
+                            input.value = isMargin ? values.margin : values.padding;
+                        });
+                    }
+                    
+                    updatePreview();
+                });
+            });
+        });
+        
+        // Spacing inputs
+        document.querySelectorAll('.spacing-quad input').forEach(input => {
+            input.addEventListener('input', () => {
+                const value = parseInt(input.value) || 0;
+                const isMargin = input.closest('.control-row').querySelector('.control-label').textContent === 'Margin';
+                const index = Array.from(input.parentElement.querySelectorAll('input')).indexOf(input);
+                
+                if (isMargin) {
+                    if (index === 0) currentState.marginTop = value;
+                    else if (index === 1) currentState.marginRight = value;
+                    else if (index === 2) currentState.marginBottom = value;
+                    else if (index === 3) currentState.marginLeft = value;
+                } else {
+                    if (index === 0) currentState.paddingTop = value;
+                    else if (index === 1) currentState.paddingRight = value;
+                    else if (index === 2) currentState.paddingBottom = value;
+                    else if (index === 3) currentState.paddingLeft = value;
+                }
+                
+                updatePreview();
+            });
+        });
+        
+        // Select dropdowns
+        document.querySelectorAll('.compact-select').forEach(select => {
+            select.addEventListener('change', () => {
+                const label = select.parentElement.querySelector('.control-label').textContent;
+                
+                if (label === 'Display') {
+                    currentState.display = select.value.toLowerCase();
+                } else if (label === 'Position') {
+                    currentState.position = select.value.toLowerCase();
+                }
+                
+                updatePreview();
+            });
+        });
+        
+        // Gap slider
+        document.querySelector('.compact-slider').addEventListener('input', (e) => {
+            currentState.gap = parseInt(e.target.value);
+            e.target.nextElementSibling.textContent = `${currentState.gap}px`;
+            updatePreview();
+        });
+        
+        // Z-index input
+        document.querySelector('.compact-input').addEventListener('input', (e) => {
+            currentState.zIndex = e.target.value || 'auto';
+            updatePreview();
+        });
+        
+        // Toggle switches
+        document.querySelectorAll('.toggle-switch').forEach(toggle => {
+            toggle.addEventListener('click', () => {
+                toggle.classList.toggle('active');
+                const label = toggle.parentElement.querySelector('.control-label').textContent;
+                
+                if (label === 'Responsive') {
+                    currentState.responsive = toggle.classList.contains('active');
+                }
+            });
+        });
+        
+        // Icon buttons
+        document.querySelectorAll('.icon-btn').forEach(btn => {
+            btn.addEventListener('click', () => {
+                if (btn.title === 'Link values') {
+                    btn.classList.toggle('active');
+                } else if (btn.title === 'Reset') {
+                    const isMargin = btn.closest('.control-row').querySelector('.control-label').textContent === 'Margin';
+                    const inputs = btn.parentElement.querySelectorAll('.spacing-quad input');
+                    
+                    inputs.forEach(input => input.value = '0');
+                    
+                    if (isMargin) {
+                        currentState.marginTop = currentState.marginRight = 
+                        currentState.marginBottom = currentState.marginLeft = 0;
+                    } else {
+                        currentState.paddingTop = currentState.paddingRight = 
+                        currentState.paddingBottom = currentState.paddingLeft = 0;
+                    }
+                    
+                    updatePreview();
+                }
+            });
+        });
+        
+        // Initialize
+        updatePreview();
+    </script>
+</body>
+</html>

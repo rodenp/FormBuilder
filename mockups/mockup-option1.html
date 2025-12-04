@@ -1,0 +1,956 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Option 1: Unified Layout Control Panel</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+            background-color: #f8fafc;
+            padding: 20px;
+            color: #334155;
+        }
+        
+        .container {
+            max-width: 400px;
+            margin: 0 auto;
+            background: white;
+            border-radius: 12px;
+            box-shadow: 0 4px 24px rgba(0, 0, 0, 0.06);
+            overflow: hidden;
+        }
+        
+        .header {
+            padding: 20px;
+            border-bottom: 1px solid #e2e8f0;
+        }
+        
+        .header h1 {
+            font-size: 24px;
+            font-weight: 700;
+            color: #0f172a;
+            margin-bottom: 8px;
+        }
+        
+        .header p {
+            font-size: 14px;
+            color: #64748b;
+        }
+        
+        /* Properties Panel Mockup */
+        .properties-panel {
+            padding: 20px;
+        }
+        
+        .section {
+            margin-bottom: 24px;
+        }
+        
+        .section-title {
+            font-size: 13px;
+            font-weight: 600;
+            color: #475569;
+            text-transform: uppercase;
+            letter-spacing: 0.05em;
+            margin-bottom: 12px;
+        }
+        
+        /* Layout Control Group */
+        .layout-control-group {
+            background: #f8fafc;
+            border: 1px solid #e2e8f0;
+            border-radius: 8px;
+            padding: 16px;
+            margin-bottom: 16px;
+        }
+        
+        /* Alignment Controls */
+        .alignment-group {
+            margin-bottom: 16px;
+        }
+        
+        .alignment-label {
+            font-size: 12px;
+            font-weight: 500;
+            color: #64748b;
+            margin-bottom: 8px;
+        }
+        
+        .alignment-buttons {
+            display: grid;
+            grid-template-columns: repeat(6, 1fr);
+            gap: 4px;
+        }
+        
+        .align-btn {
+            flex: 1;
+            height: 32px;
+            border: 1px solid #e2e8f0;
+            background: white;
+            border-radius: 6px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            cursor: pointer;
+            transition: all 0.2s;
+            position: relative;
+        }
+        
+        .align-btn:hover {
+            border-color: #3b82f6;
+            background: #eff6ff;
+        }
+        
+        .align-btn.active {
+            background: #3b82f6;
+            border-color: #3b82f6;
+            color: white;
+        }
+        
+        /* Icon representation */
+        .icon {
+            width: 16px;
+            height: 16px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+        
+        /* Visual Box Model */
+        .box-model {
+            margin: 20px 0;
+            display: flex;
+            justify-content: center;
+        }
+        
+        
+        .box-visual {
+            width: 260px;
+            height: 180px;
+            position: relative;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            margin: 0 auto;
+        }
+        
+        /* Margin area - outer border */
+        .margin-area {
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            border: 2px dashed #3b82f6;
+            border-radius: 8px;
+            background: rgba(59, 130, 246, 0.05);
+        }
+        
+        .margin-area::before {
+            content: 'MARGIN';
+            position: absolute;
+            top: 4px;
+            left: 8px;
+            font-size: 9px;
+            font-weight: 600;
+            color: #3b82f6;
+            letter-spacing: 0.5px;
+        }
+        
+        /* Padding area - inner border */
+        .padding-area {
+            position: absolute;
+            top: 30px;
+            left: 30px;
+            right: 30px;
+            bottom: 30px;
+            border: 2px dashed #059669;
+            border-radius: 6px;
+            background: rgba(5, 150, 105, 0.05);
+        }
+        
+        .padding-area::before {
+            content: 'PADDING';
+            position: absolute;
+            top: 4px;
+            left: 8px;
+            font-size: 9px;
+            font-weight: 600;
+            color: #059669;
+            letter-spacing: 0.5px;
+        }
+        
+        /* Spacing value inputs positioned around the box */
+        .spacing-input-positioned {
+            position: absolute;
+            width: 32px;
+            height: 24px;
+            border: 1px solid #e2e8f0;
+            border-radius: 4px;
+            text-align: center;
+            font-size: 11px;
+            font-weight: 500;
+            background: white;
+            color: #374151;
+            z-index: 20;
+        }
+        
+        .spacing-input-positioned:focus {
+            outline: none;
+            border-color: #3b82f6;
+            box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.1);
+        }
+        
+        /* Margin inputs - positioned outside the blue border */
+        .margin-top { top: -30px; left: 50%; transform: translateX(-50%); border-color: #3b82f6; }
+        .margin-right { right: -40px; top: 50%; transform: translateY(-50%); border-color: #3b82f6; }
+        .margin-bottom { bottom: -30px; left: 50%; transform: translateX(-50%); border-color: #3b82f6; }
+        .margin-left { left: -40px; top: 50%; transform: translateY(-50%); border-color: #3b82f6; }
+        
+        /* Padding inputs - positioned inside the green border */
+        .padding-top { top: 35px; left: 50%; transform: translateX(-50%); border-color: #059669; }
+        .padding-right { right: 35px; top: 50%; transform: translateY(-50%); border-color: #059669; }
+        .padding-bottom { bottom: 35px; left: 50%; transform: translateX(-50%); border-color: #059669; }
+        .padding-left { left: 35px; top: 50%; transform: translateY(-50%); border-color: #059669; }
+        
+        .box-content {
+            width: 60px;
+            height: 40px;
+            background: white;
+            border: 1px solid #e2e8f0;
+            border-radius: 4px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 11px;
+            color: #64748b;
+            z-index: 10;
+            position: relative;
+            font-weight: 500;
+        }
+        
+        /* Spacing Controls Grid */
+        .spacing-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 12px;
+            margin-top: 16px;
+        }
+        
+        .spacing-group {
+            display: flex;
+            flex-direction: column;
+            gap: 6px;
+        }
+        
+        .spacing-label {
+            font-size: 11px;
+            font-weight: 500;
+        }
+        
+        .spacing-group:first-child .spacing-label {
+            color: #3b82f6;
+        }
+        
+        .spacing-group:last-child .spacing-label {
+            color: #059669;
+        }
+        
+        .spacing-inputs {
+            display: grid;
+            grid-template-columns: repeat(4, 1fr);
+            gap: 4px;
+        }
+        
+        .spacing-input {
+            width: 100%;
+            height: 28px;
+            border: 1px solid #e2e8f0;
+            border-radius: 4px;
+            text-align: center;
+            font-size: 12px;
+            background: white;
+            transition: all 0.2s;
+        }
+        
+        .spacing-input:focus {
+            outline: none;
+            border-color: #3b82f6;
+            box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.1);
+        }
+        
+        .spacing-input::placeholder {
+            color: #cbd5e1;
+            font-size: 11px;
+        }
+        
+        /* Spacing Controls */
+        .spacing-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 12px;
+        }
+        
+        .spacing-group {
+            display: flex;
+            flex-direction: column;
+            gap: 6px;
+        }
+        
+        .spacing-label {
+            font-size: 11px;
+            font-weight: 500;
+            color: #64748b;
+        }
+        
+        .spacing-inputs {
+            display: grid;
+            grid-template-columns: repeat(4, 1fr);
+            gap: 4px;
+        }
+        
+        .spacing-input {
+            width: 100%;
+            height: 28px;
+            border: 1px solid #e2e8f0;
+            border-radius: 4px;
+            text-align: center;
+            font-size: 12px;
+            background: white;
+            transition: all 0.2s;
+        }
+        
+        .spacing-input:focus {
+            outline: none;
+            border-color: #3b82f6;
+            box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.1);
+        }
+        
+        .spacing-input::placeholder {
+            color: #cbd5e1;
+            font-size: 11px;
+        }
+        
+        /* Quick presets */
+        .preset-buttons {
+            display: flex;
+            gap: 8px;
+            margin-top: 12px;
+        }
+        
+        .preset-btn {
+            padding: 6px 12px;
+            border: 1px solid #e2e8f0;
+            background: white;
+            border-radius: 6px;
+            font-size: 12px;
+            color: #64748b;
+            cursor: pointer;
+            transition: all 0.2s;
+        }
+        
+        .preset-btn:hover {
+            border-color: #3b82f6;
+            color: #3b82f6;
+            background: #eff6ff;
+        }
+        
+        .preset-btn.active {
+            background: #3b82f6;
+            border-color: #3b82f6;
+            color: white;
+        }
+        
+        /* Live Preview */
+        .live-preview {
+            margin-top: 24px;
+            padding: 20px;
+            background: #f8fafc;
+            border-radius: 8px;
+            border: 1px solid #e2e8f0;
+        }
+        
+        .preview-label {
+            font-size: 12px;
+            font-weight: 500;
+            color: #64748b;
+            margin-bottom: 12px;
+        }
+        
+        .preview-element {
+            background: white;
+            border: 1px solid #e2e8f0;
+            border-radius: 6px;
+            padding: 16px;
+            transition: all 0.3s ease;
+            min-height: 200px;
+            height: 200px;
+            width: 100%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+        
+        .preview-content {
+            background: #3b82f6;
+            color: white;
+            padding: 8px 12px;
+            border-radius: 4px;
+            font-size: 12px;
+            font-weight: 500;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+        }
+        
+        .preview-content:nth-child(1) { background: #ef4444; }
+        .preview-content:nth-child(2) { background: #10b981; }
+        .preview-content:nth-child(3) { background: #8b5cf6; }
+        
+        /* Default element sizes - use !important to ensure they can be overridden */
+        .preview-content[data-element="A"] { width: 50px; height: 30px; }
+        .preview-content[data-element="B"] { width: 70px; height: 45px; }
+        .preview-content[data-element="C"] { width: 60px; height: 35px; }
+        
+        /* Grid stretch override */
+        .preview-element[style*="align-items: stretch"] .preview-content {
+            width: auto !important;
+            height: auto !important;
+        }
+        
+        /* Gap Control */
+        .gap-control {
+            margin-top: 16px;
+        }
+        
+        .gap-slider {
+            width: 100%;
+            margin-top: 8px;
+        }
+        
+        /* Display Control */
+        .display-control {
+            display: flex;
+            gap: 8px;
+            margin-top: 16px;
+        }
+        
+        /* Conditional Alignment Controls */
+        .alignment-group.hidden {
+            display: none;
+        }
+        
+        .display-option {
+            flex: 1;
+            padding: 8px;
+            border: 1px solid #e2e8f0;
+            background: white;
+            border-radius: 6px;
+            text-align: center;
+            font-size: 12px;
+            color: #64748b;
+            cursor: pointer;
+            transition: all 0.2s;
+        }
+        
+        .display-option:hover {
+            border-color: #3b82f6;
+            background: #eff6ff;
+        }
+        
+        .display-option.active {
+            background: #3b82f6;
+            border-color: #3b82f6;
+            color: white;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h1>Option 1: Unified Layout Control Panel</h1>
+            <p>Visual box model with integrated controls</p>
+        </div>
+        
+        <div class="properties-panel">
+            <!-- Layout Section -->
+            <div class="section">
+                <h3 class="section-title">Layout</h3>
+                
+                <div class="layout-control-group">
+                    <!-- Direction Control (for Flex and Grid) -->
+                    <div class="alignment-group" id="directionControl">
+                        <div class="alignment-label">Direction</div>
+                        <div class="alignment-buttons" style="grid-template-columns: repeat(2, 1fr);">
+                            <button class="align-btn active" title="Horizontal layout" data-direction="horizontal">
+                                <div class="icon">→</div>
+                            </button>
+                            <button class="align-btn" title="Vertical layout" data-direction="vertical">
+                                <div class="icon">↓</div>
+                            </button>
+                        </div>
+                    </div>
+                    
+                    <!-- Horizontal Controls (Row/Horizontal) -->
+                    <div class="alignment-group" id="horizontalControls">
+                        <div class="alignment-label" id="horizontalLabel">Horizontal Alignment</div>
+                        <div class="alignment-buttons">
+                            <button class="align-btn" title="Start (Left for Flex, Start for Grid)" data-justify="flex-start">
+                                <div class="icon" style="font-size: 10px;">⬜⬜⬜</div>
+                            </button>
+                            <button class="align-btn" title="Center" data-justify="center">
+                                <div class="icon" style="font-size: 10px;">&nbsp;⬜⬜⬜&nbsp;</div>
+                            </button>
+                            <button class="align-btn" title="End (Right for Flex, End for Grid)" data-justify="flex-end">
+                                <div class="icon" style="font-size: 10px;">&nbsp;&nbsp;&nbsp;⬜⬜⬜</div>
+                            </button>
+                            <button class="align-btn" title="Space Between" data-justify="space-between">
+                                <div class="icon" style="font-size: 10px;">⬜&nbsp;&nbsp;⬜&nbsp;&nbsp;⬜</div>
+                            </button>
+                            <button class="align-btn" title="Space Around" data-justify="space-around">
+                                <div class="icon" style="font-size: 10px;">&nbsp;⬜&nbsp;⬜&nbsp;⬜&nbsp;</div>
+                            </button>
+                            <button class="align-btn" title="Space Evenly" data-justify="space-evenly">
+                                <div class="icon" style="font-size: 10px;">&nbsp;⬜&nbsp;&nbsp;⬜&nbsp;&nbsp;⬜&nbsp;</div>
+                            </button>
+                        </div>
+                        
+                        <!-- Cross-axis alignment for horizontal -->
+                        <div class="alignment-label" style="margin-top: 12px;">Vertical Alignment</div>
+                        <div class="alignment-buttons" style="grid-template-columns: repeat(4, 1fr);">
+                            <button class="align-btn" title="Top (Flex) / Start (Grid)" data-align="flex-start">
+                                <div class="icon">⬆</div>
+                            </button>
+                            <button class="align-btn" title="Middle / Center" data-align="center">
+                                <div class="icon">↕</div>
+                            </button>
+                            <button class="align-btn" title="Bottom (Flex) / End (Grid)" data-align="flex-end">
+                                <div class="icon">⬇</div>
+                            </button>
+                            <button class="align-btn" title="Stretch to Fill" data-align="stretch">
+                                <div class="icon">⇕</div>
+                            </button>
+                        </div>
+                    </div>
+                    
+                    <!-- Vertical Controls (Column/Vertical) -->
+                    <div class="alignment-group hidden" id="verticalControls">
+                        <div class="alignment-label" id="verticalLabel">Vertical Alignment</div>
+                        <div class="alignment-buttons">
+                            <button class="align-btn" title="Top" data-justify="flex-start">
+                                <div class="icon">⬆</div>
+                            </button>
+                            <button class="align-btn" title="Center" data-justify="center">
+                                <div class="icon">↕</div>
+                            </button>
+                            <button class="align-btn" title="Bottom" data-justify="flex-end">
+                                <div class="icon">⬇</div>
+                            </button>
+                            <button class="align-btn" title="Space between" data-justify="space-between">
+                                <div class="icon">⟷</div>
+                            </button>
+                            <button class="align-btn" title="Space around" data-justify="space-around">
+                                <div class="icon">⟐</div>
+                            </button>
+                            <button class="align-btn" title="Space evenly" data-justify="space-evenly">
+                                <div class="icon">⫸</div>
+                            </button>
+                        </div>
+                        
+                        <!-- Cross-axis alignment for vertical -->
+                        <div class="alignment-label" style="margin-top: 12px;">Horizontal Alignment</div>
+                        <div class="alignment-buttons" style="grid-template-columns: repeat(4, 1fr);">
+                            <button class="align-btn" title="Left" data-align="flex-start">
+                                <div class="icon">⬅</div>
+                            </button>
+                            <button class="align-btn" title="Center" data-align="center">
+                                <div class="icon">↔</div>
+                            </button>
+                            <button class="align-btn" title="Right" data-align="flex-end">
+                                <div class="icon">➡</div>
+                            </button>
+                            <button class="align-btn" title="Stretch" data-align="stretch">
+                                <div class="icon">⟷</div>
+                            </button>
+                        </div>
+                    </div>
+                    
+                    <!-- Visual Box Model -->
+                    <div class="box-model">
+                        <div class="box-visual">
+                            <div class="margin-area"></div>
+                            <div class="padding-area"></div>
+                            <div class="box-content">Content</div>
+                            
+                            <!-- Margin inputs positioned around the box -->
+                            <input type="text" class="spacing-input-positioned margin-top" id="marginTop" value="8">
+                            <input type="text" class="spacing-input-positioned margin-right" id="marginRight" value="8">
+                            <input type="text" class="spacing-input-positioned margin-bottom" id="marginBottom" value="8">
+                            <input type="text" class="spacing-input-positioned margin-left" id="marginLeft" value="8">
+                            
+                            <!-- Padding inputs positioned around the inner area -->
+                            <input type="text" class="spacing-input-positioned padding-top" id="paddingTop" value="16">
+                            <input type="text" class="spacing-input-positioned padding-right" id="paddingRight" value="16">
+                            <input type="text" class="spacing-input-positioned padding-bottom" id="paddingBottom" value="16">
+                            <input type="text" class="spacing-input-positioned padding-left" id="paddingLeft" value="16">
+                        </div>
+                    </div>
+                    
+                    
+                    <!-- Gap Control for Containers -->
+                    <div class="gap-control">
+                        <label class="spacing-label">Gap between items: 16px</label>
+                        <input type="range" class="gap-slider" min="0" max="100" value="16">
+                    </div>
+                    
+                    <!-- Display Type -->
+                    <div class="display-control">
+                        <button class="display-option">Block</button>
+                        <button class="display-option active">Flex</button>
+                        <button class="display-option">Grid</button>
+                    </div>
+                </div>
+                
+                <!-- Live Preview -->
+                <div class="live-preview">
+                    <div class="preview-label">Live Preview - Container with 3 Elements (200px tall)</div>
+                    <div class="preview-element" id="previewElement">
+                        <div class="preview-content" data-element="A">A</div>
+                        <div class="preview-content" data-element="B">B</div>
+                        <div class="preview-content" data-element="C">C</div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <script>
+        // Get all interactive elements
+        const alignButtons = document.querySelectorAll('.align-btn');
+        const spacingInputs = document.querySelectorAll('.spacing-input-positioned');
+        const gapSlider = document.querySelector('.gap-slider');
+        const displayOptions = document.querySelectorAll('.display-option');
+        const previewElement = document.getElementById('previewElement');
+        
+        // Current state
+        let currentState = {
+            display: 'flex',
+            direction: 'horizontal', // horizontal or vertical
+            justifyContent: 'center',
+            alignItems: 'center',
+            alignContent: 'center',
+            gridTemplateColumns: 'repeat(3, 1fr)',
+            gridTemplateRows: 'auto',
+            marginTop: 8,
+            marginRight: 8,
+            marginBottom: 8,
+            marginLeft: 8,
+            paddingTop: 16,
+            paddingRight: 16,
+            paddingBottom: 16,
+            paddingLeft: 16,
+            gap: 16
+        };
+        
+        
+        // Update preview function
+        function updatePreview() {
+            const style = previewElement.style;
+            
+            style.display = currentState.display;
+            
+            if (currentState.display === 'flex') {
+                style.flexDirection = currentState.direction === 'horizontal' ? 'row' : 'column';
+                style.justifyContent = currentState.justifyContent;
+                style.alignItems = currentState.alignItems;
+                // Clear grid properties
+                style.gridTemplateColumns = '';
+                style.gridTemplateRows = '';
+            } else if (currentState.display === 'grid') {
+                console.log('Setting grid properties. JustifyContent:', currentState.justifyContent, 'AlignItems:', currentState.alignItems);
+                // Grid layout: 3x1 grid (3 columns, auto rows)
+                style.gridTemplateColumns = 'repeat(3, 1fr)';
+                style.gridTemplateRows = 'auto';
+                
+                // Grid alignment properties
+                style.justifyContent = currentState.justifyContent; // Column distribution
+                style.alignContent = currentState.alignContent || 'start'; // Row distribution
+                style.justifyItems = 'center'; // Default item horizontal alignment
+                style.alignItems = currentState.alignItems; // Item vertical alignment
+                
+                console.log('Grid - justifyContent:', currentState.justifyContent, 'alignItems:', currentState.alignItems);
+                
+                // Handle stretch for grid
+                if (currentState.alignItems === 'stretch') {
+                    style.alignItems = 'stretch';
+                    style.justifyItems = 'stretch';
+                    console.log('Grid stretch enabled - alignItems and justifyItems set to stretch');
+                } else {
+                    style.alignItems = currentState.alignItems;
+                    style.justifyItems = 'center'; // Default horizontal alignment for non-stretch
+                    console.log('Grid non-stretch - alignItems:', currentState.alignItems);
+                }
+                
+                // Clear flex properties
+                style.flexDirection = '';
+            } else {
+                // Block - clear all layout properties
+                style.flexDirection = '';
+                style.justifyContent = '';
+                style.alignItems = '';
+                style.alignContent = '';
+                style.gridTemplateColumns = '';
+                style.gridTemplateRows = '';
+                style.justifyItems = '';
+            }
+            
+            style.margin = `${currentState.marginTop}px ${currentState.marginRight}px ${currentState.marginBottom}px ${currentState.marginLeft}px`;
+            style.padding = `${currentState.paddingTop}px ${currentState.paddingRight}px ${currentState.paddingBottom}px ${currentState.paddingLeft}px`;
+            style.gap = `${currentState.gap}px`;
+            
+            // Handle stretch alignment - only for flex and grid
+            if (currentState.display === 'flex' || currentState.display === 'grid') {
+                const elements = previewElement.querySelectorAll('.preview-content');
+                console.log('Checking stretch. alignItems:', currentState.alignItems, 'display:', currentState.display);
+                
+                elements.forEach(el => {
+                    if (currentState.alignItems === 'stretch') {
+                        console.log('Applying stretch to element:', el.getAttribute('data-element'));
+                        
+                        if (currentState.display === 'flex') {
+                            // Flexbox stretch: remove cross-axis dimension
+                            if (currentState.direction === 'horizontal') {
+                                // Row: stretch height, keep widths
+                                el.style.height = 'auto';
+                                el.style.alignSelf = 'stretch';
+                                // Keep original widths
+                                if (el.getAttribute('data-element') === 'A') el.style.width = '50px';
+                                else if (el.getAttribute('data-element') === 'B') el.style.width = '70px';
+                                else if (el.getAttribute('data-element') === 'C') el.style.width = '60px';
+                            } else {
+                                // Column: stretch width, keep heights
+                                el.style.width = 'auto';
+                                el.style.alignSelf = 'stretch';
+                                // Keep original heights
+                                if (el.getAttribute('data-element') === 'A') el.style.height = '30px';
+                                else if (el.getAttribute('data-element') === 'B') el.style.height = '45px';
+                                else if (el.getAttribute('data-element') === 'C') el.style.height = '35px';
+                            }
+                        } else if (currentState.display === 'grid') {
+                            // Grid stretch: force auto sizing to allow container-level stretch
+                            el.style.setProperty('width', 'auto', 'important');
+                            el.style.setProperty('height', 'auto', 'important');
+                            console.log('Grid stretch - forcing auto dimensions for element:', el.getAttribute('data-element'));
+                        }
+                    } else {
+                        // Reset to default sizes and remove any stretch properties
+                        el.style.alignSelf = 'auto';
+                        el.style.justifySelf = 'auto';
+                        
+                        // Restore original dimensions (clear any !important styles first)
+                        el.style.removeProperty('width');
+                        el.style.removeProperty('height');
+                        
+                        if (el.getAttribute('data-element') === 'A') {
+                            el.style.width = '50px';
+                            el.style.height = '30px';
+                        } else if (el.getAttribute('data-element') === 'B') {
+                            el.style.width = '70px';
+                            el.style.height = '45px';
+                        } else if (el.getAttribute('data-element') === 'C') {
+                            el.style.width = '60px';
+                            el.style.height = '35px';
+                        }
+                    }
+                });
+            }
+        }
+        
+        // Update display mode and show/hide relevant controls
+        function updateDisplayMode(displayMode) {
+            const directionControl = document.getElementById('directionControl');
+            const horizontalControls = document.getElementById('horizontalControls');
+            const verticalControls = document.getElementById('verticalControls');
+            
+            if (displayMode === 'flex') {
+                // Flex: Show direction control and update based on current direction
+                directionControl.classList.remove('hidden');
+                updateDirectionControls(currentState.direction, displayMode);
+            } else if (displayMode === 'grid') {
+                // Grid: Hide direction control, show both horizontal and vertical controls
+                directionControl.classList.add('hidden');
+                horizontalControls.classList.remove('hidden');
+                verticalControls.classList.remove('hidden');
+                
+                // Update labels for grid
+                document.getElementById('horizontalLabel').textContent = 'Column Distribution';
+                document.getElementById('verticalLabel').textContent = 'Item Alignment';
+                
+                updateStretchButtonsVisibility(displayMode);
+            } else {
+                // Block mode - hide all layout controls
+                directionControl.classList.add('hidden');
+                horizontalControls.classList.add('hidden');
+                verticalControls.classList.add('hidden');
+                // Hide stretch buttons for block layout
+                updateStretchButtonsVisibility(displayMode);
+            }
+            
+            updatePreview();
+        }
+        
+        // Update controls based on direction
+        function updateDirectionControls(direction, displayMode) {
+            const horizontalControls = document.getElementById('horizontalControls');
+            const verticalControls = document.getElementById('verticalControls');
+            const horizontalLabel = document.getElementById('horizontalLabel');
+            const verticalLabel = document.getElementById('verticalLabel');
+            
+            if (direction === 'horizontal') {
+                horizontalControls.classList.remove('hidden');
+                verticalControls.classList.add('hidden');
+                
+                // Update label based on display mode
+                if (displayMode === 'flex') {
+                    horizontalLabel.textContent = 'Horizontal Spacing';
+                } else if (displayMode === 'grid') {
+                    horizontalLabel.textContent = 'Grid Horizontal';
+                }
+            } else {
+                horizontalControls.classList.add('hidden');
+                verticalControls.classList.remove('hidden');
+                
+                // Update label based on display mode  
+                if (displayMode === 'flex') {
+                    verticalLabel.textContent = 'Vertical Spacing';
+                } else if (displayMode === 'grid') {
+                    verticalLabel.textContent = 'Grid Vertical';
+                }
+            }
+            
+            // Show/hide stretch buttons based on display mode
+            updateStretchButtonsVisibility(displayMode);
+        }
+        
+        // Show/hide stretch buttons based on display mode
+        function updateStretchButtonsVisibility(displayMode) {
+            const stretchButtons = document.querySelectorAll('[data-align="stretch"]');
+            
+            stretchButtons.forEach(btn => {
+                if (displayMode === 'block') {
+                    // Hide stretch for block layout
+                    btn.style.display = 'none';
+                } else {
+                    // Show stretch for flex and grid
+                    btn.style.display = 'flex';
+                }
+            });
+        }
+        
+        // Alignment buttons
+        alignButtons.forEach(btn => {
+            btn.addEventListener('click', () => {
+                // Remove active class from all buttons in the same group
+                const group = btn.parentElement;
+                group.querySelectorAll('.align-btn').forEach(b => b.classList.remove('active'));
+                btn.classList.add('active');
+                
+                // Handle different types of controls
+                const direction = btn.getAttribute('data-direction');
+                const justify = btn.getAttribute('data-justify');
+                const align = btn.getAttribute('data-align');
+                
+                if (direction) {
+                    // Direction control clicked
+                    currentState.direction = direction;
+                    updateDirectionControls(direction, currentState.display);
+                } else if (justify) {
+                    // Handle justify-content (main axis for flex, columns for grid)
+                    if (btn.closest('#verticalControls') && currentState.display === 'grid') {
+                        // Vertical controls in grid mode affect align-content (rows)
+                        currentState.alignContent = justify;
+                        console.log('Updated grid alignContent (rows):', justify);
+                    } else {
+                        // Horizontal controls or flex mode - use justify-content
+                        currentState.justifyContent = justify;
+                        console.log('Updated justifyContent (columns):', justify);
+                    }
+                } else if (align) {
+                    // Cross axis alignment (align-items)
+                    currentState.alignItems = align;
+                    console.log('Updated alignItems:', align);
+                }
+                
+                updatePreview();
+            });
+        });
+        
+        // Spacing inputs
+        spacingInputs.forEach(input => {
+            input.addEventListener('input', () => {
+                const value = parseInt(input.value) || 0;
+                const id = input.id;
+                
+                // Update current state based on input ID
+                if (id === 'marginTop') currentState.marginTop = value;
+                else if (id === 'marginRight') currentState.marginRight = value;
+                else if (id === 'marginBottom') currentState.marginBottom = value;
+                else if (id === 'marginLeft') currentState.marginLeft = value;
+                else if (id === 'paddingTop') currentState.paddingTop = value;
+                else if (id === 'paddingRight') currentState.paddingRight = value;
+                else if (id === 'paddingBottom') currentState.paddingBottom = value;
+                else if (id === 'paddingLeft') currentState.paddingLeft = value;
+                
+                updatePreview();
+            });
+        });
+        
+        
+        // Gap slider
+        if (gapSlider) {
+            const gapLabel = gapSlider.parentElement.querySelector('label');
+            gapSlider.addEventListener('input', () => {
+                currentState.gap = parseInt(gapSlider.value);
+                gapLabel.textContent = `Gap between items: ${currentState.gap}px`;
+                updatePreview();
+            });
+        }
+        
+        // Display options
+        displayOptions.forEach(option => {
+            option.addEventListener('click', () => {
+                displayOptions.forEach(opt => opt.classList.remove('active'));
+                option.classList.add('active');
+                
+                currentState.display = option.textContent.toLowerCase();
+                updateDisplayMode(currentState.display);
+            });
+        });
+        
+        // Initialize preview and controls
+        updatePreview();
+        updateDisplayMode(currentState.display);
+        updateDirectionControls(currentState.direction, currentState.display);
+        
+        
+        // Ensure direction control is properly initialized
+        document.querySelector('[data-direction="horizontal"]').classList.add('active');
+        
+        // Set initial active alignment buttons
+        setTimeout(() => {
+            const centerJustifyBtn = document.querySelector('#horizontalControls [data-justify="center"]');
+            const centerAlignBtn = document.querySelector('#horizontalControls [data-align="center"]');
+            if (centerJustifyBtn) centerJustifyBtn.classList.add('active');
+            if (centerAlignBtn) centerAlignBtn.classList.add('active');
+        }, 100);
+    </script>
+</body>
+</html>

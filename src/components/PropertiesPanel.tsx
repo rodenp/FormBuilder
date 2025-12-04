@@ -4,6 +4,7 @@ import { Plus, Trash, Settings, Sliders, ExternalLink, Webhook, MessageCircle, G
 import { v4 as uuidv4 } from 'uuid';
 import { clsx } from 'clsx';
 import type { SubmissionAction, WebhookAction, FormElement } from '../types';
+import { LayoutPanel } from './LayoutPanel';
 
 // Separate Rich Text Editor Component
 const RichTextEditor: React.FC<{
@@ -50,7 +51,7 @@ const RichTextEditor: React.FC<{
 
     // Only update editor content when the selected element ID changes (not content)
     useEffect(() => {
-        if (editorRef.current && selectedElement.type === 'rich-text' && selectedElement.id !== lastElementId) {
+        if (editorRef.current && (selectedElement.type === 'rich-text' || selectedElement.type === 'text-block') && selectedElement.id !== lastElementId) {
             editorRef.current.innerHTML = selectedElement.content || '';
             setLastElementId(selectedElement.id);
             
@@ -293,7 +294,8 @@ export const PropertiesPanel: React.FC = () => {
         elements,
         updateElement,
         settings,
-        updateSettings
+        updateSettings,
+        currentProject
     } = useStore();
 
     const [showActionSelector, setShowActionSelector] = useState(false);
@@ -303,6 +305,7 @@ export const PropertiesPanel: React.FC = () => {
 
     const hasUserAction = settings.submissionActions.some(action => action.type === 'redirect' || action.type === 'message');
     const hasFormAction = !!settings.formAction;
+    const isFormProject = currentProject?.type === 'form';
 
     const generateFormCode = () => {
         if (codeType === 'html') {
@@ -1233,13 +1236,13 @@ export default MyForm;`;
             <div style={{padding: '24px 32px', gap: '12px', overflowY: 'auto', display: 'flex', flexDirection: 'column'}}>
                 {/* Define input types that need field name and placeholder */}
                 {(() => {
-                    const isInputType = !['container', 'columns', 'rich-text', 'star-rating', 'button'].includes(selectedElement.type);
+                    const isInputType = !['container', 'columns', 'rich-text', 'text-block', 'star-rating', 'button'].includes(selectedElement.type);
                     const needsFieldName = isInputType && selectedElement.type !== 'hidden';
                     const needsPlaceholder = isInputType && !['hidden', 'checkbox', 'radio', 'star-rating', 'select', 'date', 'time', 'month', 'button'].includes(selectedElement.type);
 
                     return (
                         <>
-                            {selectedElement.type !== 'hidden' && selectedElement.type !== 'rich-text' && (
+                            {isFormProject && selectedElement.type !== 'hidden' && selectedElement.type !== 'rich-text' && selectedElement.type !== 'text-block' && (
                                 <div>
                                     <label className="block text-xs font-semibold text-slate-500 uppercase tracking-wider mb-2">
                                         Label
@@ -1253,7 +1256,7 @@ export default MyForm;`;
                                 </div>
                             )}
 
-                            {needsFieldName && (
+                            {isFormProject && needsFieldName && (
                                 <div>
                                     <label className="block text-xs font-semibold text-slate-500 uppercase tracking-wider mb-2">
                                         Field Name (Data Key)
@@ -1268,7 +1271,7 @@ export default MyForm;`;
                                 </div>
                             )}
 
-                            {needsPlaceholder && (
+                            {isFormProject && needsPlaceholder && (
                                 <div>
                                     <label className="block text-xs font-semibold text-slate-500 uppercase tracking-wider mb-2">
                                         Placeholder
@@ -1316,10 +1319,11 @@ export default MyForm;`;
                     </>
                 ) : null}
 
-                {selectedElement.type === 'rich-text' && (
+
+                {(selectedElement.type === 'rich-text' || selectedElement.type === 'text-block') && (
                     <div>
                         <label className="block text-xs font-semibold text-slate-500 uppercase tracking-wider mb-2">
-                            Rich Text Content
+                            {selectedElement.type === 'rich-text' ? 'Rich Text Content' : 'Text Content'}
                         </label>
                         <div className="border border-gray-300 rounded-lg bg-white overflow-hidden">
                             {/* Toolbar matching the screenshot */}
@@ -1551,7 +1555,7 @@ export default MyForm;`;
                     </div>
                 )}
 
-                {selectedElement.type !== 'hidden' && selectedElement.type !== 'rich-text' && (
+                {isFormProject && selectedElement.type !== 'hidden' && selectedElement.type !== 'rich-text' && selectedElement.type !== 'text-block' && (
                     <>
                         <div>
                             <label className="block text-xs font-semibold text-slate-500 uppercase tracking-wider mb-2">
@@ -1679,8 +1683,16 @@ export default MyForm;`;
                     </div>
                 </div>
                 
+                {/* Layout Panel */}
+                {!['hidden'].includes(selectedElement.type) && (
+                    <LayoutPanel 
+                        selectedElement={selectedElement} 
+                        updateElement={updateElement} 
+                    />
+                )}
+                
                 {/* Spacing Controls - Option 6: Clean Visual Editor */}
-                {!['hidden'].includes(selectedElement.type) && (() => {
+                {false && !['hidden'].includes(selectedElement.type) && (() => {
                     // Calculate actual container constraints by measuring the real element
                     const getActualConstraints = () => {
                         const elementInCanvas = document.querySelector(`[data-element-id="${selectedElement.id}"]`);
@@ -2281,7 +2293,7 @@ export default MyForm;`;
                     </div>
                 )}
 
-                {!['container', 'columns', 'rich-text', 'star-rating', 'hidden', 'button'].includes(selectedElement.type) && (
+                {!['container', 'columns', 'rich-text', 'text-block', 'star-rating', 'hidden', 'button'].includes(selectedElement.type) && (
                     <div className="flex items-center justify-between p-3 bg-slate-50 rounded-lg border border-slate-200">
                         <label htmlFor="required" className="text-sm font-medium text-slate-700">
                             Required Field

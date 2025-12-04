@@ -3,6 +3,7 @@ import { useForm } from 'react-hook-form';
 import { CheckCircle, AlertCircle, ExternalLink, Info, AlertTriangle, X, Star } from 'lucide-react';
 import { clsx } from 'clsx';
 import type { FormElement, FormSettings, SubmissionAction } from '../types';
+import { useStore } from '../store/useStore';
 
 interface FormRendererProps {
     schema?: {
@@ -85,6 +86,9 @@ export const FormRenderer: React.FC<FormRendererProps> = ({
     isLoading = false,
     className
 }) => {
+    const { currentProject } = useStore();
+    const isFormProject = currentProject?.type === 'form';
+    
     const elements = schema?.elements || propElements || [];
     const settings = schema?.settings || propSettings || {
         title: 'Untitled Form',
@@ -219,8 +223,13 @@ export const FormRenderer: React.FC<FormRendererProps> = ({
 
     // Recursive function to render form elements
     const renderElement = (element: any, isRootLevel = true): JSX.Element | null => {
+        // Handle null/undefined elements
+        if (!element) {
+            return null;
+        }
+        
         // Calculate width percentage for root level elements
-        const widthPercentage = isRootLevel ? (element.width || 12) / 12 * 100 : 100;
+        const widthPercentage = isRootLevel ? (element.width || (element.type === 'image' ? 2 : 12)) / 12 * 100 : 100;
 
         if (element.type === 'rich-text') {
             return (
@@ -232,7 +241,7 @@ export const FormRenderer: React.FC<FormRendererProps> = ({
                     )}
                     style={{
                         ...(isRootLevel ? { width: `${widthPercentage}%` } : {}),
-                        backgroundColor: element.backgroundColor || undefined
+                        backgroundColor: element.backgroundColor
                     }}
                     dangerouslySetInnerHTML={{ __html: element.content || '<p>Your rich text content here</p>' }}
                 />
@@ -255,7 +264,7 @@ export const FormRenderer: React.FC<FormRendererProps> = ({
                     <div 
                         className="rounded-lg"
                         style={{
-                            backgroundColor: element.backgroundColor || undefined,
+                            backgroundColor: element.backgroundColor,
                             // Only apply padding for container when values are explicitly set
                             paddingTop: element.paddingTop !== undefined ? `${element.paddingTop * 0.25}rem` : undefined,
                             paddingRight: element.paddingRight !== undefined ? `${element.paddingRight * 0.25}rem` : undefined,
@@ -263,7 +272,7 @@ export const FormRenderer: React.FC<FormRendererProps> = ({
                             paddingLeft: element.paddingLeft !== undefined ? `${element.paddingLeft * 0.25}rem` : undefined
                         }}
                     >
-                        {element.label && element.label.trim() && (
+                        {isFormProject && element.label && element.label.trim() && (
                             <div
                                 style={{ marginBottom: element.labelGap !== undefined ? `${element.labelGap * 0.25}rem` : '0.75rem' }}
                             >
@@ -291,9 +300,15 @@ export const FormRenderer: React.FC<FormRendererProps> = ({
                         {element.children && element.children.length > 0 && (
                             <div 
                                 style={{
-                                    display: 'flex',
-                                    flexDirection: 'column',
-                                    gap: `${(element.gap || 0) * 0.25}rem`
+                                    display: element.display || 'flex',
+                                    flexDirection: element.display === 'flex' ? (element.flexDirection || 'column') : undefined,
+                                    flexWrap: element.display === 'flex' ? (element.flexWrap || 'wrap') : undefined,
+                                    justifyContent: element.display !== 'block' ? element.justifyContent : undefined,
+                                    alignItems: element.display !== 'block' ? element.alignItems : undefined,
+                                    alignContent: element.display === 'flex' ? (element.alignContent || 'flex-start') : 'start',
+                                    gridTemplateColumns: element.display === 'grid' ? `repeat(${element.gridColumns || 3}, auto)` : undefined,
+                                    rowGap: element.display !== 'block' ? `${(element.rowGap || element.gap || 0) * 0.25}rem` : undefined,
+                                    columnGap: element.display !== 'block' ? `${(element.columnGap || element.gap || 0) * 0.25}rem` : undefined
                                 }}
                             >
                                 {element.children.map((childElement: any) =>
@@ -306,7 +321,7 @@ export const FormRenderer: React.FC<FormRendererProps> = ({
             );
         }
 
-        if (element.type === 'columns') {
+        if (element.type === 'columns' || element.type === 'rows' || element.type === 'grid') {
             return (
                 <div
                     key={element.id}
@@ -322,7 +337,7 @@ export const FormRenderer: React.FC<FormRendererProps> = ({
                     <div 
                         className="rounded-lg"
                         style={{
-                            backgroundColor: element.backgroundColor || undefined,
+                            backgroundColor: element.backgroundColor,
                             // Only apply padding for columns when values are explicitly set
                             paddingTop: element.paddingTop !== undefined ? `${element.paddingTop * 0.25}rem` : undefined,
                             paddingRight: element.paddingRight !== undefined ? `${element.paddingRight * 0.25}rem` : undefined,
@@ -330,7 +345,7 @@ export const FormRenderer: React.FC<FormRendererProps> = ({
                             paddingLeft: element.paddingLeft !== undefined ? `${element.paddingLeft * 0.25}rem` : undefined
                         }}
                     >
-                        {element.label && element.label.trim() && (
+                        {isFormProject && element.label && element.label.trim() && (
                             <div
                                 style={{ marginBottom: element.labelGap !== undefined ? `${element.labelGap * 0.25}rem` : '0.75rem' }}
                             >
@@ -356,14 +371,48 @@ export const FormRenderer: React.FC<FormRendererProps> = ({
                             </div>
                         )}
                         {element.children && element.children.length > 0 && (
-                            <div className="grid"
+                            <div 
                                 style={{
-                                    gridTemplateColumns: `repeat(${element.columnCount || 2}, 1fr)`,
-                                    gap: `${(element.gap || 0) * 0.25}rem`
+                                    // Auto-set layout based on container type
+                                    display: element.type === 'columns' || element.type === 'rows' ? 'flex' : 
+                                             element.type === 'grid' ? 'grid' : (element.display || 'grid'),
+                                    flexDirection: element.type === 'columns' ? 'row' : element.type === 'rows' ? 'column' : 
+                                        (element.display === 'flex' ? (element.flexDirection || 'row') : undefined),
+                                    flexWrap: (element.type === 'columns' || element.type === 'rows' || element.display === 'flex') ? 
+                                        (element.flexWrap || 'wrap') : undefined,
+                                    justifyContent: (element.display !== 'block' || element.type === 'columns' || element.type === 'rows') ? 
+                                        element.justifyContent : undefined,
+                                    alignItems: (element.display !== 'block' || element.type === 'columns' || element.type === 'rows') ? 
+                                        element.alignItems : undefined,
+                                    alignContent: (element.type === 'columns' || element.type === 'rows' || element.display === 'flex') ? 
+                                        (element.alignContent || 'flex-start') : 'start',
+                                    gridTemplateColumns: (element.display === 'grid' || element.type === 'grid') && element.type !== 'columns' && element.type !== 'rows' ? 
+                                        `repeat(${element.gridColumns || element.columnCount || 3}, 1fr)` : undefined,
+                                    rowGap: (element.display !== 'block' || element.type === 'rows' || element.type === 'grid') ? 
+                                        `${(element.rowGap || element.gap || 0) * 0.25}rem` : undefined,
+                                    columnGap: (element.display !== 'block' || element.type === 'columns' || element.type === 'grid') ? 
+                                        `${(element.columnGap || element.gap || 0) * 0.25}rem` : undefined
                                 }}
                             >
-                                {element.children.map((childElement: any) =>
-                                    renderElement(childElement, false)
+                                {(element.type === 'columns' || element.type === 'rows' || element.type === 'grid' || element.display === 'flex') ? (
+                                    // For flex layout (including columns/rows) or grid, render children directly without column wrappers
+                                    element.children.map((childElement: any) => (
+                                        renderElement(childElement, false)
+                                    ))
+                                ) : (
+                                    // For grid layout, use column wrappers with background colors
+                                    element.children.map((childElement: any, index: number) => (
+                                        <div
+                                            key={childElement.id}
+                                            style={{
+                                                backgroundColor: element.columnBackgrounds?.[index] || 'transparent',
+                                                background: element.columnBackgrounds?.[index] || 'none'
+                                            }}
+                                            className="rounded"
+                                        >
+                                            {renderElement(childElement, false)}
+                                        </div>
+                                    ))
                                 )}
                             </div>
                         )}
@@ -382,13 +431,16 @@ export const FormRenderer: React.FC<FormRendererProps> = ({
                     marginTop: element.marginTop ? `${element.marginTop * 0.25}rem` : undefined,
                     marginRight: element.marginRight ? `${element.marginRight * 0.25}rem` : undefined,
                     marginBottom: element.marginBottom !== undefined ? `${element.marginBottom * 0.25}rem` : undefined,
-                    marginLeft: element.marginLeft ? `${element.marginLeft * 0.25}rem` : undefined
+                    marginLeft: element.marginLeft ? `${element.marginLeft * 0.25}rem` : undefined,
+                    // Apply horizontal alignment for non-containers
+                    ...(element.horizontalAlign === 'center' ? { marginLeft: 'auto', marginRight: 'auto' } : {}),
+                    ...(element.horizontalAlign === 'right' ? { marginLeft: 'auto' } : {})
                 }}
             >
                 <div 
                     className="rounded-lg"
                     style={{
-                        backgroundColor: element.backgroundColor || undefined
+                        backgroundColor: element.backgroundColor
                     }}
                 >
                     <div style={{
@@ -398,7 +450,7 @@ export const FormRenderer: React.FC<FormRendererProps> = ({
                         paddingBottom: element.paddingBottom !== undefined ? `${element.paddingBottom * 0.25}rem` : undefined,
                         paddingLeft: element.paddingLeft !== undefined ? `${element.paddingLeft * 0.25}rem` : undefined
                     }}>
-                {element.label && element.label.trim() && element.type !== 'rich-text' && (
+                {isFormProject && element.label && element.label.trim() && element.type !== 'rich-text' && (
                     <div
                         style={{ marginBottom: element.labelGap !== undefined ? `${element.labelGap * 0.25}rem` : '0.25rem' }}
                     >
@@ -524,6 +576,112 @@ export const FormRenderer: React.FC<FormRendererProps> = ({
                             {element.buttonText || element.label || 'Button'}
                         </button>
                     )
+                ) : element.type === 'text-block' ? (
+                    <div className="rounded-lg" style={{
+                        backgroundColor: element.backgroundColor
+                    }}>
+                        <div 
+                            className="prose prose-sm max-w-none text-gray-700"
+                            dangerouslySetInnerHTML={{ __html: element.content || '<p>Your text content here</p>' }}
+                        />
+                    </div>
+                ) : element.type === 'heading' ? (
+                    <div className="rounded-lg" style={{
+                        backgroundColor: element.backgroundColor,
+                        padding: '1rem'
+                    }}>
+                        {React.createElement(
+                            `h${element.headingLevel || 1}`,
+                            {
+                                className: clsx(
+                                    "text-gray-800 font-bold",
+                                    element.headingLevel === 1 && "text-4xl",
+                                    element.headingLevel === 2 && "text-3xl",
+                                    element.headingLevel === 3 && "text-2xl",
+                                    element.headingLevel === 4 && "text-xl",
+                                    element.headingLevel === 5 && "text-lg",
+                                    element.headingLevel === 6 && "text-base",
+                                    !element.headingLevel && "text-4xl"
+                                )
+                            },
+                            element.content || 'Your heading here'
+                        )}
+                    </div>
+                ) : element.type === 'menu' ? (
+                    <div className="border border-gray-200 rounded-lg" style={{
+                        backgroundColor: element.backgroundColor,
+                        padding: '1rem'
+                    }}>
+                        <nav 
+                            style={{
+                                display: element.display || 'flex',
+                                flexDirection: element.display === 'flex' ? (element.flexDirection || (element.menuLayout === 'vertical' ? 'column' : 'row')) : undefined,
+                                flexWrap: element.display === 'flex' ? (element.flexWrap || 'wrap') : undefined,
+                                justifyContent: element.display !== 'block' ? element.justifyContent : undefined,
+                                alignItems: element.display !== 'block' ? element.alignItems : undefined,
+                                alignContent: element.display === 'flex' ? (element.alignContent || 'flex-start') : 'start',
+                                gridTemplateColumns: element.display === 'grid' ? `repeat(${element.gridColumns || 3}, auto)` : undefined,
+                                rowGap: element.display !== 'block' ? `${(element.rowGap || element.gap || 16) * 0.25}rem` : '1rem',
+                                columnGap: element.display !== 'block' ? `${(element.columnGap || element.gap || 16) * 0.25}rem` : '1rem'
+                            }}
+                        >
+                            {(element.menuItems || [{ label: 'Home', href: '#' }, { label: 'About', href: '#' }, { label: 'Contact', href: '#' }]).map((item, index) => (
+                                <a
+                                    key={index}
+                                    href={item.href}
+                                    target={item.target || '_self'}
+                                    className="text-blue-600 hover:text-blue-800 font-medium transition-colors"
+                                >
+                                    {item.label}
+                                </a>
+                            ))}
+                        </nav>
+                    </div>
+                ) : element.type === 'social' ? (
+                    <div className="border border-gray-200 rounded-lg" style={{
+                        backgroundColor: element.backgroundColor,
+                        padding: '1rem'
+                    }}>
+                        <div 
+                            style={{
+                                display: element.display || 'flex',
+                                flexDirection: element.display === 'flex' ? (element.flexDirection || (element.socialLayout === 'vertical' ? 'column' : 'row')) : undefined,
+                                flexWrap: element.display === 'flex' ? (element.flexWrap || 'wrap') : undefined,
+                                justifyContent: element.display !== 'block' ? element.justifyContent : undefined,
+                                alignItems: element.display !== 'block' ? element.alignItems : undefined,
+                                alignContent: element.display === 'flex' ? (element.alignContent || 'flex-start') : 'start',
+                                gridTemplateColumns: element.display === 'grid' ? `repeat(${element.gridColumns || 3}, auto)` : undefined,
+                                rowGap: element.display !== 'block' ? `${(element.rowGap || element.gap || 12) * 0.25}rem` : '0.75rem',
+                                columnGap: element.display !== 'block' ? `${(element.columnGap || element.gap || 12) * 0.25}rem` : '0.75rem'
+                            }}
+                        >
+                            {(element.socialLinks || [
+                                { platform: 'Facebook', url: '#', icon: '📘' },
+                                { platform: 'Twitter', url: '#', icon: '🐦' },
+                                { platform: 'LinkedIn', url: '#', icon: '💼' }
+                            ]).map((social, index) => (
+                                <a
+                                    key={index}
+                                    href={social.url}
+                                    target="_blank"
+                                    rel="noopener noreferrer"
+                                    className="flex items-center gap-2 text-blue-600 hover:text-blue-800 font-medium transition-colors"
+                                >
+                                    <span>{social.icon || '🔗'}</span>
+                                    {social.platform}
+                                </a>
+                            ))}
+                        </div>
+                    </div>
+                ) : element.type === 'image' ? (
+                    <img
+                        src={element.imageUrl || 'https://placehold.co/400x200/e2e8f0/94a3b8?text=Image'}
+                        alt={element.imageAlt || 'Image'}
+                        className="rounded-lg border border-gray-200 block w-full h-auto"
+                        style={{
+                            backgroundColor: element.backgroundColor
+                        }}
+                    />
                 ) : (
                     <input
                         type={element.type}
@@ -628,10 +786,10 @@ export const FormRenderer: React.FC<FormRendererProps> = ({
         );
     }
 
-    return (
+    return isFormProject ? (
         <div
             className={clsx(
-                "rounded-xl shadow-sm border border-gray-200 p-8",
+                "rounded-xl shadow-sm border border-gray-200 px-8 pt-8 pb-8",
                 className
             )}
             style={{
@@ -684,17 +842,34 @@ export const FormRenderer: React.FC<FormRendererProps> = ({
                     )}
                 </div>
 
-                <div className="pt-6">
-                    <button
-                        type="submit"
-                        disabled={submitStatus === 'submitting' || isLoading}
-                        className={getButtonClasses(settings)}
-                        style={getButtonStyle(settings)}
-                    >
-                        {submitStatus === 'submitting' || isLoading ? 'Processing...' : settings.submitButtonText}
-                    </button>
-                </div>
+                {isFormProject && (
+                    <div className="pt-6">
+                        <button
+                            type="submit"
+                            disabled={submitStatus === 'submitting' || isLoading}
+                            className={getButtonClasses(settings)}
+                            style={getButtonStyle(settings)}
+                        >
+                            {submitStatus === 'submitting' || isLoading ? 'Processing...' : settings.submitButtonText}
+                        </button>
+                    </div>
+                )}
             </form>
+        </div>
+    ) : (
+        // Non-form projects: render full width like canvas
+        <div 
+            className={className}
+            style={{
+                backgroundColor: settings.formBackground || '#FFFFFF',
+                minHeight: '100vh'
+            }}
+        >
+            <div className="flex flex-col">
+                {elements.filter(el => el.type !== 'hidden').map((element) =>
+                    renderElement(element, true)
+                )}
+            </div>
         </div>
     );
 };

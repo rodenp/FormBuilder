@@ -1,0 +1,603 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Option 1 Original: Unified Layout Control Panel</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+            background-color: #f8fafc;
+            padding: 20px;
+            color: #334155;
+        }
+        
+        .container {
+            max-width: 400px;
+            margin: 0 auto;
+            background: white;
+            border-radius: 12px;
+            box-shadow: 0 4px 24px rgba(0, 0, 0, 0.06);
+            overflow: hidden;
+        }
+        
+        .header {
+            padding: 20px;
+            border-bottom: 1px solid #e2e8f0;
+        }
+        
+        .header h1 {
+            font-size: 24px;
+            font-weight: 700;
+            color: #0f172a;
+            margin-bottom: 8px;
+        }
+        
+        .header p {
+            font-size: 14px;
+            color: #64748b;
+        }
+        
+        /* Properties Panel Mockup */
+        .properties-panel {
+            padding: 20px;
+        }
+        
+        .section {
+            margin-bottom: 24px;
+        }
+        
+        .section-title {
+            font-size: 13px;
+            font-weight: 600;
+            color: #475569;
+            text-transform: uppercase;
+            letter-spacing: 0.05em;
+            margin-bottom: 12px;
+        }
+        
+        /* Layout Control Group */
+        .layout-control-group {
+            background: #f8fafc;
+            border: 1px solid #e2e8f0;
+            border-radius: 8px;
+            padding: 16px;
+            margin-bottom: 16px;
+        }
+        
+        /* Alignment Controls */
+        .alignment-group {
+            margin-bottom: 16px;
+        }
+        
+        .alignment-label {
+            font-size: 12px;
+            font-weight: 500;
+            color: #64748b;
+            margin-bottom: 8px;
+        }
+        
+        .alignment-buttons {
+            display: flex;
+            gap: 4px;
+        }
+        
+        .align-btn {
+            flex: 1;
+            height: 32px;
+            border: 1px solid #e2e8f0;
+            background: white;
+            border-radius: 6px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            cursor: pointer;
+            transition: all 0.2s;
+            position: relative;
+        }
+        
+        .align-btn:hover {
+            border-color: #3b82f6;
+            background: #eff6ff;
+        }
+        
+        .align-btn.active {
+            background: #3b82f6;
+            border-color: #3b82f6;
+            color: white;
+        }
+        
+        /* Icon representation */
+        .icon {
+            width: 16px;
+            height: 16px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+        
+        /* Visual Box Model */
+        .box-model {
+            margin: 20px 0;
+            display: flex;
+            justify-content: center;
+        }
+        
+        .box-visual {
+            width: 180px;
+            height: 120px;
+            position: relative;
+            background: #f0f9ff;
+            border: 2px dashed #3b82f6;
+            border-radius: 8px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+        
+        .box-content {
+            width: 100px;
+            height: 60px;
+            background: white;
+            border: 1px solid #e2e8f0;
+            border-radius: 4px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 11px;
+            color: #64748b;
+        }
+        
+        /* Margin/Padding labels */
+        .box-label {
+            position: absolute;
+            font-size: 10px;
+            color: #3b82f6;
+            font-weight: 500;
+        }
+        
+        .box-label.top { top: -20px; left: 50%; transform: translateX(-50%); }
+        .box-label.right { right: -35px; top: 50%; transform: translateY(-50%); }
+        .box-label.bottom { bottom: -20px; left: 50%; transform: translateX(-50%); }
+        .box-label.left { left: -35px; top: 50%; transform: translateY(-50%); }
+        
+        /* Spacing Controls */
+        .spacing-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 12px;
+        }
+        
+        .spacing-group {
+            display: flex;
+            flex-direction: column;
+            gap: 6px;
+        }
+        
+        .spacing-label {
+            font-size: 11px;
+            font-weight: 500;
+            color: #64748b;
+        }
+        
+        .spacing-inputs {
+            display: grid;
+            grid-template-columns: repeat(4, 1fr);
+            gap: 4px;
+        }
+        
+        .spacing-input {
+            width: 100%;
+            height: 28px;
+            border: 1px solid #e2e8f0;
+            border-radius: 4px;
+            text-align: center;
+            font-size: 12px;
+            background: white;
+            transition: all 0.2s;
+        }
+        
+        .spacing-input:focus {
+            outline: none;
+            border-color: #3b82f6;
+            box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.1);
+        }
+        
+        .spacing-input::placeholder {
+            color: #cbd5e1;
+            font-size: 11px;
+        }
+        
+        /* Quick presets */
+        .preset-buttons {
+            display: flex;
+            gap: 8px;
+            margin-top: 12px;
+        }
+        
+        .preset-btn {
+            padding: 6px 12px;
+            border: 1px solid #e2e8f0;
+            background: white;
+            border-radius: 6px;
+            font-size: 12px;
+            color: #64748b;
+            cursor: pointer;
+            transition: all 0.2s;
+        }
+        
+        .preset-btn:hover {
+            border-color: #3b82f6;
+            color: #3b82f6;
+            background: #eff6ff;
+        }
+        
+        .preset-btn.active {
+            background: #3b82f6;
+            border-color: #3b82f6;
+            color: white;
+        }
+        
+        /* Gap Control */
+        .gap-control {
+            margin-top: 16px;
+        }
+        
+        .gap-slider {
+            width: 100%;
+            margin-top: 8px;
+        }
+        
+        /* Display Control */
+        .display-control {
+            display: flex;
+            gap: 8px;
+            margin-top: 16px;
+        }
+        
+        .display-option {
+            flex: 1;
+            padding: 8px;
+            border: 1px solid #e2e8f0;
+            background: white;
+            border-radius: 6px;
+            text-align: center;
+            font-size: 12px;
+            color: #64748b;
+            cursor: pointer;
+            transition: all 0.2s;
+        }
+        
+        .display-option:hover {
+            border-color: #3b82f6;
+            background: #eff6ff;
+        }
+        
+        .display-option.active {
+            background: #3b82f6;
+            border-color: #3b82f6;
+            color: white;
+        }
+        
+        /* Live Preview */
+        .live-preview {
+            margin-top: 24px;
+            padding: 20px;
+            background: #f8fafc;
+            border-radius: 8px;
+            border: 1px solid #e2e8f0;
+        }
+        
+        .preview-label {
+            font-size: 12px;
+            font-weight: 500;
+            color: #64748b;
+            margin-bottom: 12px;
+        }
+        
+        .preview-element {
+            background: white;
+            border: 1px solid #e2e8f0;
+            border-radius: 6px;
+            padding: 16px;
+            transition: all 0.3s ease;
+            min-height: 80px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+        
+        .preview-content {
+            background: #3b82f6;
+            color: white;
+            padding: 8px 16px;
+            border-radius: 4px;
+            font-size: 14px;
+            font-weight: 500;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h1>Option 1 Original: Unified Layout Control Panel</h1>
+            <p>Visual box model with integrated controls (Original Version)</p>
+        </div>
+        
+        <div class="properties-panel">
+            <!-- Layout Section -->
+            <div class="section">
+                <h3 class="section-title">Layout</h3>
+                
+                <div class="layout-control-group">
+                    <!-- Alignment Controls -->
+                    <div class="alignment-group">
+                        <div class="alignment-label">Horizontal Alignment</div>
+                        <div class="alignment-buttons">
+                            <button class="align-btn" title="Align Left">
+                                <div class="icon">⬅</div>
+                            </button>
+                            <button class="align-btn active" title="Center">
+                                <div class="icon">↔</div>
+                            </button>
+                            <button class="align-btn" title="Align Right">
+                                <div class="icon">➡</div>
+                            </button>
+                            <button class="align-btn" title="Justify">
+                                <div class="icon">☰</div>
+                            </button>
+                        </div>
+                    </div>
+                    
+                    <div class="alignment-group">
+                        <div class="alignment-label">Vertical Alignment</div>
+                        <div class="alignment-buttons">
+                            <button class="align-btn" title="Align Top">
+                                <div class="icon">⬆</div>
+                            </button>
+                            <button class="align-btn" title="Center">
+                                <div class="icon">↕</div>
+                            </button>
+                            <button class="align-btn" title="Align Bottom">
+                                <div class="icon">⬇</div>
+                            </button>
+                            <button class="align-btn" title="Stretch">
+                                <div class="icon">⇕</div>
+                            </button>
+                        </div>
+                    </div>
+                    
+                    <!-- Visual Box Model -->
+                    <div class="box-model">
+                        <div class="box-visual">
+                            <div class="box-content">Content</div>
+                            <span class="box-label top">margin</span>
+                            <span class="box-label right">margin</span>
+                            <span class="box-label bottom">margin</span>
+                            <span class="box-label left">margin</span>
+                        </div>
+                    </div>
+                    
+                    <!-- Spacing Controls -->
+                    <div class="spacing-grid">
+                        <div class="spacing-group">
+                            <label class="spacing-label">Margin</label>
+                            <div class="spacing-inputs">
+                                <input type="text" class="spacing-input" placeholder="T" value="8">
+                                <input type="text" class="spacing-input" placeholder="R" value="8">
+                                <input type="text" class="spacing-input" placeholder="B" value="8">
+                                <input type="text" class="spacing-input" placeholder="L" value="8">
+                            </div>
+                        </div>
+                        
+                        <div class="spacing-group">
+                            <label class="spacing-label">Padding</label>
+                            <div class="spacing-inputs">
+                                <input type="text" class="spacing-input" placeholder="T" value="16">
+                                <input type="text" class="spacing-input" placeholder="R" value="16">
+                                <input type="text" class="spacing-input" placeholder="B" value="16">
+                                <input type="text" class="spacing-input" placeholder="L" value="16">
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <!-- Quick Presets -->
+                    <div class="preset-buttons">
+                        <button class="preset-btn">None</button>
+                        <button class="preset-btn">Small</button>
+                        <button class="preset-btn active">Medium</button>
+                        <button class="preset-btn">Large</button>
+                    </div>
+                    
+                    <!-- Gap Control for Containers -->
+                    <div class="gap-control">
+                        <label class="spacing-label">Gap between items: 16px</label>
+                        <input type="range" class="gap-slider" min="0" max="64" value="16">
+                    </div>
+                    
+                    <!-- Display Type -->
+                    <div class="display-control">
+                        <button class="display-option">Block</button>
+                        <button class="display-option active">Flex</button>
+                        <button class="display-option">Grid</button>
+                    </div>
+                </div>
+            </div>
+            
+            <!-- Live Preview -->
+            <div class="live-preview">
+                <div class="preview-label">Live Preview</div>
+                <div class="preview-element" id="previewElement">
+                    <div class="preview-content" id="previewContent">Sample Element</div>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <script>
+        // Get all interactive elements
+        const alignButtons = document.querySelectorAll('.align-btn');
+        const spacingInputs = document.querySelectorAll('.spacing-input');
+        const presetButtons = document.querySelectorAll('.preset-btn');
+        const gapSlider = document.querySelector('.gap-slider');
+        const displayOptions = document.querySelectorAll('.display-option');
+        const previewElement = document.getElementById('previewElement');
+        const previewContent = document.getElementById('previewContent');
+        
+        // Current state
+        let currentState = {
+            justifyContent: 'center',
+            alignItems: 'center',
+            marginTop: 8,
+            marginRight: 8,
+            marginBottom: 8,
+            marginLeft: 8,
+            paddingTop: 16,
+            paddingRight: 16,
+            paddingBottom: 16,
+            paddingLeft: 16,
+            gap: 16,
+            display: 'flex'
+        };
+        
+        // Update preview function
+        function updatePreview() {
+            const style = previewElement.style;
+            
+            style.display = currentState.display;
+            style.justifyContent = currentState.justifyContent;
+            style.alignItems = currentState.alignItems;
+            style.margin = `${currentState.marginTop}px ${currentState.marginRight}px ${currentState.marginBottom}px ${currentState.marginLeft}px`;
+            style.padding = `${currentState.paddingTop}px ${currentState.paddingRight}px ${currentState.paddingBottom}px ${currentState.paddingLeft}px`;
+            style.gap = `${currentState.gap}px`;
+        }
+        
+        // Alignment buttons
+        alignButtons.forEach(btn => {
+            btn.addEventListener('click', () => {
+                // Remove active class from all buttons in the same group
+                const group = btn.parentElement;
+                group.querySelectorAll('.align-btn').forEach(b => b.classList.remove('active'));
+                btn.classList.add('active');
+                
+                // Update alignment based on button
+                if (btn.title === 'Align Left') currentState.justifyContent = 'flex-start';
+                else if (btn.title === 'Center') currentState.justifyContent = 'center';
+                else if (btn.title === 'Align Right') currentState.justifyContent = 'flex-end';
+                else if (btn.title === 'Justify') currentState.justifyContent = 'space-between';
+                else if (btn.title === 'Align Top') currentState.alignItems = 'flex-start';
+                else if (btn.title === 'Align Bottom') currentState.alignItems = 'flex-end';
+                else if (btn.title === 'Stretch') currentState.alignItems = 'stretch';
+                
+                updatePreview();
+            });
+        });
+        
+        // Spacing inputs
+        spacingInputs.forEach((input, index) => {
+            input.addEventListener('input', () => {
+                const value = parseInt(input.value) || 0;
+                const marginInputs = document.querySelectorAll('.spacing-group:first-child .spacing-input');
+                const paddingInputs = document.querySelectorAll('.spacing-group:last-child .spacing-input');
+                
+                if (Array.from(marginInputs).includes(input)) {
+                    // Margin input
+                    const marginIndex = Array.from(marginInputs).indexOf(input);
+                    if (marginIndex === 0) currentState.marginTop = value;
+                    else if (marginIndex === 1) currentState.marginRight = value;
+                    else if (marginIndex === 2) currentState.marginBottom = value;
+                    else if (marginIndex === 3) currentState.marginLeft = value;
+                } else if (Array.from(paddingInputs).includes(input)) {
+                    // Padding input
+                    const paddingIndex = Array.from(paddingInputs).indexOf(input);
+                    if (paddingIndex === 0) currentState.paddingTop = value;
+                    else if (paddingIndex === 1) currentState.paddingRight = value;
+                    else if (paddingIndex === 2) currentState.paddingBottom = value;
+                    else if (paddingIndex === 3) currentState.paddingLeft = value;
+                }
+                
+                updatePreview();
+            });
+        });
+        
+        // Preset buttons
+        presetButtons.forEach(btn => {
+            btn.addEventListener('click', () => {
+                // Remove active class from all presets
+                presetButtons.forEach(b => b.classList.remove('active'));
+                btn.classList.add('active');
+                
+                let values = { margin: 0, padding: 0 };
+                
+                switch (btn.textContent) {
+                    case 'None':
+                        values = { margin: 0, padding: 0 };
+                        break;
+                    case 'Small':
+                        values = { margin: 4, padding: 8 };
+                        break;
+                    case 'Medium':
+                        values = { margin: 8, padding: 16 };
+                        break;
+                    case 'Large':
+                        values = { margin: 16, padding: 24 };
+                        break;
+                }
+                
+                // Update state
+                currentState.marginTop = currentState.marginRight = 
+                currentState.marginBottom = currentState.marginLeft = values.margin;
+                currentState.paddingTop = currentState.paddingRight = 
+                currentState.paddingBottom = currentState.paddingLeft = values.padding;
+                
+                // Update inputs
+                const marginInputs = document.querySelectorAll('.spacing-group:first-child .spacing-input');
+                const paddingInputs = document.querySelectorAll('.spacing-group:last-child .spacing-input');
+                
+                marginInputs.forEach(input => input.value = values.margin);
+                paddingInputs.forEach(input => input.value = values.padding);
+                
+                updatePreview();
+            });
+        });
+        
+        // Gap slider
+        if (gapSlider) {
+            const gapLabel = gapSlider.parentElement.querySelector('label');
+            gapSlider.addEventListener('input', () => {
+                currentState.gap = parseInt(gapSlider.value);
+                gapLabel.textContent = `Gap between items: ${currentState.gap}px`;
+                updatePreview();
+            });
+        }
+        
+        // Display options
+        displayOptions.forEach(option => {
+            option.addEventListener('click', () => {
+                displayOptions.forEach(opt => opt.classList.remove('active'));
+                option.classList.add('active');
+                
+                currentState.display = option.textContent.toLowerCase();
+                if (currentState.display === 'block') {
+                    currentState.justifyContent = 'normal';
+                    currentState.alignItems = 'normal';
+                }
+                updatePreview();
+            });
+        });
+        
+        // Initialize preview
+        updatePreview();
+        
+        // Set initial active states
+        document.querySelector('.align-btn[title="Center"]').classList.add('active');
+        document.querySelector('.preset-btn:nth-child(3)').classList.add('active'); // Medium
+    </script>
+</body>
+</html>

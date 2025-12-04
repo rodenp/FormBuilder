@@ -1,9 +1,204 @@
 import React, { useState, useEffect } from 'react';
-import { useDroppable } from '@dnd-kit/core';
+import { useDroppable, useDraggable } from '@dnd-kit/core';
 import { useStore } from '../store/useStore';
 import type { FormElement } from '../types';
-import { Trash2, Info, Copy, Star, EyeOff, Plus, ChevronUp, ChevronDown, Menu } from 'lucide-react';
+import { Trash2, Info, Copy, Star, EyeOff, Plus, ChevronUp, ChevronDown, Menu, GripVertical } from 'lucide-react';
 import { clsx } from 'clsx';
+
+const ColumnPlaceholder: React.FC<{ element: FormElement; index: number }> = ({ element, index }) => {
+    const { setNodeRef, isOver } = useDroppable({
+        id: `column-cell-${element.id}-${index}`,
+        data: { type: 'columns', containerId: element.id, columnIndex: index }
+    });
+    
+    
+    return (
+        <div 
+            ref={setNodeRef}
+            className={clsx(
+                "flex-1 border-2 rounded-lg flex flex-col items-center justify-center h-32 text-slate-400 cursor-pointer transition-all duration-200",
+                isOver 
+                    ? "border-solid border-blue-500 bg-blue-100 shadow-lg transform scale-105" 
+                    : "border-dashed border-slate-300 bg-slate-100/50 hover:border-brand-400 hover:bg-brand-50/30"
+            )}
+        >
+            {isOver ? (
+                <div className="text-blue-600 font-bold text-sm">
+                    Drop into Column {index + 1}
+                </div>
+            ) : (
+                <>
+                    <Plus size={20} className="mb-1 opacity-60" />
+                    <p className="text-xs font-medium">Column {index + 1}</p>
+                    <p className="text-xs opacity-75">Drop here</p>
+                </>
+            )}
+        </div>
+    );
+};
+
+const ColumnCellDropZone: React.FC<{ containerId: string; columnIndex: number }> = ({ containerId, columnIndex }) => {
+    const { setNodeRef, isOver } = useDroppable({
+        id: `column-cell-add-${containerId}`,
+        data: { type: 'container', containerId }
+    });
+    
+    return (
+        <div 
+            ref={setNodeRef}
+            className={clsx(
+                "border-2 border-dashed rounded-lg p-4 text-center text-slate-400 text-sm transition-all",
+                isOver 
+                    ? "border-blue-500 bg-blue-100 text-blue-600 shadow-lg" 
+                    : "border-slate-200 hover:border-slate-400 hover:bg-slate-50"
+            )}
+        >
+            {isOver ? (
+                <div className="font-bold">
+                    Drop here to add to Column {columnIndex + 1}
+                </div>
+            ) : (
+                <div>
+                    <Plus size={16} className="mx-auto mb-1 opacity-60" />
+                    Drop here to add to Column {columnIndex + 1}
+                </div>
+            )}
+        </div>
+    );
+};
+
+interface ColumnDropZoneProps {
+    element: FormElement;
+    index: number;
+    child: FormElement | undefined;
+    cellEditMode: boolean;
+    handleCellClick: (e: React.MouseEvent, index: number) => void;
+}
+
+const ColumnDropZone: React.FC<ColumnDropZoneProps> = ({ element, index, child, cellEditMode, handleCellClick }) => {
+    const { setNodeRef, isOver } = useDroppable({
+        id: `column-cell-${element.id}-${index}`,
+        data: { 
+            type: child && child.type === 'container' ? 'container' : 'columns', 
+            containerId: child && child.type === 'container' ? child.id : element.id, 
+            columnIndex: index 
+        }
+    });
+
+    const { selectElement } = useStore();
+
+    const handleColumnClick = (e: React.MouseEvent) => {
+        // If clicking on column cell with container child, select the child container
+        if (child && child.type === 'container' && !cellEditMode) {
+            selectElement(child.id);
+            e.stopPropagation();
+            return;
+        }
+        // If clicking on empty column area and not in cell edit mode
+        if (!child && !cellEditMode) {
+            // Select the parent container (the columns element) when clicking empty areas
+            selectElement(element.id);
+            e.stopPropagation();
+            return;
+        }
+        // For cell edit mode, handle cell click
+        if (cellEditMode) {
+            handleCellClick(e, index);
+            e.stopPropagation();
+        }
+    };
+
+    return (
+        <div
+            ref={setNodeRef}
+            key={index}
+            className={clsx(
+                "relative flex-1 min-h-[120px] transition-all duration-200",
+                cellEditMode && "border-orange-400 bg-orange-50 hover:border-orange-600 hover:bg-orange-100 cursor-pointer border-2 border-dashed",
+                isOver && !cellEditMode && "border-4 border-solid border-blue-500 bg-blue-100 rounded-lg shadow-lg transform scale-105",
+                !cellEditMode && !isOver && "border-2 border-dashed border-slate-300 bg-slate-50/50 hover:border-slate-400 hover:bg-slate-100/50 rounded-lg",
+                // Add margin between columns for visual separation
+                index > 0 && "ml-4"
+            )}
+            style={{
+                backgroundColor: element.columnBackgrounds?.[index] || 'transparent'
+            }}
+            onClick={handleColumnClick}
+        >
+            {cellEditMode && (
+                <div className="absolute top-1 right-1 bg-orange-600 text-white text-xs px-2 py-1 rounded font-medium z-40">
+                    Cell {index + 1}
+                </div>
+            )}
+
+            {/* Drop indicator */}
+            {isOver && !cellEditMode && (
+                <div className="absolute inset-0 flex items-center justify-center bg-blue-500/20 backdrop-blur-sm">
+                    <div className="bg-blue-500 text-white text-lg px-4 py-2 rounded-lg font-bold shadow-lg border-2 border-blue-300 animate-pulse">
+                        Drop into Column {index + 1}
+                    </div>
+                </div>
+            )}
+
+            {/* Content area */}
+            <div 
+                className="relative w-full h-full p-2"
+                style={{ 
+                    pointerEvents: cellEditMode ? 'none' : 'auto',
+                    display: child && child.type === 'container' ? 'flex' : 'flex',
+                    flexDirection: child && child.type === 'container' ? (child.flexDirection || 'column') : 'column',
+                    gap: child && child.type === 'container' ? `${(child.gap || 4) * 0.25}rem` : '0.5rem'
+                }}
+            >
+                {child && child.type === 'container' ? (
+                    child.children && child.children.length > 0 ? (
+                        // Column cell has content - render all children
+                        <>
+                            {child.children.map((cellChild, cellIndex) => (
+                                <SortableElement 
+                                    key={cellChild.id} 
+                                    element={cellChild} 
+                                    parentId={child.id} 
+                                />
+                            ))}
+                        </>
+                    ) : (
+                        // Empty column cell container - show drop zone
+                        !cellEditMode && (
+                            <ColumnCellDropZone 
+                                containerId={child.id} 
+                                columnIndex={index}
+                            />
+                        )
+                    )
+                ) : (
+                    // Fallback - should not happen with new structure
+                    !cellEditMode && (
+                        <div className="flex items-center justify-center h-full text-slate-400 text-sm border-2 border-dashed border-slate-200 rounded-lg p-4">
+                            <div className="text-center">
+                                <Plus size={20} className="mx-auto mb-2 opacity-60" />
+                                <p>Empty Column {index + 1}</p>
+                                <p className="text-xs opacity-75">No container</p>
+                            </div>
+                        </div>
+                    )
+                )}
+                
+                {/* Click overlay when in cell edit mode */}
+                {cellEditMode && (
+                    <div
+                        className="absolute inset-0 z-50 cursor-pointer bg-transparent"
+                        onClick={(e) => handleCellClick(e, index)}
+                        onMouseDown={(e) => e.preventDefault()}
+                        title={`Click to edit Cell ${index + 1} background`}
+                        style={{ pointerEvents: 'auto' }}
+                    />
+                )}
+            </div>
+        </div>
+    );
+};
+
 
 interface SortableElementProps {
     element: FormElement;
@@ -13,35 +208,78 @@ interface SortableElementProps {
 const ContainerContent: React.FC<{ element: FormElement }> = ({ element }) => {
     const { setNodeRef } = useDroppable({
         id: `container-${element.id}`,
-        data: { type: 'container', containerId: element.id }
+        data: { type: element.type, containerId: element.id }
     });
     const { selectElement } = useStore();
 
     return (
         <div
             ref={setNodeRef}
-            className="container-content border-2 border-dashed border-slate-200 rounded-lg bg-slate-50/30 hover:border-brand-300 hover:bg-brand-50/20 transition-all"
+            className="container-content border-2 border-dashed border-slate-200 rounded-lg bg-slate-50/30 hover:border-brand-300 hover:bg-brand-50/20"
         >
             {(!element.children || element.children.length === 0) ? (
-                <div 
-                    className="container-empty-area flex flex-col items-center justify-center h-28 text-slate-400 cursor-pointer"
-                >
-                    <Plus size={24} className="mb-2 opacity-50" />
-                    <p className="text-sm font-medium">Drop elements here</p>
-                    <p className="text-xs">Container is empty</p>
-                </div>
+                element.type === 'columns' ? (
+                    // Show placeholder drop zones for columns
+                    <div className="flex gap-4 w-full">
+                        {Array.from({ length: element.columnCount || 2 }).map((_, index) => (
+                            <ColumnPlaceholder 
+                                key={`placeholder-${index}`}
+                                element={element} 
+                                index={index} 
+                            />
+                        ))}
+                    </div>
+                ) : (
+                    // Default empty state for other containers
+                    <div 
+                        className="container-empty-area flex flex-col items-center justify-center h-28 text-slate-400 cursor-pointer"
+                    >
+                        <Plus size={24} className="mb-2 opacity-50" />
+                        <p className="text-sm font-medium">Drop elements here</p>
+                        <p className="text-xs">Container is empty</p>
+                    </div>
+                )
             ) : (
                 <div 
                     className="container-grid"
                     style={{
-                        display: 'flex',
-                        flexDirection: 'column',
-                        gap: `${(element.gap || 0) * 0.25}rem`
+                        // Auto-set layout for rows, columns, grid, and menu containers
+                        display: element.type === 'rows' ? 'flex' : element.type === 'columns' ? 'flex' : element.type === 'menu' ? 'flex' : element.type === 'grid' ? 'grid' : (element.display || 'flex'),
+                        flexDirection: element.type === 'rows' ? 'column' : element.type === 'columns' ? 'row' : 
+                            element.type === 'menu' ? (element.flexDirection || 'row') :
+                            element.type === 'container' ? (element.flexDirection || 'column') :
+                            (element.display === 'flex' ? (element.flexDirection || 'column') : undefined),
+                        flexWrap: (element.type === 'rows' || element.type === 'columns' || element.type === 'menu' || element.display === 'flex') ? 
+                            (element.flexWrap || (element.type === 'menu' ? 'nowrap' : 'wrap')) : undefined,
+                        justifyContent: (element.display === 'flex' || element.display === 'grid' || element.type === 'rows' || element.type === 'columns' || element.type === 'menu') ? element.justifyContent : undefined,
+                        alignItems: (element.display === 'flex' || element.display === 'grid' || element.type === 'rows' || element.type === 'columns' || element.type === 'menu') ? element.alignItems : undefined,
+                        alignContent: (element.type === 'rows' || element.type === 'columns' || element.type === 'menu' || element.display === 'flex') ? (element.alignContent || 'flex-start') : 'start',
+                        gridTemplateColumns: (element.display === 'grid' || element.type === 'grid') && element.type !== 'rows' ? `repeat(${element.gridColumns || 3}, auto)` : undefined,
+                        rowGap: (element.display !== 'block' || element.type === 'rows' || element.type === 'grid') ? `${(element.rowGap || element.gap || 0) * 0.25}rem` : undefined,
+                        columnGap: (element.display !== 'block' || element.type === 'grid' || element.type === 'columns' || element.type === 'menu') ? `${(element.columnGap || element.gap || 0) * 0.25}rem` : undefined,
+                        // Add minimum height only when needed for spacing to work in column direction
+                        minHeight: (element.display === 'flex' && element.flexDirection === 'column') || 
+                                   element.type === 'rows' ||
+                                   (element.display === 'flex' && !element.flexDirection && element.type !== 'menu' && element.type !== 'columns') ? 
+                                   '120px' : undefined
                     }}
                 >
-                    {element.children.map((child, index) => (
-                        <SortableElement key={child.id} element={child} parentId={element.id} />
-                    ))}
+                    {element.children.map((child, index) => {
+                        if (!child) {
+                            // Return droppable placeholder for removed elements in columns
+                            if (element.type === 'columns') {
+                                return <ColumnPlaceholder key={`empty-${index}`} element={element} index={index} />;
+                            } else {
+                                // For non-column containers, just maintain structure
+                                return (
+                                    <div key={`empty-${index}`} className="flex-1 min-h-[32px]">
+                                        {/* Empty slot to maintain structure */}
+                                    </div>
+                                );
+                            }
+                        }
+                        return <SortableElement key={child.id} element={child} parentId={element.id} />;
+                    })}
                 </div>
             )}
         </div>
@@ -50,11 +288,12 @@ const ContainerContent: React.FC<{ element: FormElement }> = ({ element }) => {
 
 const ColumnsContent: React.FC<{ element: FormElement }> = ({ element }) => {
     const [isMobile, setIsMobile] = useState(false);
+    const [cellEditMode, setCellEditMode] = useState(false);
     const { setNodeRef } = useDroppable({
         id: `columns-${element.id}`,
         data: { type: 'columns', containerId: element.id }
     });
-    const { selectElement } = useStore();
+    const { selectElement, updateElement } = useStore();
 
     useEffect(() => {
         const checkMobile = () => {
@@ -66,43 +305,204 @@ const ColumnsContent: React.FC<{ element: FormElement }> = ({ element }) => {
         return () => window.removeEventListener('resize', checkMobile);
     }, []);
 
+    useEffect(() => {
+        const handleKeyDown = (e: KeyboardEvent) => {
+            if (e.key === 'Alt' || e.key === 'Option') {
+                setCellEditMode(true);
+            }
+        };
+
+        const handleKeyUp = (e: KeyboardEvent) => {
+            if (e.key === 'Alt' || e.key === 'Option') {
+                setCellEditMode(false);
+            }
+        };
+
+        window.addEventListener('keydown', handleKeyDown);
+        window.addEventListener('keyup', handleKeyUp);
+
+        return () => {
+            window.removeEventListener('keydown', handleKeyDown);
+            window.removeEventListener('keyup', handleKeyUp);
+        };
+    }, []);
+
+    const handleCellClick = (e: React.MouseEvent, cellIndex: number) => {
+        if (cellEditMode) {
+            e.stopPropagation();
+            e.preventDefault();
+            console.log('Cell background edit mode - cell clicked:', cellIndex, 'element.id:', element.id);
+            updateElement(element.id, { selectedColumnIndex: cellIndex });
+            selectElement(element.id);
+            console.log('Updated element with selectedColumnIndex:', cellIndex);
+        }
+    };
+
     return (
         <div
             ref={setNodeRef}
-            className="bg-slate-50 border border-slate-200 rounded-lg"
+            className="bg-slate-50 border border-slate-200 rounded-lg relative"
         >
+            {cellEditMode && (
+                <div className="absolute top-2 left-2 bg-blue-600 text-white text-xs px-2 py-1 rounded font-medium z-50">
+                    Cell Edit Mode - Click any cell to edit background
+                </div>
+            )}
+            
             <div 
-                className="grid" 
                 style={{
-                    gridTemplateColumns: isMobile ? '1fr' : `repeat(${element.columnCount || 2}, 1fr)`,
-                    gap: `${(element.gap || 0) * 0.25}rem`
+                    // Auto-set layout based on container type
+                    display: element.type === 'columns' || element.type === 'rows' ? 'flex' : 
+                             element.type === 'grid' ? 'grid' : (element.display || 'grid'),
+                    flexDirection: element.type === 'columns' ? 'row' : element.type === 'rows' ? 'column' : 
+                        (element.display === 'flex' ? (element.flexDirection || 'row') : undefined),
+                    flexWrap: (element.type === 'columns' || element.type === 'rows' || element.display === 'flex') ? 
+                        (element.flexWrap || 'wrap') : undefined,
+                    justifyContent: (element.display !== 'block' || element.type === 'columns' || element.type === 'rows') ? 
+                        element.justifyContent : undefined,
+                    alignItems: (element.display !== 'block' || element.type === 'columns' || element.type === 'rows') ? 
+                        element.alignItems : undefined,
+                    alignContent: (element.type === 'columns' || element.type === 'rows' || element.display === 'flex') ? 
+                        (element.alignContent || 'flex-start') : 'start',
+                    gridTemplateColumns: (element.display === 'grid' || element.type === 'grid') && element.type !== 'columns' && element.type !== 'rows' ? 
+                        (isMobile ? '1fr' : `repeat(${element.gridColumns || element.columnCount || 3}, 1fr)`) : undefined,
+                    rowGap: (element.display !== 'block' || element.type === 'rows' || element.type === 'grid') ? 
+                        `${(element.rowGap || element.gap || 0) * 0.25}rem` : undefined,
+                    columnGap: (element.display !== 'block' || element.type === 'columns' || element.type === 'grid') ? 
+                        `${(element.columnGap || element.gap || 16) * 0.25}rem` : undefined
                 }}
             >
-                {(!element.children || element.children.length === 0) ? (
-                    Array.from({ length: element.columnCount || 2 }).map((_, index) => (
-                        <div key={index} className="border-2 border-dashed border-slate-300 rounded text-center text-slate-400 text-sm flex items-center justify-center" style={{ padding: '1rem', minHeight: '80px' }}>
-                            Drop element here
+{(element.type === 'columns') ? (
+                // For columns, use individual drop zones for each column
+                Array.from({ length: element.columnCount || 2 }).map((_, index) => {
+                    const child = element.children?.[index];
+                    return (
+                        <ColumnDropZone
+                            key={index}
+                            element={element}
+                            index={index}
+                            child={child}
+                            cellEditMode={cellEditMode}
+                            handleCellClick={handleCellClick}
+                        />
+                    );
+                })
+            ) : ((element.type === 'rows' || element.type === 'grid' || element.display === 'flex') ? (
+                // For flex layout (rows/grid) or dedicated grid, render all children directly
+                element.children?.map((child: any, index) => {
+                    if (!child) {
+                        return <div key={`empty-${index}`} className="flex-1 min-h-[32px]" />;
+                    }
+                    return <SortableElement key={child.id} element={child} parentId={element.id} />;
+                })
+            ) : (
+                // For legacy grid layout in columns, use the original column-based layout  
+                Array.from({ length: element.columnCount || 2 }).map((_, index) => {
+                    const child = element.children?.[index];
+                    // If no child, create a mock placeholder element
+                    const displayChild = child || {
+                        id: `placeholder-${element.id}-${index}`,
+                        type: 'text' as const,
+                        label: '',
+                        name: `placeholder-${index}`,
+                        placeholder: 'Drop element here',
+                        required: false,
+                        width: 12,
+                        isPlaceholder: true // Mark this as a placeholder
+                    };
+                    
+                    return (
+                        <div
+                            key={index}
+                            className={`relative ${
+                                cellEditMode 
+                                    ? 'border-orange-400 bg-orange-50 hover:border-orange-600 hover:bg-orange-100 cursor-pointer border-2 border-dashed' 
+                                    : ''
+                            }`}
+                            style={{
+                                backgroundColor: element.columnBackgrounds?.[index] || 'transparent'
+                            }}
+                        >
+                            {cellEditMode && (
+                                <div className="absolute top-1 right-1 bg-orange-600 text-white text-xs px-2 py-1 rounded font-medium z-40">
+                                    Cell {index + 1}
+                                </div>
+                            )}
+
+                            {/* Always render content - either real child or placeholder */}
+                            <div 
+                                className="relative w-full h-full"
+                                style={{ pointerEvents: cellEditMode ? 'none' : 'auto' }}
+                            >
+                                {child ? (
+                                    <SortableElement element={child} parentId={element.id} />
+                                ) : (
+                                    <SortableElement element={displayChild} parentId={element.id} />
+                                )}
+                                
+                                {/* Click overlay when in cell edit mode - above content */}
+                                {cellEditMode && (
+                                    <div
+                                        className="absolute inset-0 z-50 cursor-pointer bg-transparent"
+                                        onClick={(e) => handleCellClick(e, index)}
+                                        onMouseDown={(e) => e.preventDefault()}
+                                        title={`Click to edit Cell ${index + 1} background`}
+                                        style={{ pointerEvents: 'auto' }}
+                                    />
+                                )}
+                            </div>
                         </div>
-                    ))
-                ) : (
-                    element.children.map((child, index) => (
-                        <SortableElement key={child.id} element={child} parentId={element.id} />
-                    ))
-                )}
+                    );
+                })
+            ))}
             </div>
         </div>
     );
 };
 
-const SortableElement: React.FC<SortableElementProps> = React.memo(({ element, parentId }) => {
-    const { selectElement, selectedElementId, removeElement, duplicateElement, updateElement, moveElementUp, moveElementDown, elements } = useStore();
+const SortableElement: React.FC<SortableElementProps> = ({ element, parentId }) => {
+    const { selectElement, selectedElementId, removeElement, duplicateElement, updateElement, moveElementUp, moveElementDown, elements, currentProject } = useStore();
+    
+    // Add draggable functionality
+    const { attributes, listeners, setNodeRef: setDragNodeRef, transform, isDragging } = useDraggable({
+        id: element.id,
+        data: {
+            type: element.type,
+            element: element,
+            parentId: parentId
+        }
+    });
+    
+    // Add droppable functionality for "insert before" drop zones
+    const { setNodeRef: setDropBeforeNodeRef, isOver: isOverBefore } = useDroppable({
+        id: `drop-before-${element.id}`,
+        data: {
+            type: element.type,
+            element: element,
+            parentId: parentId,
+            insertPosition: 'before'
+        }
+    });
+
+    // Add droppable functionality for "insert after" drop zones  
+    const { setNodeRef: setDropAfterNodeRef, isOver: isOverAfter } = useDroppable({
+        id: `drop-after-${element.id}`,
+        data: {
+            type: element.type,
+            element: element,
+            parentId: parentId,
+            insertPosition: 'after'
+        }
+    });
     const isSelected = selectedElementId === element.id;
     const hasAnySelection = selectedElementId !== null;
+    const isFormProject = currentProject?.type === 'form';
 
     // Check if parent is a columns or container component
     const parentInfo = parentId && (() => {
         const findParent = (elements: any[]): any => {
             for (const el of elements) {
+                if (!el) continue; // Skip undefined/null elements
                 if (el.id === parentId) return el;
                 if (el.children) {
                     const found = findParent(el.children);
@@ -115,12 +515,15 @@ const SortableElement: React.FC<SortableElementProps> = React.memo(({ element, p
         return {
             isInColumns: parent?.type === 'columns',
             isInContainer: parent?.type === 'container',
-            parentType: parent?.type
+            isInRows: parent?.type === 'rows',
+            parentType: parent?.type,
+            parent: parent
         };
     })();
 
     const isInColumns = parentInfo?.isInColumns || false;
     const isInContainer = parentInfo?.isInContainer || false;
+    const isInRows = parentInfo?.isInRows || false;
     const isNested = parentInfo ? true : false;
 
     const colSpanMap: Record<number, string> = {
@@ -196,35 +599,103 @@ const SortableElement: React.FC<SortableElementProps> = React.memo(({ element, p
         document.body.style.cursor = direction === 'right' ? 'e-resize' : 'w-resize';
     };
 
+    const handleImageResize = (e: React.MouseEvent, direction: 'nw' | 'ne' | 'sw' | 'se') => {
+        e.stopPropagation();
+        e.preventDefault();
+        
+        setIsResizing(true);
+        
+        // Store initial state
+        const startX = e.clientX;
+        const startWidth = element.width || 2; // Default ~17% (2 of 12 columns)
+        
+        const handleMouseMove = (moveEvent: MouseEvent) => {
+            moveEvent.preventDefault();
+            
+            const deltaX = moveEvent.clientX - startX;
+            const pixelsPerColumn = 80; // Approximate pixels per column
+            let columnDelta = Math.round(deltaX / pixelsPerColumn);
+            
+            // Adjust for left-side handles
+            if (direction === 'nw' || direction === 'sw') {
+                columnDelta = -columnDelta;
+            }
+            
+            const newWidth = Math.max(1, Math.min(12, startWidth + columnDelta));
+            
+            if (newWidth !== element.width) {
+                updateElement(element.id, { width: newWidth });
+            }
+        };
+        
+        const handleMouseUp = () => {
+            setIsResizing(false);
+            document.removeEventListener('mousemove', handleMouseMove);
+            document.removeEventListener('mouseup', handleMouseUp);
+            document.body.style.userSelect = '';
+            document.body.style.cursor = '';
+        };
+
+        // Add listeners
+        document.addEventListener('mousemove', handleMouseMove);
+        document.addEventListener('mouseup', handleMouseUp);
+        
+        // Prevent text selection
+        document.body.style.userSelect = 'none';
+        document.body.style.cursor = `${direction}-resize`;
+    };
+
+
+    // Set drag ref for the main element (drop refs are handled separately for before/after zones)
+    const setMainElementRef = (node: HTMLElement | null) => {
+        setDragNodeRef(node);
+    };
 
     return (
         <div
+            ref={setMainElementRef}
             data-element-id={element.id}
             onClick={(e: React.MouseEvent) => {
                 e.stopPropagation();
                 selectElement(element.id);
                 console.log('Element selected:', element.id, 'parentId:', parentId);
             }}
+            {...(isSelected ? { ...listeners, ...attributes } : {})}
             className={clsx(
                 "group relative flex flex-col cursor-pointer",
-                isNested && "w-full", // Full width inside any container or columns
+                isNested && !['columns', 'menu'].includes(parentInfo?.parent?.type) && "w-full", // Full width inside any container but not columns or menu
                 "opacity-100",
                 isSelected && "z-10",
                 isResizing && "z-50 select-none",
                 parentId && "z-20", // Higher z-index for nested elements
-                "transition-all duration-200 ease-in-out",
-                // Hover highlighting with dashed border
-                !isSelected && "hover:border-2 hover:border-dashed hover:border-brand-500 hover:bg-brand-50/20 rounded-lg"
+                isDragging && "opacity-50",
+                // Default transparent border to prevent layout shift on hover
+                !isSelected && "border border-transparent",
+                // Hover highlighting - only for columns and main components when dragging
+                !isSelected && !isDragging && "hover:border-brand-500 hover:border-dashed hover:bg-brand-50/20 rounded-lg"
             )}
             style={{
                 ...(parentId ? { pointerEvents: 'auto', position: 'relative' } : {}),
-                // Only apply percentage width for root level elements
-                ...(!isNested ? { width: `${(element.width || 12) / 12 * 100}%` } : {}),
+                // Apply percentage width for root level elements, elements in columns, and elements in menu containers
+                ...(!isNested || ['columns', 'menu'].includes(parentInfo?.parent?.type) ? 
+                    (parentInfo?.parent?.type === 'menu' ? 
+                        // For menu items, remove fixed width and let flex container control layout
+                        { flex: '0 0 auto', alignSelf: 'stretch' } : 
+                        { width: `${(element.width || (element.type === 'image' ? 2 : 12)) / 12 * 100}%` }) : {}),
                 // Apply margins
-                marginTop: element.marginTop ? `${element.marginTop * 0.25}rem` : undefined,
-                marginRight: element.marginRight ? `${element.marginRight * 0.25}rem` : undefined,
-                marginBottom: element.marginBottom ? `${element.marginBottom * 0.25}rem` : undefined,
-                marginLeft: element.marginLeft ? `${element.marginLeft * 0.25}rem` : undefined
+                marginTop: `${(element.marginTop ?? 0) * 0.25}rem`,
+                marginRight: `${(element.marginRight ?? 0) * 0.25}rem`,
+                marginBottom: `${(element.marginBottom ?? 0) * 0.25}rem`,
+                marginLeft: `${(element.marginLeft ?? 0) * 0.25}rem`,
+                // Apply horizontal alignment for non-containers
+                ...(element.horizontalAlign === 'center' && !['container', 'columns', 'rows', 'grid'].includes(element.type) ? 
+                    { marginLeft: 'auto', marginRight: 'auto' } : {}),
+                ...(element.horizontalAlign === 'right' && !['container', 'columns', 'rows', 'grid'].includes(element.type) ? 
+                    { marginLeft: 'auto' } : {}),
+                // Apply stretch behavior when parent has alignItems: 'stretch'
+                ...(parentInfo?.parent?.alignItems === 'stretch' && parentInfo?.parent?.display !== 'block' && 
+                    !['container', 'columns', 'menu', 'social'].includes(element.type) ? 
+                    { minHeight: 'fit-content' } : {})
             }}
         >
             {/* Resize indicator */}
@@ -234,74 +705,55 @@ const SortableElement: React.FC<SortableElementProps> = React.memo(({ element, p
                 </div>
             )}
 
+            {/* Drop Before Zone - positioned above element */}
+            <div
+                ref={setDropBeforeNodeRef}
+                className={clsx(
+                    "absolute -top-2 left-0 right-0 h-4 flex items-center justify-center z-40",
+                    isOverBefore && element.type !== 'columns' && "bg-blue-500/20"
+                )}
+            >
+                {isOverBefore && element.type !== 'columns' && (
+                    <div className="bg-blue-500 text-white text-xs px-2 py-1 rounded font-medium shadow-lg">
+                        Drop before
+                    </div>
+                )}
+            </div>
+
+            {/* Drop After Zone - positioned below element */}
+            <div
+                ref={setDropAfterNodeRef}
+                className={clsx(
+                    "absolute -bottom-2 left-0 right-0 h-4 flex items-center justify-center z-40",
+                    isOverAfter && element.type !== 'columns' && "bg-blue-500/20"
+                )}
+            >
+                {isOverAfter && element.type !== 'columns' && (
+                    <div className="bg-blue-500 text-white text-xs px-2 py-1 rounded font-medium shadow-lg">
+                        Drop after
+                    </div>
+                )}
+            </div>
+
 
             {/* Selected Element Toolbar - Only show for selected element */}
             {isSelected && (
-                <div className="absolute left-0 -top-8 opacity-100 z-50 flex gap-1">
-                <button
-                    onClick={(e) => {
-                        e.stopPropagation();
-                        moveElementUp(element.id, parentId);
-                    }}
-                    className="p-1 bg-white border border-slate-300 rounded shadow-sm text-slate-600 hover:text-blue-600 hover:bg-blue-50 transition-colors"
-                    title="Move up"
-                    disabled={(() => {
-                        if (parentId) {
-                            const findParent = (elements: any[]): any => {
-                                for (const el of elements) {
-                                    if (el.id === parentId) return el;
-                                    if (el.children) {
-                                        const found = findParent(el.children);
-                                        if (found) return found;
-                                    }
-                                }
-                                return null;
-                            };
-                            const parent = findParent(elements);
-                            return parent?.children?.[0]?.id === element.id;
-                        } else {
-                            return elements[0]?.id === element.id;
-                        }
-                    })()}
+                <div 
+                    className="absolute top-1 left-1 opacity-100 z-[9999] flex gap-1 bg-white rounded-md shadow-lg p-1 border border-slate-200"
+                    style={{ pointerEvents: 'auto' }}
                 >
-                    <ChevronUp size={12} />
-                </button>
-                <button
-                    onClick={(e) => {
-                        e.stopPropagation();
-                        moveElementDown(element.id, parentId);
-                    }}
-                    className="p-1 bg-white border border-slate-300 rounded shadow-sm text-slate-600 hover:text-blue-600 hover:bg-blue-50 transition-colors"
-                    title="Move down"
-                    disabled={(() => {
-                        if (parentId) {
-                            const findParent = (elements: any[]): any => {
-                                for (const el of elements) {
-                                    if (el.id === parentId) return el;
-                                    if (el.children) {
-                                        const found = findParent(el.children);
-                                        if (found) return found;
-                                    }
-                                }
-                                return null;
-                            };
-                            const parent = findParent(elements);
-                            const lastIndex = (parent?.children?.length || 1) - 1;
-                            return parent?.children?.[lastIndex]?.id === element.id;
-                        } else {
-                            const lastIndex = elements.length - 1;
-                            return elements[lastIndex]?.id === element.id;
-                        }
-                    })()}
+                <div
+                    className="p-1 bg-white border border-slate-300 rounded shadow-sm text-slate-600 hover:text-blue-600 hover:bg-blue-50 cursor-grab active:cursor-grabbing"
+                    title="Drag to move"
                 >
-                    <ChevronDown size={12} />
-                </button>
+                    <GripVertical size={12} />
+                </div>
                 <button
                     onClick={(e) => {
                         e.stopPropagation();
                         duplicateElement(element.id);
                     }}
-                    className="p-1 bg-white border border-slate-300 rounded shadow-sm text-slate-600 hover:text-green-600 hover:bg-green-50 transition-colors"
+                    className="p-1 bg-white border border-slate-300 rounded shadow-sm text-slate-600 hover:text-green-600 hover:bg-green-50"
                     title="Duplicate"
                 >
                     <Copy size={12} />
@@ -311,7 +763,7 @@ const SortableElement: React.FC<SortableElementProps> = React.memo(({ element, p
                         e.stopPropagation();
                         removeElement(element.id);
                     }}
-                    className="p-1 bg-white border border-slate-300 rounded shadow-sm text-slate-600 hover:text-red-600 hover:bg-red-50 transition-colors"
+                    className="p-1 bg-white border border-slate-300 rounded shadow-sm text-slate-600 hover:text-red-600 hover:bg-red-50"
                     title="Delete"
                 >
                     <Trash2 size={12} />
@@ -323,10 +775,10 @@ const SortableElement: React.FC<SortableElementProps> = React.memo(({ element, p
             {!isNested && (
                 <>
                     <div className={clsx(
-                        "absolute right-0 top-0 bottom-0 w-4 cursor-e-resize flex items-center justify-center z-30 transition-all",
+                        "absolute right-0 top-0 bottom-0 w-4 cursor-e-resize flex items-center justify-center z-30",
                         isResizing ? "opacity-100 bg-brand-100/80" : 
                         isSelected ? "opacity-80 hover:opacity-100 hover:bg-brand-50/50" :
-                        hasAnySelection ? "opacity-0" : "opacity-0 group-hover:opacity-100 hover:bg-brand-50/50"
+                        hasAnySelection ? "opacity-0" : "opacity-0"
                     )}
                         onMouseDown={(e) => {
                             e.stopPropagation();
@@ -335,26 +787,7 @@ const SortableElement: React.FC<SortableElementProps> = React.memo(({ element, p
                         title="Drag to resize"
                     >
                         <div className={clsx(
-                            "w-1 rounded-full transition-colors",
-                            parentId ? "h-6" : "h-8", // Smaller handles in containers
-                            isResizing ? "bg-brand-500" : 
-                            isSelected ? "bg-brand-400" : "bg-slate-300"
-                        )}></div>
-                    </div>
-                    <div className={clsx(
-                        "absolute left-0 top-0 bottom-0 w-4 cursor-w-resize flex items-center justify-center z-30 transition-all",
-                        isResizing ? "opacity-100 bg-brand-100/80" : 
-                        isSelected ? "opacity-80 hover:opacity-100 hover:bg-brand-50/50" :
-                        hasAnySelection ? "opacity-0" : "opacity-0 group-hover:opacity-100 hover:bg-brand-50/50"
-                    )}
-                        onMouseDown={(e) => {
-                            e.stopPropagation();
-                            handleResizeStart(e, 'left');
-                        }}
-                        title="Drag to resize"
-                    >
-                        <div className={clsx(
-                            "w-1 rounded-full transition-colors",
+                            "w-1 rounded-full",
                             parentId ? "h-6" : "h-8", // Smaller handles in containers
                             isResizing ? "bg-brand-500" : 
                             isSelected ? "bg-brand-400" : "bg-slate-300"
@@ -367,19 +800,19 @@ const SortableElement: React.FC<SortableElementProps> = React.memo(({ element, p
             {/* Visual wrapper around label and component */}
             <div 
                 className={clsx(
-                    "flex-1 relative rounded-lg transition-all",
+                    "relative rounded-lg flex-1",
                     isSelected && "ring-2 ring-brand-400 ring-opacity-50"
                 )}
                 style={{
-                    backgroundColor: (element.type === 'container' || element.type === 'columns') ? element.backgroundColor : undefined,
-                    // Only apply padding for container and columns, regular elements handle their own spacing
-                    paddingTop: (element.type === 'container' || element.type === 'columns') && element.paddingTop !== undefined ? `${element.paddingTop * 0.25}rem` : undefined,
-                    paddingRight: (element.type === 'container' || element.type === 'columns') && element.paddingRight !== undefined ? `${element.paddingRight * 0.25}rem` : undefined,
-                    paddingBottom: (element.type === 'container' || element.type === 'columns') && element.paddingBottom !== undefined ? `${element.paddingBottom * 0.25}rem` : undefined,
-                    paddingLeft: (element.type === 'container' || element.type === 'columns') && element.paddingLeft !== undefined ? `${element.paddingLeft * 0.25}rem` : undefined
+                    backgroundColor: ['container', 'columns', 'rows', 'grid'].includes(element.type) ? element.backgroundColor : undefined,
+                    // Only apply padding for container, columns, rows, and grid - regular elements handle their own spacing
+                    paddingTop: ['container', 'columns', 'rows', 'grid'].includes(element.type) ? `${(element.paddingTop ?? 0) * 0.25}rem` : undefined,
+                    paddingRight: ['container', 'columns', 'rows', 'grid'].includes(element.type) ? `${(element.paddingRight ?? 0) * 0.25}rem` : undefined,
+                    paddingBottom: ['container', 'columns', 'rows', 'grid'].includes(element.type) ? `${(element.paddingBottom ?? 0) * 0.25}rem` : undefined,
+                    paddingLeft: ['container', 'columns', 'rows', 'grid'].includes(element.type) ? `${(element.paddingLeft ?? 0) * 0.25}rem` : undefined
                 }}
             >
-                {element.type !== 'hidden' && element.type !== 'rich-text' && element.type !== 'container' && element.type !== 'columns' && element.label && element.label.trim() && (
+                {isFormProject && !['hidden', 'rich-text', 'container', 'columns', 'rows', 'grid'].includes(element.type) && element.label && element.label.trim() && (
                     <div 
                         className="flex justify-between items-start"
                         style={{ marginBottom: element.labelGap !== undefined ? `${element.labelGap * 0.25}rem` : '0.75rem' }}
@@ -411,7 +844,7 @@ const SortableElement: React.FC<SortableElementProps> = React.memo(({ element, p
                     </div>
                 )}
 
-                {(element.type === 'container' || element.type === 'columns') && element.label && element.label.trim() && (
+                {isFormProject && ['container', 'columns', 'rows', 'grid'].includes(element.type) && element.label && element.label.trim() && (
                     <div 
                         className="flex justify-between items-start"
                         style={{ marginBottom: element.labelGap !== undefined ? `${element.labelGap * 0.25}rem` : '0.75rem' }}
@@ -453,19 +886,27 @@ const SortableElement: React.FC<SortableElementProps> = React.memo(({ element, p
                 <div 
                     className="pointer-events-none"
                     style={{
-                        // Apply padding to regular form elements (not containers/columns) only if padding values are set
-                        paddingTop: (element.type !== 'container' && element.type !== 'columns' && element.paddingTop !== undefined) ? `${element.paddingTop * 0.25}rem` : undefined,
-                        paddingRight: (element.type !== 'container' && element.type !== 'columns' && element.paddingRight !== undefined) ? `${element.paddingRight * 0.25}rem` : undefined,
-                        paddingBottom: (element.type !== 'container' && element.type !== 'columns' && element.paddingBottom !== undefined) ? `${element.paddingBottom * 0.25}rem` : undefined,
-                        paddingLeft: (element.type !== 'container' && element.type !== 'columns' && element.paddingLeft !== undefined) ? `${element.paddingLeft * 0.25}rem` : undefined
+                        // Apply padding to regular form elements (not containers/columns/buttons) only if padding values are set
+                        paddingTop: (!['container', 'columns', 'rows', 'button', 'textarea', 'select', 'checkbox', 'radio'].includes(element.type)) ? `${(element.paddingTop ?? 0) * 0.25}rem` : undefined,
+                        paddingRight: (!['container', 'columns', 'rows', 'button', 'textarea', 'select', 'checkbox', 'radio'].includes(element.type)) ? `${(element.paddingRight ?? 0) * 0.25}rem` : undefined,
+                        paddingBottom: (!['container', 'columns', 'rows', 'button', 'textarea', 'select', 'checkbox', 'radio'].includes(element.type)) ? `${(element.paddingBottom ?? 0) * 0.25}rem` : undefined,
+                        paddingLeft: (!['container', 'columns', 'rows', 'button', 'textarea', 'select', 'checkbox', 'radio'].includes(element.type)) ? `${(element.paddingLeft ?? 0) * 0.25}rem` : undefined
                     }}
+                    data-padding-debug={JSON.stringify({
+                        type: element.type,
+                        paddingTop: element.paddingTop,
+                        appliedPaddingTop: (!['container', 'columns', 'rows', 'button'].includes(element.type)) ? `${(element.paddingTop ?? 0) * 0.25}rem` : 'excluded'
+                    })}
                 >
                     {element.type === 'textarea' ? (
                         <textarea
                             className="w-full border border-slate-200 rounded-lg text-slate-500 text-sm resize-none"
                             style={{
-                                backgroundColor: element.backgroundColor || '#f8fafc',
-                                padding: '0.75rem' // Default padding, can be overridden by element padding
+                                backgroundColor: element.backgroundColor,
+                                paddingTop: `${(element.paddingTop ?? 3) * 0.25}rem`,
+                                paddingRight: `${(element.paddingRight ?? 3) * 0.25}rem`,
+                                paddingBottom: `${(element.paddingBottom ?? 3) * 0.25}rem`,
+                                paddingLeft: `${(element.paddingLeft ?? 3) * 0.25}rem`
                             }}
                             placeholder={element.placeholder}
                             rows={3}
@@ -474,8 +915,11 @@ const SortableElement: React.FC<SortableElementProps> = React.memo(({ element, p
                     ) : element.type === 'select' ? (
                         <div className="relative">
                             <select className="w-full border border-slate-200 rounded-lg text-slate-500 text-sm appearance-none" style={{
-                                backgroundColor: element.backgroundColor || '#f8fafc',
-                                padding: '0.75rem'
+                                backgroundColor: element.backgroundColor,
+                                paddingTop: element.paddingTop !== undefined ? `${element.paddingTop * 0.25}rem` : '0.75rem',
+                                paddingRight: element.paddingRight !== undefined ? `${element.paddingRight * 0.25}rem` : '0.75rem',
+                                paddingBottom: element.paddingBottom !== undefined ? `${element.paddingBottom * 0.25}rem` : '0.75rem',
+                                paddingLeft: element.paddingLeft !== undefined ? `${element.paddingLeft * 0.25}rem` : '0.75rem'
                             }} disabled>
                                 {element.options?.map((opt, idx) => (
                                     <option key={idx}>{opt.label}</option>
@@ -490,7 +934,10 @@ const SortableElement: React.FC<SortableElementProps> = React.memo(({ element, p
                     ) : element.type === 'checkbox' ? (
                         <div className="flex items-center border border-slate-200 rounded-lg" style={{
                             backgroundColor: element.backgroundColor || '#f8fafc',
-                            padding: '0.75rem'
+                            paddingTop: element.paddingTop !== undefined ? `${element.paddingTop * 0.25}rem` : '0.75rem',
+                            paddingRight: element.paddingRight !== undefined ? `${element.paddingRight * 0.25}rem` : '0.75rem',
+                            paddingBottom: element.paddingBottom !== undefined ? `${element.paddingBottom * 0.25}rem` : '0.75rem',
+                            paddingLeft: element.paddingLeft !== undefined ? `${element.paddingLeft * 0.25}rem` : '0.75rem'
                         }}>
                             <input type="checkbox" className="h-4 w-4 text-brand-600 rounded border-slate-300" disabled />
                             <span className="ml-3 text-sm text-slate-600">{element.placeholder || 'Checkbox option'}</span>
@@ -498,7 +945,10 @@ const SortableElement: React.FC<SortableElementProps> = React.memo(({ element, p
                     ) : element.type === 'radio' ? (
                         <div className="space-y-2 border border-slate-200 rounded-lg" style={{
                             backgroundColor: element.backgroundColor || '#f8fafc',
-                            padding: '0.75rem'
+                            paddingTop: element.paddingTop !== undefined ? `${element.paddingTop * 0.25}rem` : '0.75rem',
+                            paddingRight: element.paddingRight !== undefined ? `${element.paddingRight * 0.25}rem` : '0.75rem',
+                            paddingBottom: element.paddingBottom !== undefined ? `${element.paddingBottom * 0.25}rem` : '0.75rem',
+                            paddingLeft: element.paddingLeft !== undefined ? `${element.paddingLeft * 0.25}rem` : '0.75rem'
                         }}>
                             {(element.options || [{ label: 'Option 1', value: 'option1' }, { label: 'Option 2', value: 'option2' }]).map((opt, idx) => (
                                 <div key={idx} className="flex items-center">
@@ -517,8 +967,17 @@ const SortableElement: React.FC<SortableElementProps> = React.memo(({ element, p
                         <ContainerContent element={element} />
                     ) : element.type === 'columns' ? (
                         <ColumnsContent element={element} />
+                    ) : element.type === 'rows' ? (
+                        <ContainerContent element={element} />
+                    ) : element.type === 'grid' ? (
+                        <ContainerContent element={element} />
                     ) : element.type === 'hidden' ? (
-                        <div className="flex items-center bg-slate-100 border border-slate-300 rounded-lg opacity-60" style={{ padding: '0.75rem' }}>
+                        <div className="flex items-center bg-slate-100 border border-slate-300 rounded-lg opacity-60" style={{ 
+                            paddingTop: element.paddingTop !== undefined ? `${element.paddingTop * 0.25}rem` : '0.75rem',
+                            paddingRight: element.paddingRight !== undefined ? `${element.paddingRight * 0.25}rem` : '0.75rem',
+                            paddingBottom: element.paddingBottom !== undefined ? `${element.paddingBottom * 0.25}rem` : '0.75rem',
+                            paddingLeft: element.paddingLeft !== undefined ? `${element.paddingLeft * 0.25}rem` : '0.75rem'
+                        }}>
                             <div className="flex items-center gap-2 text-slate-500">
                                 <EyeOff size={16} />
                                 <span className="text-sm font-mono">Hidden: {element.value || 'No value'}</span>
@@ -527,7 +986,10 @@ const SortableElement: React.FC<SortableElementProps> = React.memo(({ element, p
                     ) : element.type === 'rich-text' ? (
                         <div className="border border-slate-200 rounded-lg min-h-[100px]" style={{
                             backgroundColor: element.backgroundColor || '#f8fafc',
-                            padding: '0.75rem'
+                            paddingTop: element.paddingTop !== undefined ? `${element.paddingTop * 0.25}rem` : '0.75rem',
+                            paddingRight: element.paddingRight !== undefined ? `${element.paddingRight * 0.25}rem` : '0.75rem',
+                            paddingBottom: element.paddingBottom !== undefined ? `${element.paddingBottom * 0.25}rem` : '0.75rem',
+                            paddingLeft: element.paddingLeft !== undefined ? `${element.paddingLeft * 0.25}rem` : '0.75rem'
                         }}>
                             <div 
                                 className="prose prose-sm max-w-none text-slate-600"
@@ -539,18 +1001,32 @@ const SortableElement: React.FC<SortableElementProps> = React.memo(({ element, p
                             <button
                                 type={element.buttonType || 'button'}
                                 className={clsx(
-                                    "font-medium transition-all rounded-lg border",
-                                    element.buttonSize === 'sm' && "px-3 py-1.5 text-sm",
-                                    element.buttonSize === 'lg' && "px-6 py-3 text-lg",
-                                    (!element.buttonSize || element.buttonSize === 'md') && "px-4 py-2 text-base",
+                                    "font-medium rounded-lg border",
+                                    element.buttonSize === 'sm' && "text-sm",
+                                    element.buttonSize === 'lg' && "text-lg", 
+                                    (!element.buttonSize || element.buttonSize === 'md') && "text-base",
                                     element.buttonStyle === 'primary' && "bg-blue-600 border-blue-600 text-white hover:bg-blue-700",
                                     element.buttonStyle === 'secondary' && "bg-gray-600 border-gray-600 text-white hover:bg-gray-700",
                                     element.buttonStyle === 'outline' && "bg-transparent border-gray-300 text-gray-700 hover:bg-gray-50",
                                     element.buttonStyle === 'text' && "bg-transparent border-transparent text-blue-600 hover:bg-blue-50",
+                                    element.buttonStyle === 'link' && "bg-transparent border-transparent text-blue-600 hover:text-blue-800 hover:underline",
                                     (!element.buttonStyle || element.buttonStyle === 'primary') && "bg-blue-600 border-blue-600 text-white hover:bg-blue-700"
                                 )}
                                 style={{
-                                    backgroundColor: element.backgroundColor && element.buttonStyle !== 'text' && element.buttonStyle !== 'outline' ? element.backgroundColor : undefined
+                                    backgroundColor: element.backgroundColor && element.buttonStyle !== 'text' && element.buttonStyle !== 'outline' && element.buttonStyle !== 'link' ? 
+                                        element.backgroundColor : undefined,
+                                    paddingTop: element.paddingTop !== undefined ? `${element.paddingTop * 0.25}rem` : undefined,
+                                    paddingRight: element.paddingRight !== undefined ? `${element.paddingRight * 0.25}rem` : undefined,
+                                    paddingBottom: element.paddingBottom !== undefined ? `${element.paddingBottom * 0.25}rem` : undefined,
+                                    paddingLeft: element.paddingLeft !== undefined ? `${element.paddingLeft * 0.25}rem` : undefined,
+                                    marginTop: element.marginTop !== undefined ? `${element.marginTop * 0.25}rem` : undefined,
+                                    marginRight: element.marginRight !== undefined ? `${element.marginRight * 0.25}rem` : undefined,
+                                    marginBottom: element.marginBottom !== undefined ? `${element.marginBottom * 0.25}rem` : undefined,
+                                    marginLeft: element.marginLeft !== undefined ? `${element.marginLeft * 0.25}rem` : undefined,
+                                    boxSizing: 'border-box',
+                                    lineHeight: 'normal',
+                                    minHeight: 'unset',
+                                    height: 'auto'
                                 }}
                                 disabled
                             >
@@ -562,13 +1038,122 @@ const SortableElement: React.FC<SortableElementProps> = React.memo(({ element, p
                                 </div>
                             )}
                         </div>
+                    ) : element.type === 'text-block' ? (
+                        <div className="rounded-lg" style={{
+                            backgroundColor: element.backgroundColor
+                        }}>
+                            <div 
+                                className="prose prose-sm max-w-none text-slate-600"
+                                dangerouslySetInnerHTML={{ __html: element.content || '<p>Click to edit this text block</p>' }}
+                            />
+                        </div>
+                    ) : element.type === 'heading' ? (
+                        <div className="rounded-lg" style={{
+                            backgroundColor: element.backgroundColor,
+                            paddingTop: element.paddingTop !== undefined ? `${element.paddingTop * 0.25}rem` : undefined,
+                            paddingRight: element.paddingRight !== undefined ? `${element.paddingRight * 0.25}rem` : undefined,
+                            paddingBottom: element.paddingBottom !== undefined ? `${element.paddingBottom * 0.25}rem` : undefined,
+                            paddingLeft: element.paddingLeft !== undefined ? `${element.paddingLeft * 0.25}rem` : undefined
+                        }}>
+                            {React.createElement(
+                                `h${element.headingLevel || 1}`,
+                                {
+                                    className: clsx(
+                                        "text-gray-800 font-bold",
+                                        element.headingLevel === 1 && "text-4xl",
+                                        element.headingLevel === 2 && "text-3xl",
+                                        element.headingLevel === 3 && "text-2xl",
+                                        element.headingLevel === 4 && "text-xl",
+                                        element.headingLevel === 5 && "text-lg",
+                                        element.headingLevel === 6 && "text-base",
+                                        !element.headingLevel && "text-4xl"
+                                    )
+                                },
+                                element.content || 'Your heading here'
+                            )}
+                        </div>
+                    ) : element.type === 'menu' ? (
+                        <ContainerContent element={element} />
+                    ) : element.type === 'social' ? (
+                        <div className="border border-slate-200 rounded-lg" style={{
+                            backgroundColor: element.backgroundColor,
+                            paddingTop: element.paddingTop !== undefined ? `${element.paddingTop * 0.25}rem` : '1rem',
+                            paddingRight: element.paddingRight !== undefined ? `${element.paddingRight * 0.25}rem` : '1rem',
+                            paddingBottom: element.paddingBottom !== undefined ? `${element.paddingBottom * 0.25}rem` : '1rem',
+                            paddingLeft: element.paddingLeft !== undefined ? `${element.paddingLeft * 0.25}rem` : '1rem'
+                        }}>
+                            <div className={clsx(
+                                "flex gap-3",
+                                element.socialLayout === 'vertical' ? "flex-col" : "flex-row"
+                            )}>
+                                {(element.socialLinks || [
+                                    { platform: 'Facebook', url: '#', icon: '📘' },
+                                    { platform: 'Twitter', url: '#', icon: '🐦' },
+                                    { platform: 'LinkedIn', url: '#', icon: '💼' }
+                                ]).map((social, index) => (
+                                    <a
+                                        key={index}
+                                        href={social.url}
+                                        target="_blank"
+                                        rel="noopener noreferrer"
+                                        className="flex items-center gap-2 text-blue-600 hover:text-blue-800 font-medium"
+                                    >
+                                        <span>{social.icon || '🔗'}</span>
+                                        {social.platform}
+                                    </a>
+                                ))}
+                            </div>
+                        </div>
+                    ) : element.type === 'image' ? (
+                        <div className="relative w-full group">
+                            <img
+                                src={element.imageUrl || 'https://placehold.co/400x200/e2e8f0/94a3b8?text=Image'}
+                                alt={element.imageAlt || 'Image'}
+                                className="rounded-lg border border-slate-200 block w-full h-auto"
+                                style={{
+                                    backgroundColor: element.backgroundColor
+                                }}
+                            />
+                            {/* Corner resize handles for professional image editing */}
+                            {isSelected && (
+                                <>
+                                    {/* Top-left corner */}
+                                    <div
+                                        className="absolute -top-2 -left-2 w-4 h-4 bg-blue-500 border-2 border-white rounded-sm cursor-nw-resize shadow-md opacity-100 z-40"
+                                        onMouseDown={(e) => handleImageResize(e, 'nw')}
+                                        title="Resize from top-left corner"
+                                    />
+                                    {/* Top-right corner */}
+                                    <div
+                                        className="absolute -top-2 -right-2 w-4 h-4 bg-blue-500 border-2 border-white rounded-sm cursor-ne-resize shadow-md opacity-100 z-40"
+                                        onMouseDown={(e) => handleImageResize(e, 'ne')}
+                                        title="Resize from top-right corner"
+                                    />
+                                    {/* Bottom-left corner */}
+                                    <div
+                                        className="absolute -bottom-2 -left-2 w-4 h-4 bg-blue-500 border-2 border-white rounded-sm cursor-sw-resize shadow-md opacity-100 z-40"
+                                        onMouseDown={(e) => handleImageResize(e, 'sw')}
+                                        title="Resize from bottom-left corner"
+                                    />
+                                    {/* Bottom-right corner */}
+                                    <div
+                                        className="absolute -bottom-2 -right-2 w-4 h-4 bg-blue-500 border-2 border-white rounded-sm cursor-se-resize shadow-md opacity-100 z-40"
+                                        onMouseDown={(e) => handleImageResize(e, 'se')}
+                                        title="Resize from bottom-right corner"
+                                    />
+                                </>
+                            )}
+                        </div>
                     ) : (
                         <input
                             type={element.type}
                             className="w-full border border-slate-200 rounded-lg text-slate-500 text-sm"
                             style={{
-                                backgroundColor: element.backgroundColor || '#f8fafc',
-                                padding: '0.75rem'
+                                backgroundColor: element.backgroundColor,
+                                paddingTop: element.paddingTop !== undefined ? `${element.paddingTop * 0.25}rem` : '0.75rem',
+                                paddingRight: element.paddingRight !== undefined ? `${element.paddingRight * 0.25}rem` : '0.75rem',
+                                paddingBottom: element.paddingBottom !== undefined ? `${element.paddingBottom * 0.25}rem` : '0.75rem',
+                                paddingLeft: element.paddingLeft !== undefined ? `${element.paddingLeft * 0.25}rem` : '0.75rem'
                             }}
                             placeholder={element.placeholder}
                             readOnly
@@ -578,7 +1163,30 @@ const SortableElement: React.FC<SortableElementProps> = React.memo(({ element, p
             </div>
         </div >
     );
-});
+};
+
+const CanvasEndDropZone: React.FC = () => {
+    const { setNodeRef, isOver } = useDroppable({
+        id: 'canvas-end',
+        data: { type: 'canvas-end' }
+    });
+
+    return (
+        <div
+            ref={setNodeRef}
+            className={clsx(
+                "h-16 flex items-center justify-center transition-all",
+                isOver ? "bg-blue-50 border-2 border-dashed border-blue-400 rounded-lg" : "bg-transparent border-2 border-dashed border-transparent"
+            )}
+        >
+            {isOver && (
+                <div className="text-blue-600 text-sm font-medium">
+                    Drop here
+                </div>
+            )}
+        </div>
+    );
+};
 
 export const Canvas: React.FC = () => {
     const { elements, selectElement, settings } = useStore();
@@ -595,9 +1203,12 @@ export const Canvas: React.FC = () => {
                 <div
                     ref={setNodeRef}
                     className={clsx(
-                        "min-h-[800px] bg-white rounded-2xl shadow-card p-16 transition-all duration-300",
+                        "min-h-[800px] bg-white rounded-2xl shadow-card px-8 pb-8",
                         elements.length === 0 && "form-builder-canvas-empty flex items-center justify-center"
                     )}
+                    style={{
+                        backgroundColor: settings.formBackground || '#ffffff'
+                    }}
                 >
                     {elements.length === 0 ? (
                         <div className="form-builder-canvas-empty-content">
@@ -610,19 +1221,14 @@ export const Canvas: React.FC = () => {
                             </p>
                         </div>
                     ) : (
-                        <div className="space-y-2">
-                            <div className="mb-8 border-b border-slate-100 pb-6">
-                                <div className="h-8 w-3/4 bg-slate-100 rounded-lg animate-pulse mb-3"></div>
-                                <div className="h-4 w-1/2 bg-slate-50 rounded-lg animate-pulse"></div>
-                            </div>
-
-                            <div
-                                className="flex flex-col"
-                            >
-                                {elements.map((element) => (
-                                    <SortableElement key={element.id} element={element} />
-                                ))}
-                            </div>
+                        <div
+                            className="flex flex-col"
+                        >
+                            {elements.map((element) => (
+                                <SortableElement key={element.id} element={element} />
+                            ))}
+                            {/* End of canvas drop zone */}
+                            <CanvasEndDropZone />
                         </div>
                     )}
                 </div>

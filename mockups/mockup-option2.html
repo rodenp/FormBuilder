@@ -1,0 +1,738 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Option 2: Tab-Based Layout</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+            background-color: #f8fafc;
+            padding: 20px;
+            color: #334155;
+        }
+        
+        .container {
+            max-width: 400px;
+            margin: 0 auto;
+            background: white;
+            border-radius: 12px;
+            box-shadow: 0 4px 24px rgba(0, 0, 0, 0.06);
+            overflow: hidden;
+        }
+        
+        .header {
+            padding: 20px;
+            border-bottom: 1px solid #e2e8f0;
+        }
+        
+        .header h1 {
+            font-size: 24px;
+            font-weight: 700;
+            color: #0f172a;
+            margin-bottom: 8px;
+        }
+        
+        .header p {
+            font-size: 14px;
+            color: #64748b;
+        }
+        
+        /* Properties Panel Mockup */
+        .properties-panel {
+            padding: 20px;
+        }
+        
+        .section {
+            margin-bottom: 24px;
+        }
+        
+        .section-title {
+            font-size: 13px;
+            font-weight: 600;
+            color: #475569;
+            text-transform: uppercase;
+            letter-spacing: 0.05em;
+            margin-bottom: 12px;
+        }
+        
+        /* Mini Tab System */
+        .mini-tabs {
+            display: flex;
+            gap: 2px;
+            background: #f1f5f9;
+            border-radius: 8px;
+            padding: 2px;
+            margin-bottom: 16px;
+        }
+        
+        .mini-tab {
+            flex: 1;
+            padding: 8px 12px;
+            font-size: 12px;
+            font-weight: 500;
+            text-align: center;
+            border-radius: 6px;
+            cursor: pointer;
+            transition: all 0.2s;
+            color: #64748b;
+            background: transparent;
+            border: none;
+        }
+        
+        .mini-tab:hover {
+            color: #3b82f6;
+            background: rgba(59, 130, 246, 0.1);
+        }
+        
+        .mini-tab.active {
+            background: white;
+            color: #3b82f6;
+            box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+        }
+        
+        /* Tab Content */
+        .tab-content {
+            min-height: 200px;
+        }
+        
+        .tab-panel {
+            display: none;
+        }
+        
+        .tab-panel.active {
+            display: block;
+        }
+        
+        /* Layout Tab - Alignment Controls */
+        .alignment-section {
+            margin-bottom: 20px;
+        }
+        
+        .alignment-grid {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 8px;
+            margin-bottom: 16px;
+        }
+        
+        .alignment-control {
+            aspect-ratio: 1;
+            border: 1px solid #e2e8f0;
+            border-radius: 6px;
+            background: white;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            cursor: pointer;
+            transition: all 0.2s;
+            position: relative;
+        }
+        
+        .alignment-control:hover {
+            border-color: #3b82f6;
+            background: #eff6ff;
+        }
+        
+        .alignment-control.active {
+            background: #3b82f6;
+            border-color: #3b82f6;
+            color: white;
+        }
+        
+        /* Visual representation of alignment */
+        .align-visual {
+            width: 24px;
+            height: 18px;
+            position: relative;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+        }
+        
+        .align-line {
+            height: 2px;
+            background: currentColor;
+            margin: 1px 0;
+            opacity: 0.7;
+        }
+        
+        .align-visual.left .align-line { width: 20px; align-self: flex-start; }
+        .align-visual.left .align-line:nth-child(2) { width: 16px; }
+        .align-visual.left .align-line:nth-child(3) { width: 18px; }
+        
+        .align-visual.center .align-line { align-self: center; }
+        .align-visual.center .align-line:nth-child(1) { width: 20px; }
+        .align-visual.center .align-line:nth-child(2) { width: 14px; }
+        .align-visual.center .align-line:nth-child(3) { width: 18px; }
+        
+        .align-visual.right .align-line { align-self: flex-end; }
+        .align-visual.right .align-line:nth-child(1) { width: 20px; }
+        .align-visual.right .align-line:nth-child(2) { width: 16px; }
+        .align-visual.right .align-line:nth-child(3) { width: 18px; }
+        
+        .align-visual.justify .align-line { width: 20px; }
+        
+        .align-visual.top { align-items: flex-start; }
+        .align-visual.middle { align-items: center; }
+        .align-visual.bottom { align-items: flex-end; }
+        
+        .align-visual.flex {
+            flex-direction: row;
+            gap: 2px;
+        }
+        
+        .align-visual.flex .align-line {
+            width: 4px;
+            height: 16px;
+            margin: 0;
+        }
+        
+        /* Spacing Tab */
+        .spacing-group {
+            margin-bottom: 20px;
+        }
+        
+        .spacing-label {
+            font-size: 12px;
+            font-weight: 500;
+            color: #64748b;
+            margin-bottom: 8px;
+        }
+        
+        .spacing-controls {
+            display: grid;
+            grid-template-columns: repeat(4, 1fr);
+            gap: 8px;
+        }
+        
+        .spacing-input {
+            height: 36px;
+            border: 1px solid #e2e8f0;
+            border-radius: 6px;
+            text-align: center;
+            font-size: 13px;
+            background: white;
+            transition: all 0.2s;
+        }
+        
+        .spacing-input:focus {
+            outline: none;
+            border-color: #3b82f6;
+            box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.1);
+        }
+        
+        .input-label {
+            font-size: 10px;
+            color: #94a3b8;
+            text-align: center;
+            margin-top: 4px;
+        }
+        
+        /* Preset buttons */
+        .preset-row {
+            display: flex;
+            gap: 8px;
+            margin-top: 12px;
+        }
+        
+        .preset-btn {
+            flex: 1;
+            padding: 8px;
+            border: 1px solid #e2e8f0;
+            background: white;
+            border-radius: 6px;
+            font-size: 12px;
+            color: #64748b;
+            cursor: pointer;
+            transition: all 0.2s;
+        }
+        
+        .preset-btn:hover {
+            border-color: #3b82f6;
+            color: #3b82f6;
+            background: #eff6ff;
+        }
+        
+        /* Position Tab */
+        .position-grid {
+            display: grid;
+            grid-template-columns: repeat(2, 1fr);
+            gap: 16px;
+        }
+        
+        .position-group {
+            display: flex;
+            flex-direction: column;
+            gap: 8px;
+        }
+        
+        .position-select {
+            width: 100%;
+            height: 36px;
+            border: 1px solid #e2e8f0;
+            border-radius: 6px;
+            background: white;
+            font-size: 13px;
+            padding: 0 12px;
+            color: #334155;
+        }
+        
+        .position-select:focus {
+            outline: none;
+            border-color: #3b82f6;
+        }
+        
+        /* Gap slider */
+        .gap-control {
+            margin-top: 16px;
+        }
+        
+        .gap-slider {
+            width: 100%;
+            margin-top: 8px;
+            accent-color: #3b82f6;
+        }
+        
+        .gap-value {
+            float: right;
+            font-size: 12px;
+            color: #64748b;
+        }
+        
+        /* Live Preview */
+        .live-preview {
+            margin-top: 20px;
+            padding: 16px;
+            background: #f8fafc;
+            border-radius: 8px;
+            border: 1px solid #e2e8f0;
+        }
+        
+        .preview-label {
+            font-size: 12px;
+            font-weight: 500;
+            color: #64748b;
+            margin-bottom: 12px;
+        }
+        
+        .preview-container {
+            background: white;
+            border: 1px solid #e2e8f0;
+            border-radius: 6px;
+            padding: 20px;
+            transition: all 0.3s ease;
+            min-height: 120px;
+            display: flex;
+            flex-wrap: wrap;
+        }
+        
+        .preview-item {
+            background: #3b82f6;
+            color: white;
+            padding: 12px 16px;
+            border-radius: 4px;
+            font-size: 13px;
+            font-weight: 500;
+            margin: 4px;
+        }
+        
+        .current-values {
+            margin-top: 12px;
+            padding: 8px 12px;
+            background: #eff6ff;
+            border-radius: 4px;
+            font-size: 11px;
+            color: #1d4ed8;
+            font-family: monospace;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h1>Option 2: Tab-Based Layout</h1>
+            <p>Organized into mini tabs for Layout, Spacing & Position</p>
+        </div>
+        
+        <div class="properties-panel">
+            <!-- Layout Section -->
+            <div class="section">
+                <h3 class="section-title">Layout</h3>
+                
+                <!-- Mini Tabs -->
+                <div class="mini-tabs">
+                    <button class="mini-tab active" onclick="showTab('layout')">Layout</button>
+                    <button class="mini-tab" onclick="showTab('spacing')">Spacing</button>
+                    <button class="mini-tab" onclick="showTab('position')">Position</button>
+                </div>
+                
+                <div class="tab-content">
+                    <!-- Layout Tab -->
+                    <div class="tab-panel active" id="layout-tab">
+                        <div class="alignment-section">
+                            <div class="spacing-label">Text Alignment</div>
+                            <div class="alignment-grid">
+                                <div class="alignment-control active" title="Align Left">
+                                    <div class="align-visual left">
+                                        <div class="align-line"></div>
+                                        <div class="align-line"></div>
+                                        <div class="align-line"></div>
+                                    </div>
+                                </div>
+                                <div class="alignment-control" title="Center">
+                                    <div class="align-visual center">
+                                        <div class="align-line"></div>
+                                        <div class="align-line"></div>
+                                        <div class="align-line"></div>
+                                    </div>
+                                </div>
+                                <div class="alignment-control" title="Align Right">
+                                    <div class="align-visual right">
+                                        <div class="align-line"></div>
+                                        <div class="align-line"></div>
+                                        <div class="align-line"></div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <div class="alignment-section">
+                            <div class="spacing-label">Flex Direction</div>
+                            <div class="alignment-grid">
+                                <div class="alignment-control active" title="Row">
+                                    <div class="align-visual flex">
+                                        <div class="align-line"></div>
+                                        <div class="align-line"></div>
+                                        <div class="align-line"></div>
+                                    </div>
+                                </div>
+                                <div class="alignment-control" title="Column">
+                                    <div class="align-visual">
+                                        <div class="align-line"></div>
+                                        <div class="align-line"></div>
+                                        <div class="align-line"></div>
+                                    </div>
+                                </div>
+                                <div class="alignment-control" title="Wrap">
+                                    <div style="font-size: 10px;">↩️</div>
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <!-- Gap Control -->
+                        <div class="gap-control">
+                            <div class="spacing-label">
+                                Gap between items
+                                <span class="gap-value">16px</span>
+                            </div>
+                            <input type="range" class="gap-slider" min="0" max="48" value="16">
+                        </div>
+                    </div>
+                    
+                    <!-- Spacing Tab -->
+                    <div class="tab-panel" id="spacing-tab">
+                        <div class="spacing-group">
+                            <div class="spacing-label">Margin</div>
+                            <div class="spacing-controls">
+                                <div>
+                                    <input type="text" class="spacing-input" value="8" placeholder="0">
+                                    <div class="input-label">Top</div>
+                                </div>
+                                <div>
+                                    <input type="text" class="spacing-input" value="8" placeholder="0">
+                                    <div class="input-label">Right</div>
+                                </div>
+                                <div>
+                                    <input type="text" class="spacing-input" value="8" placeholder="0">
+                                    <div class="input-label">Bottom</div>
+                                </div>
+                                <div>
+                                    <input type="text" class="spacing-input" value="8" placeholder="0">
+                                    <div class="input-label">Left</div>
+                                </div>
+                            </div>
+                            <div class="preset-row">
+                                <button class="preset-btn">None</button>
+                                <button class="preset-btn">Small</button>
+                                <button class="preset-btn">Medium</button>
+                                <button class="preset-btn">Large</button>
+                            </div>
+                        </div>
+                        
+                        <div class="spacing-group">
+                            <div class="spacing-label">Padding</div>
+                            <div class="spacing-controls">
+                                <div>
+                                    <input type="text" class="spacing-input" value="16" placeholder="0">
+                                    <div class="input-label">Top</div>
+                                </div>
+                                <div>
+                                    <input type="text" class="spacing-input" value="16" placeholder="0">
+                                    <div class="input-label">Right</div>
+                                </div>
+                                <div>
+                                    <input type="text" class="spacing-input" value="16" placeholder="0">
+                                    <div class="input-label">Bottom</div>
+                                </div>
+                                <div>
+                                    <input type="text" class="spacing-input" value="16" placeholder="0">
+                                    <div class="input-label">Left</div>
+                                </div>
+                            </div>
+                            <div class="preset-row">
+                                <button class="preset-btn">None</button>
+                                <button class="preset-btn">Small</button>
+                                <button class="preset-btn">Medium</button>
+                                <button class="preset-btn">Large</button>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <!-- Position Tab -->
+                    <div class="tab-panel" id="position-tab">
+                        <div class="position-grid">
+                            <div class="position-group">
+                                <div class="spacing-label">Display</div>
+                                <select class="position-select">
+                                    <option>Block</option>
+                                    <option selected>Flex</option>
+                                    <option>Grid</option>
+                                    <option>Inline</option>
+                                    <option>None</option>
+                                </select>
+                            </div>
+                            
+                            <div class="position-group">
+                                <div class="spacing-label">Position</div>
+                                <select class="position-select">
+                                    <option selected>Static</option>
+                                    <option>Relative</option>
+                                    <option>Absolute</option>
+                                    <option>Fixed</option>
+                                    <option>Sticky</option>
+                                </select>
+                            </div>
+                            
+                            <div class="position-group">
+                                <div class="spacing-label">Justify</div>
+                                <select class="position-select">
+                                    <option selected>Flex Start</option>
+                                    <option>Center</option>
+                                    <option>Flex End</option>
+                                    <option>Space Between</option>
+                                    <option>Space Around</option>
+                                </select>
+                            </div>
+                            
+                            <div class="position-group">
+                                <div class="spacing-label">Align Items</div>
+                                <select class="position-select">
+                                    <option selected>Stretch</option>
+                                    <option>Flex Start</option>
+                                    <option>Center</option>
+                                    <option>Flex End</option>
+                                    <option>Baseline</option>
+                                </select>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <!-- Live Preview -->
+                    <div class="live-preview">
+                        <div class="preview-label">Live Preview</div>
+                        <div class="preview-container" id="previewContainer">
+                            <div class="preview-item">Item 1</div>
+                            <div class="preview-item">Item 2</div>
+                            <div class="preview-item">Item 3</div>
+                        </div>
+                        <div class="current-values" id="currentValues">
+                            Display: flex | Direction: row | Gap: 16px | Margin: 8px | Padding: 16px
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <script>
+        // Current state object
+        let currentState = {
+            display: 'flex',
+            flexDirection: 'row',
+            justifyContent: 'flex-start',
+            alignItems: 'stretch',
+            gap: 16,
+            marginTop: 8, marginRight: 8, marginBottom: 8, marginLeft: 8,
+            paddingTop: 16, paddingRight: 16, paddingBottom: 16, paddingLeft: 16,
+            textAlign: 'left'
+        };
+        
+        const previewContainer = document.getElementById('previewContainer');
+        const currentValues = document.getElementById('currentValues');
+        
+        // Update preview function
+        function updatePreview() {
+            const style = previewContainer.style;
+            
+            style.display = currentState.display;
+            style.flexDirection = currentState.flexDirection;
+            style.justifyContent = currentState.justifyContent;
+            style.alignItems = currentState.alignItems;
+            style.gap = `${currentState.gap}px`;
+            style.margin = `${currentState.marginTop}px ${currentState.marginRight}px ${currentState.marginBottom}px ${currentState.marginLeft}px`;
+            style.padding = `${currentState.paddingTop}px ${currentState.paddingRight}px ${currentState.paddingBottom}px ${currentState.paddingLeft}px`;
+            style.textAlign = currentState.textAlign;
+            
+            // Update values display
+            currentValues.textContent = `Display: ${currentState.display} | Direction: ${currentState.flexDirection} | Gap: ${currentState.gap}px | Margin: ${currentState.marginTop}px | Padding: ${currentState.paddingTop}px`;
+        }
+        
+        function showTab(tabName) {
+            // Hide all tab panels
+            const panels = document.querySelectorAll('.tab-panel');
+            panels.forEach(panel => panel.classList.remove('active'));
+            
+            // Remove active class from all tabs
+            const tabs = document.querySelectorAll('.mini-tab');
+            tabs.forEach(tab => tab.classList.remove('active'));
+            
+            // Show selected tab panel
+            document.getElementById(tabName + '-tab').classList.add('active');
+            
+            // Add active class to clicked tab
+            event.target.classList.add('active');
+        }
+        
+        // Alignment controls
+        document.querySelectorAll('.alignment-control').forEach(control => {
+            control.addEventListener('click', () => {
+                // Remove active from siblings
+                control.parentElement.querySelectorAll('.alignment-control').forEach(c => c.classList.remove('active'));
+                control.classList.add('active');
+                
+                const title = control.getAttribute('title');
+                
+                // Text alignment
+                if (['Align Left', 'Center', 'Align Right'].includes(title)) {
+                    if (title === 'Align Left') currentState.textAlign = 'left';
+                    else if (title === 'Center') currentState.textAlign = 'center';
+                    else if (title === 'Align Right') currentState.textAlign = 'right';
+                }
+                
+                // Flex direction
+                if (['Row', 'Column', 'Wrap'].includes(title)) {
+                    if (title === 'Row') {
+                        currentState.flexDirection = 'row';
+                        currentState.flexWrap = 'nowrap';
+                    } else if (title === 'Column') {
+                        currentState.flexDirection = 'column';
+                        currentState.flexWrap = 'nowrap';
+                    } else if (title === 'Wrap') {
+                        currentState.flexWrap = 'wrap';
+                    }
+                    
+                    previewContainer.style.flexWrap = currentState.flexWrap || 'nowrap';
+                }
+                
+                updatePreview();
+            });
+        });
+        
+        // Spacing inputs
+        document.querySelectorAll('.spacing-input').forEach(input => {
+            input.addEventListener('input', () => {
+                const value = parseInt(input.value) || 0;
+                const container = input.closest('.spacing-group');
+                const isMargin = container.querySelector('.spacing-label').textContent === 'Margin';
+                const index = Array.from(container.querySelectorAll('.spacing-input')).indexOf(input);
+                
+                if (isMargin) {
+                    if (index === 0) currentState.marginTop = value;
+                    else if (index === 1) currentState.marginRight = value;
+                    else if (index === 2) currentState.marginBottom = value;
+                    else if (index === 3) currentState.marginLeft = value;
+                } else {
+                    if (index === 0) currentState.paddingTop = value;
+                    else if (index === 1) currentState.paddingRight = value;
+                    else if (index === 2) currentState.paddingBottom = value;
+                    else if (index === 3) currentState.paddingLeft = value;
+                }
+                
+                updatePreview();
+            });
+        });
+        
+        // Preset buttons
+        document.querySelectorAll('.preset-btn').forEach(btn => {
+            btn.addEventListener('click', () => {
+                // Remove active from siblings
+                btn.parentElement.querySelectorAll('.preset-btn').forEach(b => b.classList.remove('active'));
+                btn.classList.add('active');
+                
+                let values = { margin: 0, padding: 0 };
+                
+                switch (btn.textContent) {
+                    case 'None': values = { margin: 0, padding: 0 }; break;
+                    case 'Small': values = { margin: 4, padding: 8 }; break;
+                    case 'Medium': values = { margin: 8, padding: 16 }; break;
+                    case 'Large': values = { margin: 16, padding: 24 }; break;
+                }
+                
+                const container = btn.closest('.spacing-group');
+                const isMargin = container.querySelector('.spacing-label').textContent === 'Margin';
+                const inputs = container.querySelectorAll('.spacing-input');
+                
+                if (isMargin) {
+                    currentState.marginTop = currentState.marginRight = 
+                    currentState.marginBottom = currentState.marginLeft = values.margin;
+                    inputs.forEach(input => input.value = values.margin);
+                } else {
+                    currentState.paddingTop = currentState.paddingRight = 
+                    currentState.paddingBottom = currentState.paddingLeft = values.padding;
+                    inputs.forEach(input => input.value = values.padding);
+                }
+                
+                updatePreview();
+            });
+        });
+        
+        // Gap slider
+        document.querySelector('.gap-slider').addEventListener('input', (e) => {
+            currentState.gap = parseInt(e.target.value);
+            document.querySelector('.gap-value').textContent = `${currentState.gap}px`;
+            updatePreview();
+        });
+        
+        // Position selects
+        document.querySelectorAll('.position-select').forEach(select => {
+            select.addEventListener('change', () => {
+                const label = select.previousElementSibling.textContent;
+                
+                if (label === 'Display') {
+                    currentState.display = select.value.toLowerCase();
+                } else if (label === 'Justify') {
+                    currentState.justifyContent = select.value.toLowerCase().replace(' ', '-');
+                } else if (label === 'Align Items') {
+                    currentState.alignItems = select.value.toLowerCase().replace(' ', '-');
+                }
+                
+                updatePreview();
+            });
+        });
+        
+        // Initialize
+        updatePreview();
+        
+        // Set initial active states
+        document.querySelector('.alignment-control').classList.add('active');
+        document.querySelectorAll('.preset-btn')[2].classList.add('active'); // Medium
+    </script>
+</body>
+</html>
