@@ -4,6 +4,7 @@ import { useStore } from '../store/useStore';
 import type { FormElement } from '../types';
 import { Trash2, Info, Copy, Star, EyeOff, Plus, ChevronUp, ChevronDown, Menu, GripVertical } from 'lucide-react';
 import { clsx } from 'clsx';
+import { RichTextEditor } from './RichTextEditor';
 
 const ColumnPlaceholder: React.FC<{ element: FormElement; index: number }> = ({ element, index }) => {
     const { setNodeRef, isOver } = useDroppable({
@@ -11,15 +12,50 @@ const ColumnPlaceholder: React.FC<{ element: FormElement; index: number }> = ({ 
         data: { type: 'columns', containerId: element.id, columnIndex: index }
     });
     
+    const { currentProject, selectedElementId, elements } = useStore();
+    const isFormProject = currentProject?.type === 'form';
+    
+    // Check if this column placeholder is part of a selected container
+    const isDescendantOfSelected = selectedElementId && (() => {
+        // Check if the parent columns element is the selected element or a descendant of it
+        const isAncestor = (currentElementId: string, targetAncestorId: string, elements: FormElement[]): boolean => {
+            let currentId = currentElementId;
+            while (currentId) {
+                if (currentId === targetAncestorId) return true;
+                
+                // Find parent of current element
+                const findParent = (id: string, elems: FormElement[]): string | null => {
+                    for (const el of elems) {
+                        if (el.children) {
+                            for (const childEl of el.children) {
+                                if (childEl && childEl.id === id) return el.id;
+                            }
+                            const found = findParent(id, el.children);
+                            if (found) return found;
+                        }
+                    }
+                    return null;
+                };
+                
+                currentId = findParent(currentId, elements);
+            }
+            return false;
+        };
+        
+        return isAncestor(element.id, selectedElementId, elements);
+    })();
     
     return (
         <div 
             ref={setNodeRef}
             className={clsx(
-                "flex-1 border-2 rounded-lg flex flex-col items-center justify-center h-32 text-slate-400 cursor-pointer transition-all duration-200",
+                "flex-1 rounded-lg flex flex-col items-center justify-center h-32 text-slate-400 cursor-pointer transition-all duration-200",
+                isFormProject && "border-2",
                 isOver 
-                    ? "border-solid border-blue-500 bg-blue-100 shadow-lg transform scale-105" 
-                    : "border-dashed border-slate-300 bg-slate-100/50 hover:border-brand-400 hover:bg-brand-50/30"
+                    ? (isFormProject ? "border-solid border-blue-500 bg-blue-100 shadow-lg transform scale-105" : "bg-blue-100 shadow-lg transform scale-105")
+                    : isDescendantOfSelected 
+                        ? "border-solid border-blue-400 bg-blue-50/20 hover:border-blue-500 hover:bg-blue-50/30"
+                        : (isFormProject ? "border-dashed border-slate-300 bg-slate-100/50 hover:border-brand-400 hover:bg-brand-50/30" : "bg-slate-100/50 hover:bg-brand-50/30")
             )}
         >
             {isOver ? (
@@ -47,10 +83,10 @@ const ColumnCellDropZone: React.FC<{ containerId: string; columnIndex: number }>
         <div 
             ref={setNodeRef}
             className={clsx(
-                "border-2 border-dashed rounded-lg p-4 text-center text-slate-400 text-sm transition-all",
+                "w-full h-full flex items-center justify-center text-center text-slate-400 text-sm transition-all",
                 isOver 
-                    ? "border-blue-500 bg-blue-100 text-blue-600 shadow-lg" 
-                    : "border-slate-200 hover:border-slate-400 hover:bg-slate-50"
+                    ? "bg-blue-100 text-blue-600" 
+                    : "hover:bg-slate-50"
             )}
         >
             {isOver ? (
@@ -67,7 +103,73 @@ const ColumnCellDropZone: React.FC<{ containerId: string; columnIndex: number }>
     );
 };
 
+const RowCellDropZone: React.FC<{ containerId: string; rowIndex: number }> = ({ containerId, rowIndex }) => {
+    const { setNodeRef, isOver } = useDroppable({
+        id: `row-cell-add-${containerId}`,
+        data: { type: 'container', containerId }
+    });
+    
+    return (
+        <div 
+            ref={setNodeRef}
+            className={clsx(
+                "w-full h-full flex items-center justify-center text-center text-slate-400 text-sm transition-all",
+                isOver 
+                    ? "bg-blue-100 text-blue-600" 
+                    : "hover:bg-slate-50"
+            )}
+        >
+            {isOver ? (
+                <div className="font-bold">
+                    Drop here to add to Row
+                </div>
+            ) : (
+                <div>
+                    <Plus size={16} className="mx-auto mb-1 opacity-60" />
+                    Drop here to add to Row
+                </div>
+            )}
+        </div>
+    );
+};
+
+const RowCellEndDropZone: React.FC<{ containerId: string; rowGap: number }> = ({ containerId, rowGap }) => {
+    const { setNodeRef, isOver } = useDroppable({
+        id: `row-cell-end-${containerId}`,
+        data: { type: 'container', containerId }
+    });
+    
+    return (
+        <div 
+            ref={setNodeRef}
+            className={clsx(
+                "w-full min-h-[8px] flex items-center justify-center text-slate-400 text-xs transition-all",
+                isOver 
+                    ? "bg-blue-100 min-h-[24px]" 
+                    : "opacity-0 hover:opacity-100"
+            )}
+            style={{ marginTop: `${rowGap * 0.25}rem` }}
+        >
+            {isOver ? (
+                <div className="bg-blue-500 text-white text-xs px-2 py-1 rounded font-medium shadow-lg">
+                    Drop here to add after
+                </div>
+            ) : (
+                <div className="h-px bg-slate-300 w-full"></div>
+            )}
+        </div>
+    );
+};
+
 interface ColumnDropZoneProps {
+    element: FormElement;
+    index: number;
+    child: FormElement | undefined;
+    cellEditMode: boolean;
+    handleCellClick: (e: React.MouseEvent, index: number) => void;
+}
+
+interface RowDropZoneProps {
     element: FormElement;
     index: number;
     child: FormElement | undefined;
@@ -85,7 +187,38 @@ const ColumnDropZone: React.FC<ColumnDropZoneProps> = ({ element, index, child, 
         }
     });
 
-    const { selectElement } = useStore();
+    const { selectElement, currentProject, selectedElementId, elements } = useStore();
+    const isFormProject = currentProject?.type === 'form';
+    
+    // Check if this column cell is a descendant of the selected element
+    const isDescendantOfSelected = selectedElementId && child && (() => {
+        // Walk up the parent chain to see if we're a descendant of the selected element
+        const isAncestor = (currentElementId: string, targetAncestorId: string, elements: FormElement[]): boolean => {
+            let currentId = currentElementId;
+            while (currentId) {
+                if (currentId === targetAncestorId) return true;
+                
+                // Find parent of current element
+                const findParent = (id: string, elems: FormElement[]): string | null => {
+                    for (const el of elems) {
+                        if (el.children) {
+                            for (const childEl of el.children) {
+                                if (childEl && childEl.id === id) return el.id;
+                            }
+                            const found = findParent(id, el.children);
+                            if (found) return found;
+                        }
+                    }
+                    return null;
+                };
+                
+                currentId = findParent(currentId, elements);
+            }
+            return false;
+        };
+        
+        return isAncestor(child.id, selectedElementId, elements);
+    })();
 
     const handleColumnClick = (e: React.MouseEvent) => {
         // If clicking on column cell with container child, select the child container
@@ -115,13 +248,12 @@ const ColumnDropZone: React.FC<ColumnDropZoneProps> = ({ element, index, child, 
             className={clsx(
                 "relative flex-1 min-h-[120px] transition-all duration-200",
                 cellEditMode && "border-orange-400 bg-orange-50 hover:border-orange-600 hover:bg-orange-100 cursor-pointer border-2 border-dashed",
-                isOver && !cellEditMode && "border-4 border-solid border-blue-500 bg-blue-100 rounded-lg shadow-lg transform scale-105",
-                !cellEditMode && !isOver && "border-2 border-dashed border-slate-300 bg-slate-50/50 hover:border-slate-400 hover:bg-slate-100/50 rounded-lg",
-                // Add margin between columns for visual separation
-                index > 0 && "ml-4"
+                isOver && !cellEditMode && (isFormProject ? "border-4 border-solid border-blue-500 bg-blue-100 rounded-lg shadow-lg transform scale-105" : "bg-blue-100 rounded-lg shadow-lg transform scale-105"),
+                !cellEditMode && !isOver && isDescendantOfSelected && "border-2 border-blue-400 border-dashed bg-blue-50/20 rounded-lg",
+                !cellEditMode && !isOver && !isDescendantOfSelected && isFormProject && "border-2 border-dashed border-slate-300 hover:border-slate-400 rounded-lg"
             )}
             style={{
-                backgroundColor: element.columnBackgrounds?.[index] || 'transparent'
+                backgroundColor: element.columnBackgrounds?.[index] || undefined
             }}
             onClick={handleColumnClick}
         >
@@ -142,12 +274,22 @@ const ColumnDropZone: React.FC<ColumnDropZoneProps> = ({ element, index, child, 
 
             {/* Content area */}
             <div 
-                className="relative w-full h-full p-2"
+                className={clsx(
+                    "relative w-full h-full p-2 transition-all duration-200",
+                    child && child.type === 'container' && isDescendantOfSelected && "border border-blue-400 border-dashed bg-blue-50/20 rounded-lg"
+                )}
                 style={{ 
                     pointerEvents: cellEditMode ? 'none' : 'auto',
-                    display: child && child.type === 'container' ? 'flex' : 'flex',
+                    display: child && child.type === 'container' ? (child.display || 'flex') : 'flex',
                     flexDirection: child && child.type === 'container' ? (child.flexDirection || 'column') : 'column',
-                    gap: child && child.type === 'container' ? `${(child.gap || 4) * 0.25}rem` : '0.5rem'
+                    flexWrap: child && child.type === 'container' ? (child.flexWrap || 'wrap') : 'wrap',
+                    justifyContent: child && child.type === 'container' ? (child.justifyContent || 'flex-start') : 'flex-start',
+                    alignItems: child && child.type === 'container' ? (child.alignItems || 'flex-start') : 'flex-start',
+                    alignContent: child && child.type === 'container' ? (child.alignContent || 'flex-start') : 'flex-start',
+                    rowGap: child && child.type === 'container' ? `${(child.rowGap ?? 16) * 0.25}rem` : '1rem',
+                    columnGap: child && child.type === 'container' ? `${(child.columnGap ?? 16) * 0.25}rem` : '1rem',
+                    gridTemplateColumns: child && child.type === 'container' && child.display === 'grid' ? 
+                        `repeat(${child.gridColumns || 3}, auto)` : undefined
                 }}
             >
                 {child && child.type === 'container' ? (
@@ -174,7 +316,7 @@ const ColumnDropZone: React.FC<ColumnDropZoneProps> = ({ element, index, child, 
                 ) : (
                     // Fallback - should not happen with new structure
                     !cellEditMode && (
-                        <div className="flex items-center justify-center h-full text-slate-400 text-sm border-2 border-dashed border-slate-200 rounded-lg p-4">
+                        <div className="flex items-center justify-center h-full text-slate-400 text-sm">
                             <div className="text-center">
                                 <Plus size={20} className="mx-auto mb-2 opacity-60" />
                                 <p>Empty Column {index + 1}</p>
@@ -199,6 +341,173 @@ const ColumnDropZone: React.FC<ColumnDropZoneProps> = ({ element, index, child, 
     );
 };
 
+const RowDropZone: React.FC<RowDropZoneProps> = ({ element, index, child, cellEditMode, handleCellClick }) => {
+    const { setNodeRef, isOver } = useDroppable({
+        id: `row-cell-${element.id}-${index}`,
+        data: { 
+            type: child && child.type === 'container' ? 'container' : 'rows', 
+            containerId: child && child.type === 'container' ? child.id : element.id, 
+            rowIndex: index 
+        }
+    });
+
+    const { selectElement, currentProject, selectedElementId, elements } = useStore();
+    const isFormProject = currentProject?.type === 'form';
+    
+    // Check if this row cell is a descendant of the selected element
+    const isDescendantOfSelected = selectedElementId && child && (() => {
+        // Walk up the parent chain to see if we're a descendant of the selected element
+        const isAncestor = (currentElementId: string, targetAncestorId: string, elements: FormElement[]): boolean => {
+            let currentId = currentElementId;
+            while (currentId) {
+                if (currentId === targetAncestorId) return true;
+                
+                // Find parent of current element
+                const findParent = (id: string, elems: FormElement[]): string | null => {
+                    for (const el of elems) {
+                        if (el.children) {
+                            for (const childEl of el.children) {
+                                if (childEl && childEl.id === id) return el.id;
+                            }
+                            const found = findParent(id, el.children);
+                            if (found) return found;
+                        }
+                    }
+                    return null;
+                };
+                
+                currentId = findParent(currentId, elements);
+            }
+            return false;
+        };
+        
+        return isAncestor(child.id, selectedElementId, elements);
+    })();
+
+    const handleRowClick = (e: React.MouseEvent) => {
+        // If clicking on row cell with container child, select the child container
+        if (child && child.type === 'container' && !cellEditMode) {
+            selectElement(child.id);
+            e.stopPropagation();
+            return;
+        }
+        // If clicking on empty row area and not in cell edit mode
+        if (!child && !cellEditMode) {
+            // Select the parent container (the rows element) when clicking empty areas
+            selectElement(element.id);
+            e.stopPropagation();
+            return;
+        }
+        // For cell edit mode, handle cell click
+        if (cellEditMode) {
+            handleCellClick(e, index);
+            e.stopPropagation();
+        }
+    };
+
+    return (
+        <div
+            ref={setNodeRef}
+            key={index}
+            className={clsx(
+                "relative min-h-[120px] w-full transition-all duration-200",
+                cellEditMode && "border-orange-400 hover:border-orange-600 cursor-pointer border-2 border-dashed",
+                cellEditMode && !element.rowBackgrounds?.[index] && "bg-orange-50 hover:bg-orange-100",
+                isOver && !cellEditMode && (isFormProject ? "border-4 border-solid border-blue-500 rounded-lg shadow-lg transform scale-105" : "rounded-lg shadow-lg transform scale-105"),
+                isOver && !cellEditMode && !element.rowBackgrounds?.[index] && "bg-blue-100",
+                !cellEditMode && !isOver && isDescendantOfSelected && "border-2 border-blue-400 border-dashed bg-blue-50/20 rounded-lg",
+                !cellEditMode && !isOver && !isDescendantOfSelected && isFormProject && "border-2 border-dashed border-slate-300 hover:border-slate-400 rounded-lg"
+            )}
+            style={{
+                backgroundColor: element.rowBackgrounds?.[index] || undefined
+            }}
+            onClick={handleRowClick}
+        >
+            {cellEditMode && (
+                <div className="absolute top-1 right-1 bg-orange-600 text-white text-xs px-2 py-1 rounded font-medium z-40">
+                    Row {index + 1}
+                </div>
+            )}
+
+            {/* Drop indicator */}
+            {isOver && !cellEditMode && (
+                <div className="absolute inset-0 flex items-center justify-center bg-blue-500/20 backdrop-blur-sm">
+                    <div className="bg-blue-500 text-white text-lg px-4 py-2 rounded-lg font-bold shadow-lg border-2 border-blue-300 animate-pulse">
+                        Drop into Row {index + 1}
+                    </div>
+                </div>
+            )}
+
+            {/* Content area */}
+            <div 
+                className={clsx(
+                    "relative w-full h-full p-2 transition-all duration-200",
+                    child && child.type === 'container' && isDescendantOfSelected && "border border-blue-400 border-dashed bg-blue-50/20 rounded-lg"
+                )}
+                style={{ 
+                    pointerEvents: cellEditMode ? 'none' : 'auto',
+                    display: child && child.type === 'container' ? (child.display || 'flex') : 'flex',
+                    flexDirection: child && child.type === 'container' ? (child.flexDirection || 'column') : 'column',
+                    flexWrap: child && child.type === 'container' ? (child.flexWrap || 'nowrap') : 'nowrap',
+                    justifyContent: child && child.type === 'container' ? (child.justifyContent || 'flex-start') : 'flex-start',
+                    alignItems: child && child.type === 'container' ? (child.alignItems || 'flex-start') : 'flex-start',
+                    alignContent: child && child.type === 'container' ? (child.alignContent || 'flex-start') : 'flex-start',
+                    rowGap: child && child.type === 'container' ? `${(element.rowGap ?? element.gap ?? 0) * 0.25}rem` : '0rem',
+                    columnGap: child && child.type === 'container' ? `${(child.columnGap ?? 0) * 0.25}rem` : '0rem',
+                    gridTemplateColumns: child && child.type === 'container' && child.display === 'grid' ? 
+                        `repeat(${child.gridColumns || 3}, auto)` : undefined
+                }}
+            >
+                {child && child.type === 'container' ? (
+                    child.children && child.children.length > 0 ? (
+                        // Row cell has content - render all children with drop zones
+                        <>
+                            {child.children.map((cellChild, cellIndex) => (
+                                <SortableElement 
+                                    key={cellChild.id} 
+                                    element={cellChild} 
+                                    parentId={child.id} 
+                                />
+                            ))}
+                            <RowCellEndDropZone containerId={child.id} rowGap={element.rowGap ?? element.gap ?? 0} />
+                        </>
+                    ) : (
+                        // Empty row cell container - show drop zone
+                        !cellEditMode && (
+                            <RowCellDropZone 
+                                containerId={child.id} 
+                                rowIndex={index}
+                            />
+                        )
+                    )
+                ) : (
+                    // Fallback - should not happen with new structure
+                    !cellEditMode && (
+                        <div className="flex items-center justify-center h-full text-slate-400 text-sm">
+                            <div className="text-center">
+                                <Plus size={20} className="mx-auto mb-2 opacity-60" />
+                                <p>Empty Row {index + 1}</p>
+                                <p className="text-xs opacity-75">No container</p>
+                            </div>
+                        </div>
+                    )
+                )}
+                
+                {/* Click overlay when in cell edit mode */}
+                {cellEditMode && (
+                    <div
+                        className="absolute inset-0 z-50 cursor-pointer bg-transparent"
+                        onClick={(e) => handleCellClick(e, index)}
+                        onMouseDown={(e) => e.preventDefault()}
+                        title={`Click to edit Row ${index + 1} background`}
+                        style={{ pointerEvents: 'auto' }}
+                    />
+                )}
+            </div>
+        </div>
+    );
+};
+
 
 interface SortableElementProps {
     element: FormElement;
@@ -215,7 +524,11 @@ const ContainerContent: React.FC<{ element: FormElement }> = ({ element }) => {
     return (
         <div
             ref={setNodeRef}
-            className="container-content border-2 border-dashed border-slate-200 rounded-lg bg-slate-50/30 hover:border-brand-300 hover:bg-brand-50/20"
+            className={clsx(
+                "container-content rounded-lg",
+                isFormProject && "border-2 border-dashed border-slate-200 hover:border-brand-300",
+                element.type !== 'menu' && "bg-slate-50/30 hover:bg-brand-50/20"
+            )}
         >
             {(!element.children || element.children.length === 0) ? (
                 element.type === 'columns' ? (
@@ -256,7 +569,7 @@ const ContainerContent: React.FC<{ element: FormElement }> = ({ element }) => {
                         alignContent: (element.type === 'rows' || element.type === 'columns' || element.type === 'menu' || element.display === 'flex') ? (element.alignContent || 'flex-start') : 'start',
                         gridTemplateColumns: (element.display === 'grid' || element.type === 'grid') && element.type !== 'rows' ? `repeat(${element.gridColumns || 3}, auto)` : undefined,
                         rowGap: (element.display !== 'block' || element.type === 'rows' || element.type === 'grid') ? `${(element.rowGap || element.gap || 0) * 0.25}rem` : undefined,
-                        columnGap: (element.display !== 'block' || element.type === 'grid' || element.type === 'columns' || element.type === 'menu') ? `${(element.columnGap || element.gap || 0) * 0.25}rem` : undefined,
+                        columnGap: (element.display !== 'block' || element.type === 'grid' || element.type === 'menu') && element.type !== 'columns' ? `${(element.columnGap || element.gap || 0) * 0.25}rem` : undefined,
                         // Add minimum height only when needed for spacing to work in column direction
                         minHeight: (element.display === 'flex' && element.flexDirection === 'column') || 
                                    element.type === 'rows' ||
@@ -293,7 +606,8 @@ const ColumnsContent: React.FC<{ element: FormElement }> = ({ element }) => {
         id: `columns-${element.id}`,
         data: { type: 'columns', containerId: element.id }
     });
-    const { selectElement, updateElement } = useStore();
+    const { selectElement, updateElement, currentProject } = useStore();
+    const isFormProject = currentProject?.type === 'form';
 
     useEffect(() => {
         const checkMobile = () => {
@@ -341,7 +655,13 @@ const ColumnsContent: React.FC<{ element: FormElement }> = ({ element }) => {
     return (
         <div
             ref={setNodeRef}
-            className="bg-slate-50 border border-slate-200 rounded-lg relative"
+            className={clsx(
+                "rounded-lg relative",
+                isFormProject && "border border-slate-200"
+            )}
+            style={{
+                backgroundColor: element.backgroundColor || 'transparent'
+            }}
         >
             {cellEditMode && (
                 <div className="absolute top-2 left-2 bg-blue-600 text-white text-xs px-2 py-1 rounded font-medium z-50">
@@ -367,9 +687,9 @@ const ColumnsContent: React.FC<{ element: FormElement }> = ({ element }) => {
                     gridTemplateColumns: (element.display === 'grid' || element.type === 'grid') && element.type !== 'columns' && element.type !== 'rows' ? 
                         (isMobile ? '1fr' : `repeat(${element.gridColumns || element.columnCount || 3}, 1fr)`) : undefined,
                     rowGap: (element.display !== 'block' || element.type === 'rows' || element.type === 'grid') ? 
-                        `${(element.rowGap || element.gap || 0) * 0.25}rem` : undefined,
-                    columnGap: (element.display !== 'block' || element.type === 'columns' || element.type === 'grid') ? 
-                        `${(element.columnGap || element.gap || 16) * 0.25}rem` : undefined
+                        `${(element.rowGap ?? element.gap ?? 0) * 0.25}rem` : undefined,
+                    columnGap: (element.display !== 'block' || element.type === 'grid') && element.type !== 'columns' ? 
+                        `${(element.columnGap ?? element.gap ?? 0) * 0.25}rem` : undefined
                 }}
             >
 {(element.type === 'columns') ? (
@@ -460,8 +780,101 @@ const ColumnsContent: React.FC<{ element: FormElement }> = ({ element }) => {
     );
 };
 
+const RowsContent: React.FC<{ element: FormElement }> = ({ element }) => {
+    const [cellEditMode, setCellEditMode] = useState(false);
+    const { setNodeRef } = useDroppable({
+        id: `rows-${element.id}`,
+        data: { type: 'rows', containerId: element.id }
+    });
+    const { selectElement, updateElement, currentProject } = useStore();
+    const isFormProject = currentProject?.type === 'form';
+
+    useEffect(() => {
+        const handleKeyDown = (e: KeyboardEvent) => {
+            if (e.key === 'Alt' || e.key === 'Option') {
+                setCellEditMode(true);
+            }
+        };
+
+        const handleKeyUp = (e: KeyboardEvent) => {
+            if (e.key === 'Alt' || e.key === 'Option') {
+                setCellEditMode(false);
+            }
+        };
+
+        window.addEventListener('keydown', handleKeyDown);
+        window.addEventListener('keyup', handleKeyUp);
+
+        return () => {
+            window.removeEventListener('keydown', handleKeyDown);
+            window.removeEventListener('keyup', handleKeyUp);
+        };
+    }, []);
+
+    const handleCellClick = (e: React.MouseEvent, cellIndex: number) => {
+        if (cellEditMode) {
+            e.stopPropagation();
+            e.preventDefault();
+            console.log('Row background edit mode - cell clicked:', cellIndex, 'element.id:', element.id);
+            updateElement(element.id, { selectedRowIndex: cellIndex });
+            selectElement(element.id);
+            console.log('Updated element with selectedRowIndex:', cellIndex);
+        }
+    };
+
+    return (
+        <div
+            ref={setNodeRef}
+            className={clsx(
+                "rounded-lg relative",
+                isFormProject && "border border-slate-200"
+            )}
+            style={{
+                backgroundColor: element.backgroundColor || 'transparent'
+            }}
+        >
+            {cellEditMode && (
+                <div className="absolute top-2 left-2 bg-blue-600 text-white text-xs px-2 py-1 rounded font-medium z-50">
+                    Cell Edit Mode - Click any row to edit background
+                </div>
+            )}
+            
+            <div 
+                style={{
+                    display: 'flex',
+                    flexDirection: 'column',
+                    flexWrap: element.flexWrap || 'nowrap',
+                    justifyContent: element.justifyContent || 'flex-start',
+                    alignItems: element.alignItems || 'stretch',
+                    alignContent: element.alignContent || 'flex-start',
+                    rowGap: `${(element.rowGap ?? element.gap ?? 0) * 0.25}rem`,
+                    columnGap: `${(element.columnGap ?? element.gap ?? 0) * 0.25}rem`
+                }}
+            >
+                {/* For rows, use individual drop zones for each row */}
+                {Array.from({ length: element.rowCount || 1 }).map((_, index) => {
+                    const child = element.children?.[index];
+                    return (
+                        <RowDropZone
+                            key={index}
+                            element={element}
+                            index={index}
+                            child={child}
+                            cellEditMode={cellEditMode}
+                            handleCellClick={handleCellClick}
+                        />
+                    );
+                })}
+            </div>
+        </div>
+    );
+};
+
 const SortableElement: React.FC<SortableElementProps> = ({ element, parentId }) => {
     const { selectElement, selectedElementId, removeElement, duplicateElement, updateElement, moveElementUp, moveElementDown, elements, currentProject } = useStore();
+    
+    // Add hover state for container highlighting
+    const [hoveredContainerId, setHoveredContainerId] = React.useState<string | null>(null);
     
     // Add draggable functionality
     const { attributes, listeners, setNodeRef: setDragNodeRef, transform, isDragging } = useDraggable({
@@ -497,6 +910,51 @@ const SortableElement: React.FC<SortableElementProps> = ({ element, parentId }) 
     const isSelected = selectedElementId === element.id;
     const hasAnySelection = selectedElementId !== null;
     const isFormProject = currentProject?.type === 'form';
+    
+    // Check if this element is a descendant of the selected element (for showing nested borders)
+    const isDescendantOfSelected = selectedElementId && (() => {
+        // Walk up the parent chain to see if we're a descendant of the selected element
+        const isAncestor = (currentElementId: string, targetAncestorId: string, elements: FormElement[]): boolean => {
+            // Find the current element in the tree
+            const findElementWithParent = (id: string, elems: FormElement[], parentId?: string): { element: FormElement; parent?: FormElement } | null => {
+                for (const el of elems) {
+                    if (!el) continue;
+                    if (el.id === id) {
+                        return { element: el, parent: parentId ? elems.find(p => p.id === parentId) : undefined };
+                    }
+                    if (el.children) {
+                        const found = findElementWithParent(id, el.children, el.id);
+                        if (found) return found;
+                    }
+                }
+                return null;
+            };
+            
+            let currentId = currentElementId;
+            while (currentId) {
+                if (currentId === targetAncestorId) return true;
+                
+                // Find parent of current element
+                const findParent = (id: string, elems: FormElement[]): string | null => {
+                    for (const el of elems) {
+                        if (el.children) {
+                            for (const child of el.children) {
+                                if (child && child.id === id) return el.id;
+                            }
+                            const found = findParent(id, el.children);
+                            if (found) return found;
+                        }
+                    }
+                    return null;
+                };
+                
+                currentId = findParent(currentId, elements);
+            }
+            return false;
+        };
+        
+        return isAncestor(element.id, selectedElementId, elements);
+    })();
 
     // Check if parent is a columns or container component
     const parentInfo = parentId && (() => {
@@ -660,9 +1118,10 @@ const SortableElement: React.FC<SortableElementProps> = ({ element, parentId }) 
                 selectElement(element.id);
                 console.log('Element selected:', element.id, 'parentId:', parentId);
             }}
-            {...(isSelected ? { ...listeners, ...attributes } : {})}
+            {...(isSelected && !['rich-text', 'text-block', 'heading'].includes(element.type) ? { ...listeners, ...attributes } : {})}
             className={clsx(
-                "group relative flex flex-col cursor-pointer",
+                "group relative flex flex-col",
+                !isSelected || !['rich-text', 'text-block', 'heading'].includes(element.type) ? "cursor-pointer" : "cursor-auto",
                 isNested && !['columns', 'menu'].includes(parentInfo?.parent?.type) && "w-full", // Full width inside any container but not columns or menu
                 "opacity-100",
                 isSelected && "z-10",
@@ -670,9 +1129,11 @@ const SortableElement: React.FC<SortableElementProps> = ({ element, parentId }) 
                 parentId && "z-20", // Higher z-index for nested elements
                 isDragging && "opacity-50",
                 // Default transparent border to prevent layout shift on hover
-                !isSelected && "border border-transparent",
+                !isSelected && !isDescendantOfSelected && "border border-transparent",
+                // Show border when element is descendant of selected container
+                isDescendantOfSelected && !isSelected && "border border-blue-400 border-dashed bg-blue-50/20 rounded-lg",
                 // Hover highlighting - only for columns and main components when dragging
-                !isSelected && !isDragging && "hover:border-brand-500 hover:border-dashed hover:bg-brand-50/20 rounded-lg"
+                !isSelected && !isDragging && !isDescendantOfSelected && "hover:border-brand-500 hover:border-dashed hover:bg-brand-50/20 rounded-lg"
             )}
             style={{
                 ...(parentId ? { pointerEvents: 'auto', position: 'relative' } : {}),
@@ -710,10 +1171,10 @@ const SortableElement: React.FC<SortableElementProps> = ({ element, parentId }) 
                 ref={setDropBeforeNodeRef}
                 className={clsx(
                     "absolute -top-2 left-0 right-0 h-4 flex items-center justify-center z-40",
-                    isOverBefore && element.type !== 'columns' && "bg-blue-500/20"
+                    isOverBefore && "bg-blue-500/20"
                 )}
             >
-                {isOverBefore && element.type !== 'columns' && (
+                {isOverBefore && (
                     <div className="bg-blue-500 text-white text-xs px-2 py-1 rounded font-medium shadow-lg">
                         Drop before
                     </div>
@@ -725,10 +1186,10 @@ const SortableElement: React.FC<SortableElementProps> = ({ element, parentId }) 
                 ref={setDropAfterNodeRef}
                 className={clsx(
                     "absolute -bottom-2 left-0 right-0 h-4 flex items-center justify-center z-40",
-                    isOverAfter && element.type !== 'columns' && "bg-blue-500/20"
+                    isOverAfter && "bg-blue-500/20"
                 )}
             >
-                {isOverAfter && element.type !== 'columns' && (
+                {isOverAfter && (
                     <div className="bg-blue-500 text-white text-xs px-2 py-1 rounded font-medium shadow-lg">
                         Drop after
                     </div>
@@ -771,8 +1232,8 @@ const SortableElement: React.FC<SortableElementProps> = ({ element, parentId }) 
                 </div>
             )}
 
-            {/* Resize Handles - Hide for elements inside containers or columns */}
-            {!isNested && (
+            {/* Resize Handles - Hide for elements inside containers, columns, or non-form projects */}
+            {!isNested && isFormProject && (
                 <>
                     <div className={clsx(
                         "absolute right-0 top-0 bottom-0 w-4 cursor-e-resize flex items-center justify-center z-30",
@@ -804,15 +1265,15 @@ const SortableElement: React.FC<SortableElementProps> = ({ element, parentId }) 
                     isSelected && "ring-2 ring-brand-400 ring-opacity-50"
                 )}
                 style={{
-                    backgroundColor: ['container', 'columns', 'rows', 'grid'].includes(element.type) ? element.backgroundColor : undefined,
-                    // Only apply padding for container, columns, rows, and grid - regular elements handle their own spacing
-                    paddingTop: ['container', 'columns', 'rows', 'grid'].includes(element.type) ? `${(element.paddingTop ?? 0) * 0.25}rem` : undefined,
-                    paddingRight: ['container', 'columns', 'rows', 'grid'].includes(element.type) ? `${(element.paddingRight ?? 0) * 0.25}rem` : undefined,
-                    paddingBottom: ['container', 'columns', 'rows', 'grid'].includes(element.type) ? `${(element.paddingBottom ?? 0) * 0.25}rem` : undefined,
-                    paddingLeft: ['container', 'columns', 'rows', 'grid'].includes(element.type) ? `${(element.paddingLeft ?? 0) * 0.25}rem` : undefined
+                    backgroundColor: ['container', 'columns', 'rows', 'grid', 'menu'].includes(element.type) ? element.backgroundColor : undefined,
+                    // Only apply padding for container, columns, rows, grid, and menu - regular elements handle their own spacing
+                    paddingTop: ['container', 'columns', 'rows', 'grid', 'menu'].includes(element.type) ? `${(element.paddingTop ?? 0) * 0.25}rem` : undefined,
+                    paddingRight: ['container', 'columns', 'rows', 'grid', 'menu'].includes(element.type) ? `${(element.paddingRight ?? 0) * 0.25}rem` : undefined,
+                    paddingBottom: ['container', 'columns', 'rows', 'grid', 'menu'].includes(element.type) ? `${(element.paddingBottom ?? 0) * 0.25}rem` : undefined,
+                    paddingLeft: ['container', 'columns', 'rows', 'grid', 'menu'].includes(element.type) ? `${(element.paddingLeft ?? 0) * 0.25}rem` : undefined
                 }}
             >
-                {isFormProject && !['hidden', 'rich-text', 'container', 'columns', 'rows', 'grid'].includes(element.type) && element.label && element.label.trim() && (
+                {isFormProject && !['hidden', 'rich-text', 'container', 'columns', 'rows', 'grid', 'menu'].includes(element.type) && element.label && element.label.trim() && (
                     <div 
                         className="flex justify-between items-start"
                         style={{ marginBottom: element.labelGap !== undefined ? `${element.labelGap * 0.25}rem` : '0.75rem' }}
@@ -844,7 +1305,7 @@ const SortableElement: React.FC<SortableElementProps> = ({ element, parentId }) 
                     </div>
                 )}
 
-                {isFormProject && ['container', 'columns', 'rows', 'grid'].includes(element.type) && element.label && element.label.trim() && (
+                {isFormProject && ['container', 'columns', 'rows', 'grid', 'menu'].includes(element.type) && element.label && element.label.trim() && (
                     <div 
                         className="flex justify-between items-start"
                         style={{ marginBottom: element.labelGap !== undefined ? `${element.labelGap * 0.25}rem` : '0.75rem' }}
@@ -884,7 +1345,10 @@ const SortableElement: React.FC<SortableElementProps> = ({ element, parentId }) 
 
                 {/* Element Content */}
                 <div 
-                    className="pointer-events-none"
+                    className={clsx(
+                        "pointer-events-none",
+                        isSelected && ['rich-text', 'text-block', 'heading'].includes(element.type) && "pointer-events-auto"
+                    )}
                     style={{
                         // Apply padding to regular form elements (not containers/columns/buttons) only if padding values are set
                         paddingTop: (!['container', 'columns', 'rows', 'button', 'textarea', 'select', 'checkbox', 'radio'].includes(element.type)) ? `${(element.paddingTop ?? 0) * 0.25}rem` : undefined,
@@ -900,7 +1364,10 @@ const SortableElement: React.FC<SortableElementProps> = ({ element, parentId }) 
                 >
                     {element.type === 'textarea' ? (
                         <textarea
-                            className="w-full border border-slate-200 rounded-lg text-slate-500 text-sm resize-none"
+                            className={clsx(
+                                "w-full rounded-lg text-slate-500 text-sm resize-none",
+                                isFormProject && "border border-slate-200"
+                            )}
                             style={{
                                 backgroundColor: element.backgroundColor,
                                 paddingTop: `${(element.paddingTop ?? 3) * 0.25}rem`,
@@ -914,7 +1381,10 @@ const SortableElement: React.FC<SortableElementProps> = ({ element, parentId }) 
                         />
                     ) : element.type === 'select' ? (
                         <div className="relative">
-                            <select className="w-full border border-slate-200 rounded-lg text-slate-500 text-sm appearance-none" style={{
+                            <select className={clsx(
+                                "w-full rounded-lg text-slate-500 text-sm appearance-none",
+                                isFormProject && "border border-slate-200"
+                            )} style={{
                                 backgroundColor: element.backgroundColor,
                                 paddingTop: element.paddingTop !== undefined ? `${element.paddingTop * 0.25}rem` : '0.75rem',
                                 paddingRight: element.paddingRight !== undefined ? `${element.paddingRight * 0.25}rem` : '0.75rem',
@@ -932,7 +1402,10 @@ const SortableElement: React.FC<SortableElementProps> = ({ element, parentId }) 
                             </div>
                         </div>
                     ) : element.type === 'checkbox' ? (
-                        <div className="flex items-center border border-slate-200 rounded-lg" style={{
+                        <div className={clsx(
+                            "flex items-center rounded-lg",
+                            isFormProject && "border border-slate-200"
+                        )} style={{
                             backgroundColor: element.backgroundColor || '#f8fafc',
                             paddingTop: element.paddingTop !== undefined ? `${element.paddingTop * 0.25}rem` : '0.75rem',
                             paddingRight: element.paddingRight !== undefined ? `${element.paddingRight * 0.25}rem` : '0.75rem',
@@ -943,7 +1416,10 @@ const SortableElement: React.FC<SortableElementProps> = ({ element, parentId }) 
                             <span className="ml-3 text-sm text-slate-600">{element.placeholder || 'Checkbox option'}</span>
                         </div>
                     ) : element.type === 'radio' ? (
-                        <div className="space-y-2 border border-slate-200 rounded-lg" style={{
+                        <div className={clsx(
+                            "space-y-2 rounded-lg",
+                            isFormProject && "border border-slate-200"
+                        )} style={{
                             backgroundColor: element.backgroundColor || '#f8fafc',
                             paddingTop: element.paddingTop !== undefined ? `${element.paddingTop * 0.25}rem` : '0.75rem',
                             paddingRight: element.paddingRight !== undefined ? `${element.paddingRight * 0.25}rem` : '0.75rem',
@@ -968,11 +1444,14 @@ const SortableElement: React.FC<SortableElementProps> = ({ element, parentId }) 
                     ) : element.type === 'columns' ? (
                         <ColumnsContent element={element} />
                     ) : element.type === 'rows' ? (
-                        <ContainerContent element={element} />
+                        <RowsContent element={element} />
                     ) : element.type === 'grid' ? (
                         <ContainerContent element={element} />
                     ) : element.type === 'hidden' ? (
-                        <div className="flex items-center bg-slate-100 border border-slate-300 rounded-lg opacity-60" style={{ 
+                        <div className={clsx(
+                            "flex items-center bg-slate-100 rounded-lg opacity-60",
+                            isFormProject && "border border-slate-300"
+                        )} style={{ 
                             paddingTop: element.paddingTop !== undefined ? `${element.paddingTop * 0.25}rem` : '0.75rem',
                             paddingRight: element.paddingRight !== undefined ? `${element.paddingRight * 0.25}rem` : '0.75rem',
                             paddingBottom: element.paddingBottom !== undefined ? `${element.paddingBottom * 0.25}rem` : '0.75rem',
@@ -984,18 +1463,55 @@ const SortableElement: React.FC<SortableElementProps> = ({ element, parentId }) 
                             </div>
                         </div>
                     ) : element.type === 'rich-text' ? (
-                        <div className="border border-slate-200 rounded-lg min-h-[100px]" style={{
-                            backgroundColor: element.backgroundColor || '#f8fafc',
-                            paddingTop: element.paddingTop !== undefined ? `${element.paddingTop * 0.25}rem` : '0.75rem',
-                            paddingRight: element.paddingRight !== undefined ? `${element.paddingRight * 0.25}rem` : '0.75rem',
-                            paddingBottom: element.paddingBottom !== undefined ? `${element.paddingBottom * 0.25}rem` : '0.75rem',
-                            paddingLeft: element.paddingLeft !== undefined ? `${element.paddingLeft * 0.25}rem` : '0.75rem'
-                        }}>
-                            <div 
-                                className="prose prose-sm max-w-none text-slate-600"
-                                dangerouslySetInnerHTML={{ __html: element.content || '<p>Your rich text content here</p>' }}
-                            />
-                        </div>
+                        isSelected ? (
+                            <div className={clsx(
+                                "relative rounded-lg",
+                                isFormProject && "border border-blue-500 shadow-lg"
+                            )} style={{
+                                backgroundColor: element.backgroundColor || 'transparent',
+                                paddingTop: element.paddingTop !== undefined ? `${element.paddingTop * 0.25}rem` : '0',
+                                paddingRight: element.paddingRight !== undefined ? `${element.paddingRight * 0.25}rem` : '0',
+                                paddingBottom: element.paddingBottom !== undefined ? `${element.paddingBottom * 0.25}rem` : '0',
+                                paddingLeft: element.paddingLeft !== undefined ? `${element.paddingLeft * 0.25}rem` : '0'
+                            }}>
+                                <RichTextEditor
+                                    selectedElement={element}
+                                    onContentChange={(content) => updateElement(element.id, { content })}
+                                />
+                            </div>
+                        ) : (
+                            <div className={clsx(
+                                "rounded-lg cursor-pointer",
+                                isFormProject && "border border-slate-200 hover:border-slate-300"
+                            )} style={{
+                                backgroundColor: element.backgroundColor || 'transparent',
+                                paddingTop: element.paddingTop !== undefined ? `${element.paddingTop * 0.25}rem` : '0',
+                                paddingRight: element.paddingRight !== undefined ? `${element.paddingRight * 0.25}rem` : '0',
+                                paddingBottom: element.paddingBottom !== undefined ? `${element.paddingBottom * 0.25}rem` : '0',
+                                paddingLeft: element.paddingLeft !== undefined ? `${element.paddingLeft * 0.25}rem` : '0'
+                            }}>
+                                <div 
+                                    className={clsx(
+                                        "prose prose-sm max-w-none",
+                                        !element.textColor && "text-slate-600",
+                                        element.textAlign === 'left' && "text-left",
+                                        element.textAlign === 'center' && "text-center",
+                                        element.textAlign === 'right' && "text-right",
+                                        element.textAlign === 'justify' && "text-justify",
+                                        !element.textAlign && "text-left"
+                                    )}
+                                    style={{
+                                        fontFamily: element.fontFamily || undefined,
+                                        fontSize: element.fontSize ? `${element.fontSize}px` : undefined,
+                                        fontWeight: element.fontWeight || undefined,
+                                        color: element.textColor || undefined,
+                                        lineHeight: element.lineHeight ? `${element.lineHeight}%` : undefined,
+                                        letterSpacing: element.letterSpacing ? `${element.letterSpacing}px` : undefined
+                                    }}
+                                    dangerouslySetInnerHTML={{ __html: element.content || '<p>Click to edit rich text...</p>' }}
+                                />
+                            </div>
+                        )
                     ) : element.type === 'button' ? (
                         <div className="relative">
                             <button
@@ -1039,43 +1555,144 @@ const SortableElement: React.FC<SortableElementProps> = ({ element, parentId }) 
                             )}
                         </div>
                     ) : element.type === 'text-block' ? (
-                        <div className="rounded-lg" style={{
-                            backgroundColor: element.backgroundColor
-                        }}>
-                            <div 
-                                className="prose prose-sm max-w-none text-slate-600"
-                                dangerouslySetInnerHTML={{ __html: element.content || '<p>Click to edit this text block</p>' }}
-                            />
-                        </div>
+                        isSelected ? (
+                            <div className={clsx(
+                                "relative rounded-lg",
+                                isFormProject && "border border-blue-500 shadow-lg"
+                            )} style={{
+                                backgroundColor: element.backgroundColor || 'transparent'
+                            }}>
+                                <RichTextEditor
+                                    selectedElement={element}
+                                    onContentChange={(content) => updateElement(element.id, { content })}
+                                />
+                            </div>
+                        ) : (
+                            <div className="rounded-lg cursor-pointer hover:bg-gray-50" style={{
+                                backgroundColor: element.backgroundColor
+                            }}>
+                                <div 
+                                    className={clsx(
+                                        "prose prose-sm max-w-none",
+                                        !element.textColor && "text-slate-600",
+                                        element.textAlign === 'left' && "text-left",
+                                        element.textAlign === 'center' && "text-center",
+                                        element.textAlign === 'right' && "text-right",
+                                        element.textAlign === 'justify' && "text-justify",
+                                        !element.textAlign && "text-left"
+                                    )}
+                                    style={{
+                                        fontFamily: element.fontFamily || undefined,
+                                        fontSize: element.fontSize ? `${element.fontSize}px` : undefined,
+                                        fontWeight: element.fontWeight || undefined,
+                                        color: element.textColor || undefined,
+                                        lineHeight: element.lineHeight ? `${element.lineHeight}%` : undefined,
+                                        letterSpacing: element.letterSpacing ? `${element.letterSpacing}px` : undefined
+                                    }}
+                                    dangerouslySetInnerHTML={{ __html: element.content || '<p>Click to edit this text block</p>' }}
+                                />
+                            </div>
+                        )
                     ) : element.type === 'heading' ? (
-                        <div className="rounded-lg" style={{
-                            backgroundColor: element.backgroundColor,
-                            paddingTop: element.paddingTop !== undefined ? `${element.paddingTop * 0.25}rem` : undefined,
-                            paddingRight: element.paddingRight !== undefined ? `${element.paddingRight * 0.25}rem` : undefined,
-                            paddingBottom: element.paddingBottom !== undefined ? `${element.paddingBottom * 0.25}rem` : undefined,
-                            paddingLeft: element.paddingLeft !== undefined ? `${element.paddingLeft * 0.25}rem` : undefined
-                        }}>
-                            {React.createElement(
-                                `h${element.headingLevel || 1}`,
-                                {
-                                    className: clsx(
-                                        "text-gray-800 font-bold",
-                                        element.headingLevel === 1 && "text-4xl",
-                                        element.headingLevel === 2 && "text-3xl",
-                                        element.headingLevel === 3 && "text-2xl",
-                                        element.headingLevel === 4 && "text-xl",
-                                        element.headingLevel === 5 && "text-lg",
-                                        element.headingLevel === 6 && "text-base",
-                                        !element.headingLevel && "text-4xl"
-                                    )
-                                },
-                                element.content || 'Your heading here'
-                            )}
-                        </div>
+                        isSelected ? (
+                            <div className={clsx(
+                                "relative rounded-lg",
+                                isFormProject && "border border-blue-500 shadow-lg"
+                            )} style={{
+                                backgroundColor: element.backgroundColor || 'transparent',
+                                paddingTop: element.paddingTop !== undefined ? `${element.paddingTop * 0.25}rem` : '0',
+                                paddingRight: element.paddingRight !== undefined ? `${element.paddingRight * 0.25}rem` : '0',
+                                paddingBottom: element.paddingBottom !== undefined ? `${element.paddingBottom * 0.25}rem` : '0',
+                                paddingLeft: element.paddingLeft !== undefined ? `${element.paddingLeft * 0.25}rem` : '0'
+                            }}>
+                                <RichTextEditor
+                                    selectedElement={element}
+                                    onContentChange={(content) => updateElement(element.id, { content })}
+                                />
+                            </div>
+                        ) : (
+                            <div className="rounded-lg cursor-pointer hover:bg-gray-50" style={{
+                                backgroundColor: element.backgroundColor,
+                                paddingTop: element.paddingTop !== undefined ? `${element.paddingTop * 0.25}rem` : undefined,
+                                paddingRight: element.paddingRight !== undefined ? `${element.paddingRight * 0.25}rem` : undefined,
+                                paddingBottom: element.paddingBottom !== undefined ? `${element.paddingBottom * 0.25}rem` : undefined,
+                                paddingLeft: element.paddingLeft !== undefined ? `${element.paddingLeft * 0.25}rem` : undefined
+                            }}>
+                                {React.createElement(
+                                    `h${element.headingLevel || 1}`,
+                                    {
+                                        className: clsx(
+                                            !element.textColor && "text-gray-800",
+                                            !element.fontWeight && "font-bold",
+                                            !element.fontSize && element.headingLevel === 1 && "text-4xl",
+                                            !element.fontSize && element.headingLevel === 2 && "text-3xl",
+                                            !element.fontSize && element.headingLevel === 3 && "text-2xl",
+                                            !element.fontSize && element.headingLevel === 4 && "text-xl",
+                                            !element.fontSize && element.headingLevel === 5 && "text-lg",
+                                            !element.fontSize && element.headingLevel === 6 && "text-base",
+                                            !element.fontSize && !element.headingLevel && "text-4xl",
+                                            element.textAlign === 'left' && "text-left",
+                                            element.textAlign === 'center' && "text-center",
+                                            element.textAlign === 'right' && "text-right",
+                                            element.textAlign === 'justify' && "text-justify",
+                                            !element.textAlign && "text-left"
+                                        ),
+                                        style: {
+                                            fontFamily: element.fontFamily || undefined,
+                                            fontSize: element.fontSize ? `${element.fontSize}px` : undefined,
+                                            fontWeight: element.fontWeight || undefined,
+                                            color: element.textColor || undefined,
+                                            lineHeight: element.lineHeight ? `${element.lineHeight}%` : undefined,
+                                            letterSpacing: element.letterSpacing ? `${element.letterSpacing}px` : undefined
+                                        },
+                                        dangerouslySetInnerHTML: { __html: element.content || 'Click to edit heading...' }
+                                    }
+                                )}
+                            </div>
+                        )
                     ) : element.type === 'menu' ? (
-                        <ContainerContent element={element} />
+                        (() => {
+                            const { setNodeRef } = useDroppable({
+                                id: `menu-${element.id}`,
+                                data: { type: 'menu', containerId: element.id }
+                            });
+                            
+                            return (
+                                <div 
+                                    ref={setNodeRef}
+                                    className="min-h-[40px]"
+                                    style={{
+                                        display: 'flex',
+                                        flexDirection: element.flexDirection || (element.menuLayout === 'vertical' ? 'column' : 'row'),
+                                        flexWrap: element.flexWrap || 'nowrap',
+                                        justifyContent: element.justifyContent || 'flex-start',
+                                        alignItems: element.alignItems || 'center',
+                                        alignContent: element.alignContent || 'flex-start',
+                                        rowGap: `${(element.rowGap || element.gap || 0) * 0.25}rem`,
+                                        columnGap: `${(element.columnGap || element.gap || 16) * 0.25}rem`
+                                    }}
+                                >
+                                    {element.children && element.children.length > 0 ? (
+                                        element.children.map((child, index) => (
+                                            <SortableElement 
+                                                key={child.id} 
+                                                element={child} 
+                                                parentId={element.id} 
+                                            />
+                                        ))
+                                    ) : (
+                                        <div className="text-gray-400 text-sm italic">
+                                            Drop menu items here
+                                        </div>
+                                    )}
+                                </div>
+                            );
+                        })()
                     ) : element.type === 'social' ? (
-                        <div className="border border-slate-200 rounded-lg" style={{
+                        <div className={clsx(
+                            "rounded-lg",
+                            isFormProject && "border border-slate-200"
+                        )} style={{
                             backgroundColor: element.backgroundColor,
                             paddingTop: element.paddingTop !== undefined ? `${element.paddingTop * 0.25}rem` : '1rem',
                             paddingRight: element.paddingRight !== undefined ? `${element.paddingRight * 0.25}rem` : '1rem',
@@ -1105,11 +1722,24 @@ const SortableElement: React.FC<SortableElementProps> = ({ element, parentId }) 
                             </div>
                         </div>
                     ) : element.type === 'image' ? (
-                        <div className="relative w-full group">
+                        <div 
+                            className={clsx(
+                                "relative group",
+                                element.imageAlign === 'center' && "flex justify-center",
+                                element.imageAlign === 'right' && "flex justify-end",
+                                element.imageAlign === 'justify' && "flex justify-center",
+                                (!element.imageAlign || element.imageAlign === 'left') && "flex justify-start"
+                            )}
+                            style={{
+                                width: `${element.imageWidthPercent || 100}%`,
+                                marginLeft: element.imageAlign === 'center' ? 'auto' : element.imageAlign === 'right' ? 'auto' : undefined,
+                                marginRight: element.imageAlign === 'center' ? 'auto' : element.imageAlign === 'right' ? undefined : element.imageAlign === 'left' ? 'auto' : undefined
+                            }}
+                        >
                             <img
                                 src={element.imageUrl || 'https://placehold.co/400x200/e2e8f0/94a3b8?text=Image'}
                                 alt={element.imageAlt || 'Image'}
-                                className="rounded-lg border border-slate-200 block w-full h-auto"
+                                className="rounded-lg block h-auto w-full"
                                 style={{
                                     backgroundColor: element.backgroundColor
                                 }}
@@ -1147,7 +1777,10 @@ const SortableElement: React.FC<SortableElementProps> = ({ element, parentId }) 
                     ) : (
                         <input
                             type={element.type}
-                            className="w-full border border-slate-200 rounded-lg text-slate-500 text-sm"
+                            className={clsx(
+                                "w-full rounded-lg text-slate-500 text-sm",
+                                isFormProject && "border border-slate-200"
+                            )}
                             style={{
                                 backgroundColor: element.backgroundColor,
                                 paddingTop: element.paddingTop !== undefined ? `${element.paddingTop * 0.25}rem` : '0.75rem',
@@ -1162,6 +1795,29 @@ const SortableElement: React.FC<SortableElementProps> = ({ element, parentId }) 
                 </div>
             </div>
         </div >
+    );
+};
+
+const CanvasStartDropZone: React.FC = () => {
+    const { setNodeRef, isOver } = useDroppable({
+        id: 'canvas-start',
+        data: { type: 'canvas-start' }
+    });
+
+    return (
+        <div
+            ref={setNodeRef}
+            className={clsx(
+                "h-16 flex items-center justify-center transition-all",
+                isOver ? "bg-blue-50 border-2 border-dashed border-blue-400 rounded-lg" : "bg-transparent border-2 border-dashed border-transparent"
+            )}
+        >
+            {isOver && (
+                <div className="text-blue-600 text-sm font-medium">
+                    Drop here
+                </div>
+            )}
+        </div>
     );
 };
 
@@ -1189,7 +1845,7 @@ const CanvasEndDropZone: React.FC = () => {
 };
 
 export const Canvas: React.FC = () => {
-    const { elements, selectElement, settings } = useStore();
+    const { elements, selectElement, settings, currentProject } = useStore();
     const { setNodeRef } = useDroppable({
         id: 'canvas',
     });
@@ -1204,6 +1860,8 @@ export const Canvas: React.FC = () => {
                     ref={setNodeRef}
                     className={clsx(
                         "min-h-[800px] bg-white rounded-2xl shadow-card px-8 pb-8",
+                        currentProject?.type !== 'form' && "pt-0",
+                        currentProject?.type === 'form' && "pt-8",
                         elements.length === 0 && "form-builder-canvas-empty flex items-center justify-center"
                     )}
                     style={{
@@ -1224,6 +1882,8 @@ export const Canvas: React.FC = () => {
                         <div
                             className="flex flex-col"
                         >
+                            {/* Start of canvas drop zone - only for form projects */}
+                            {currentProject?.type === 'form' && <CanvasStartDropZone />}
                             {elements.map((element) => (
                                 <SortableElement key={element.id} element={element} />
                             ))}

@@ -1,292 +1,12 @@
 import React, { useState, useRef, useEffect } from 'react';
 import { useStore } from '../store/useStore';
-import { Plus, Trash, Settings, Sliders, ExternalLink, Webhook, MessageCircle, Globe, X, Bold, Italic, Strikethrough, Underline, Code, Link, FileX, Image, Eye, Copy } from 'lucide-react';
+import { Plus, Trash, Settings, Sliders, ExternalLink, Webhook, MessageCircle, Globe, X, Bold, Italic, Strikethrough, Underline, Code, Link, FileX, Image, Eye, Copy, AlignLeft, AlignCenter, AlignRight, AlignJustify, ChevronDown, ChevronUp, Type, Minus } from 'lucide-react';
 import { v4 as uuidv4 } from 'uuid';
 import { clsx } from 'clsx';
-import type { SubmissionAction, WebhookAction, FormElement } from '../types';
+import type { SubmissionAction, WebhookAction, FormElement, GalleryImage } from '../types';
 import { LayoutPanel } from './LayoutPanel';
+import { ImagePicker } from './ImagePicker';
 
-// Separate Rich Text Editor Component
-const RichTextEditor: React.FC<{
-    selectedElement: FormElement;
-    onContentChange: (content: string) => void;
-}> = ({ selectedElement, onContentChange }) => {
-    const editorRef = useRef<HTMLDivElement>(null);
-    const [lastElementId, setLastElementId] = useState<string>('');
-    const [linkModal, setLinkModal] = useState<{
-        isOpen: boolean;
-        linkElement: HTMLAnchorElement | null;
-        text: string;
-        url: string;
-        isEdit: boolean;
-        savedRange: Range | null;
-    }>({
-        isOpen: false,
-        linkElement: null,
-        text: '',
-        url: '',
-        isEdit: false,
-        savedRange: null
-    });
-    
-    const styleLinks = (container: HTMLElement) => {
-        const links = container.querySelectorAll('a');
-        console.log(`Found ${links.length} links to style`);
-        links.forEach((link, index) => {
-            console.log(`Styling link ${index}:`, link.textContent, link.href);
-            const linkEl = link as HTMLElement;
-            linkEl.style.setProperty('color', '#2563eb', 'important');
-            linkEl.style.setProperty('text-decoration', 'underline', 'important');
-            linkEl.style.setProperty('cursor', 'pointer', 'important');
-            linkEl.style.setProperty('background-color', 'rgba(37, 99, 235, 0.1)', 'important');
-            linkEl.style.setProperty('padding', '1px 2px', 'important');
-            linkEl.style.setProperty('border-radius', '2px', 'important');
-            
-            // Remove existing click handlers to avoid duplicates
-            const newLink = linkEl.cloneNode(true) as HTMLElement;
-            newLink.addEventListener('click', handleLinkClick);
-            linkEl.parentNode?.replaceChild(newLink, linkEl);
-        });
-    };
-
-    // Only update editor content when the selected element ID changes (not content)
-    useEffect(() => {
-        if (editorRef.current && (selectedElement.type === 'rich-text' || selectedElement.type === 'text-block') && selectedElement.id !== lastElementId) {
-            editorRef.current.innerHTML = selectedElement.content || '';
-            setLastElementId(selectedElement.id);
-            
-            // Style all existing links
-            styleLinks(editorRef.current);
-
-            // Listen for custom link modal events
-            const handleOpenLinkModal = (e: CustomEvent) => {
-                const selectedText = e.detail.selectedText || '';
-                const savedRange = e.detail.range || null;
-                setLinkModal({
-                    isOpen: true,
-                    linkElement: null,
-                    text: selectedText,
-                    url: '',
-                    isEdit: false,
-                    savedRange: savedRange
-                });
-            };
-
-            editorRef.current.addEventListener('openLinkModal', handleOpenLinkModal as EventListener);
-
-            // Create a mutation observer to watch for new links being added
-            const observer = new MutationObserver((mutations) => {
-                mutations.forEach((mutation) => {
-                    if (mutation.type === 'childList' || mutation.type === 'subtree') {
-                        // Re-style all links whenever the DOM changes
-                        if (editorRef.current) {
-                            styleLinks(editorRef.current);
-                        }
-                    }
-                });
-            });
-
-            // Start observing
-            observer.observe(editorRef.current, {
-                childList: true,
-                subtree: true,
-                characterData: true
-            });
-
-            return () => {
-                if (editorRef.current) {
-                    editorRef.current.removeEventListener('openLinkModal', handleOpenLinkModal as EventListener);
-                }
-                observer.disconnect();
-            };
-        }
-    }, [selectedElement.id, lastElementId, selectedElement.content]);
-
-    const handleLinkClick = (e: Event) => {
-        e.preventDefault();
-        e.stopPropagation();
-        const link = e.target as HTMLAnchorElement;
-        setLinkModal({
-            isOpen: true,
-            linkElement: link,
-            text: link.textContent || '',
-            url: link.href,
-            isEdit: true
-        });
-    };
-
-    const updateContent = () => {
-        if (editorRef.current) {
-            onContentChange(editorRef.current.innerHTML);
-        }
-    };
-
-    const saveLinkModal = () => {
-        const { linkElement, text, url, isEdit, savedRange } = linkModal;
-        
-        if (text.trim() && url.trim()) {
-            const finalUrl = url.startsWith('http://') || url.startsWith('https://') || url.startsWith('mailto:') ? url : 'https://' + url;
-            console.log('Creating/updating link:', { text, finalUrl, isEdit });
-            
-            if (isEdit && linkElement) {
-                // Update existing link
-                linkElement.textContent = text;
-                linkElement.href = finalUrl;
-                console.log('Updated existing link');
-            } else {
-                // Create new link - properly handle text replacement
-                const editor = editorRef.current;
-                if (editor) {
-                    editor.focus();
-                    
-                    const linkHtml = `<a href="${finalUrl}" style="color: #2563eb !important; text-decoration: underline !important; cursor: pointer !important; background-color: rgba(37, 99, 235, 0.1) !important; padding: 1px 2px !important; border-radius: 2px !important;">${text}</a>`;
-                    
-                    if (savedRange) {
-                        // Restore the saved selection and replace it
-                        const selection = window.getSelection();
-                        selection?.removeAllRanges();
-                        selection?.addRange(savedRange);
-                        console.log('Restoring saved range and replacing with link');
-                        document.execCommand('insertHTML', false, linkHtml);
-                    } else {
-                        // Fallback: insert at current cursor position
-                        console.log('No saved range, inserting at cursor position');
-                        document.execCommand('insertHTML', false, linkHtml);
-                    }
-                    
-                    console.log('Created new link with HTML:', linkHtml);
-                    console.log('Editor content after link creation:', editor.innerHTML);
-                }
-            }
-            updateContent();
-            
-            // Re-style all links after a short delay
-            setTimeout(() => {
-                if (editorRef.current) {
-                    styleLinks(editorRef.current);
-                }
-            }, 100);
-        }
-        
-        setLinkModal({ isOpen: false, linkElement: null, text: '', url: '', isEdit: false, savedRange: null });
-    };
-
-    const deleteLinkModal = () => {
-        const { linkElement } = linkModal;
-        if (linkElement) {
-            const text = linkElement.textContent || '';
-            const textNode = document.createTextNode(text);
-            linkElement.parentNode?.replaceChild(textNode, linkElement);
-            updateContent();
-        }
-        setLinkModal({ isOpen: false, linkElement: null, text: '', url: '', isEdit: false, savedRange: null });
-    };
-
-    return (
-        <>
-            <style dangerouslySetInnerHTML={{
-                __html: `
-                    #rich-editor-${selectedElement.id} a {
-                        color: #2563eb !important;
-                        text-decoration: underline !important;
-                        cursor: pointer !important;
-                        font-weight: inherit !important;
-                        background-color: rgba(37, 99, 235, 0.1) !important;
-                        padding: 1px 2px !important;
-                        border-radius: 2px !important;
-                    }
-                    #rich-editor-${selectedElement.id} a:hover {
-                        text-decoration: underline !important;
-                        background-color: rgba(37, 99, 235, 0.2) !important;
-                    }
-                `
-            }} />
-            <div
-                ref={editorRef}
-                id={`rich-editor-${selectedElement.id}`}
-                contentEditable
-                className="p-4 min-h-[200px] text-sm text-gray-700 focus:outline-none"
-                style={{ 
-                    lineHeight: '1.5', 
-                    outline: 'none',
-                }}
-                onInput={(e) => {
-                    const target = e.target as HTMLDivElement;
-                    onContentChange(target.innerHTML);
-                }}
-                data-placeholder={!selectedElement.content ? "Enter some rich text..." : undefined}
-            />
-            
-            {/* Link Modal */}
-            {linkModal.isOpen && (
-                <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
-                    <div className="bg-white rounded-lg p-6 w-96 mx-4">
-                        <h3 className="text-lg font-semibold mb-4">
-                            {linkModal.isEdit ? 'Edit Link' : 'Add Link'}
-                        </h3>
-                        
-                        <div className="space-y-4">
-                            <div>
-                                <label className="block text-sm font-medium text-gray-700 mb-1">
-                                    Link Text
-                                </label>
-                                <input
-                                    type="text"
-                                    value={linkModal.text}
-                                    onChange={(e) => setLinkModal(prev => ({ ...prev, text: e.target.value }))}
-                                    className="w-full p-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-                                    placeholder="Enter link text"
-                                />
-                            </div>
-                            
-                            <div>
-                                <label className="block text-sm font-medium text-gray-700 mb-1">
-                                    URL
-                                </label>
-                                <input
-                                    type="url"
-                                    value={linkModal.url}
-                                    onChange={(e) => setLinkModal(prev => ({ ...prev, url: e.target.value }))}
-                                    className="w-full p-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-                                    placeholder="https://example.com"
-                                />
-                            </div>
-                        </div>
-                        
-                        <div className="flex justify-between mt-6">
-                            <div>
-                                {linkModal.isEdit && (
-                                    <button
-                                        onClick={deleteLinkModal}
-                                        className="px-4 py-2 text-red-600 hover:bg-red-50 rounded-md transition-colors"
-                                    >
-                                        Delete Link
-                                    </button>
-                                )}
-                            </div>
-                            
-                            <div className="space-x-3">
-                                <button
-                                    onClick={() => setLinkModal({ isOpen: false, linkElement: null, text: '', url: '', isEdit: false, savedRange: null })}
-                                    className="px-4 py-2 text-gray-600 hover:bg-gray-100 rounded-md transition-colors"
-                                >
-                                    Cancel
-                                </button>
-                                <button
-                                    onClick={saveLinkModal}
-                                    disabled={!linkModal.text.trim() || !linkModal.url.trim()}
-                                    className="px-4 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
-                                >
-                                    {linkModal.isEdit ? 'Update' : 'Add'} Link
-                                </button>
-                            </div>
-                        </div>
-                    </div>
-                </div>
-            )}
-        </>
-    );
-};
 
 export const PropertiesPanel: React.FC = () => {
     const {
@@ -302,6 +22,7 @@ export const PropertiesPanel: React.FC = () => {
     const [activeFormTab, setActiveFormTab] = useState<'settings' | 'styling' | 'actions' | 'code'>('settings');
     const [codeType, setCodeType] = useState<'html' | 'react' | 'json'>('html');
     const [copiedCode, setCopiedCode] = useState(false);
+    const [textPropsOpen, setTextPropsOpen] = useState(false);
 
     const hasUserAction = settings.submissionActions.some(action => action.type === 'redirect' || action.type === 'message');
     const hasFormAction = !!settings.formAction;
@@ -615,6 +336,7 @@ export default MyForm;`;
     // Helper function to find element recursively (including nested elements)
     const findElementById = (elements: FormElement[], id: string): FormElement | undefined => {
         for (const element of elements) {
+            if (!element) continue; // Skip undefined/null elements
             if (element.id === id) {
                 return element;
             }
@@ -1320,239 +1042,231 @@ export default MyForm;`;
                 ) : null}
 
 
-                {(selectedElement.type === 'rich-text' || selectedElement.type === 'text-block') && (
-                    <div>
-                        <label className="block text-xs font-semibold text-slate-500 uppercase tracking-wider mb-2">
-                            {selectedElement.type === 'rich-text' ? 'Rich Text Content' : 'Text Content'}
-                        </label>
-                        <div className="border border-gray-300 rounded-lg bg-white overflow-hidden">
-                            {/* Toolbar matching the screenshot */}
-                            <div className="flex items-center gap-2 p-3 border-b border-gray-300 bg-gray-50">
-                                {/* Paragraph Dropdown */}
-                                <select
-                                    onChange={(e) => {
-                                        const editor = document.getElementById(`rich-editor-${selectedElement.id}`) as HTMLDivElement;
-                                        if (editor && e.target.value) {
-                                            editor.focus();
-                                            document.execCommand('formatBlock', false, e.target.value);
-                                            updateElement(selectedElement.id, { content: editor.innerHTML });
-                                        }
-                                    }}
-                                    className="bg-white border border-gray-300 rounded text-sm px-3 py-1 text-gray-700 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
-                                    defaultValue="p"
-                                >
-                                    <option value="p">Paragraph</option>
-                                    <option value="h1">Heading 1</option>
-                                    <option value="h2">Heading 2</option>
-                                    <option value="h3">Heading 3</option>
-                                    <option value="h4">Heading 4</option>
-                                    <option value="h5">Heading 5</option>
-                                    <option value="h6">Heading 6</option>
-                                </select>
-                                
-                                {/* Bold */}
-                                <button
-                                    type="button"
-                                    onClick={() => {
-                                        const editor = document.getElementById(`rich-editor-${selectedElement.id}`) as HTMLDivElement;
-                                        if (editor) {
-                                            editor.focus();
-                                            document.execCommand('bold', false);
-                                            updateElement(selectedElement.id, { content: editor.innerHTML });
-                                        }
-                                    }}
-                                    className="w-8 h-8 flex items-center justify-center text-gray-600 hover:text-gray-900 hover:bg-gray-200 rounded transition-colors"
-                                    title="Bold"
-                                >
-                                    <Bold size={16} />
-                                </button>
-                                
-                                {/* Italic */}
-                                <button
-                                    type="button"
-                                    onClick={() => {
-                                        const editor = document.getElementById(`rich-editor-${selectedElement.id}`) as HTMLDivElement;
-                                        if (editor) {
-                                            editor.focus();
-                                            document.execCommand('italic', false);
-                                            updateElement(selectedElement.id, { content: editor.innerHTML });
-                                        }
-                                    }}
-                                    className="w-8 h-8 flex items-center justify-center text-gray-600 hover:text-gray-900 hover:bg-gray-200 rounded transition-colors"
-                                    title="Italic"
-                                >
-                                    <Italic size={16} />
-                                </button>
-                                
-                                {/* Strikethrough */}
-                                <button
-                                    type="button"
-                                    onClick={() => {
-                                        const editor = document.getElementById(`rich-editor-${selectedElement.id}`) as HTMLDivElement;
-                                        if (editor) {
-                                            editor.focus();
-                                            document.execCommand('strikeThrough', false);
-                                            updateElement(selectedElement.id, { content: editor.innerHTML });
-                                        }
-                                    }}
-                                    className="w-8 h-8 flex items-center justify-center text-gray-600 hover:text-gray-900 hover:bg-gray-200 rounded transition-colors"
-                                    title="Strikethrough"
-                                >
-                                    <Strikethrough size={16} />
-                                </button>
-                                
-                                {/* Code */}
-                                <button
-                                    type="button"
-                                    onClick={() => {
-                                        const editor = document.getElementById(`rich-editor-${selectedElement.id}`) as HTMLDivElement;
-                                        if (editor) {
-                                            document.execCommand('formatBlock', false, 'code');
-                                            updateElement(selectedElement.id, { content: editor.innerHTML });
-                                        }
-                                    }}
-                                    className="w-8 h-8 flex items-center justify-center text-gray-600 hover:text-gray-900 hover:bg-gray-200 rounded transition-colors"
-                                    title="Code"
-                                >
-                                    <Code size={16} />
-                                </button>
-                                
-                                {/* Link */}
-                                <button
-                                    type="button"
-                                    onClick={() => {
-                                        const editor = document.getElementById(`rich-editor-${selectedElement.id}`) as HTMLDivElement;
-                                        if (editor) {
-                                            editor.focus();
-                                            const selection = window.getSelection();
-                                            const selectedText = selection?.toString().trim() || '';
-                                            let savedRange: Range | null = null;
-                                            
-                                            // Save the current selection range
-                                            if (selection && selection.rangeCount > 0) {
-                                                savedRange = selection.getRangeAt(0).cloneRange();
-                                            }
-                                            
-                                            console.log('Link button clicked:', { selectedText, hasRange: !!savedRange });
-                                            
-                                            // Trigger the modal with saved selection
-                                            const event = new CustomEvent('openLinkModal', {
-                                                detail: { selectedText, range: savedRange }
-                                            });
-                                            editor.dispatchEvent(event);
-                                        }
-                                    }}
-                                    className="w-8 h-8 flex items-center justify-center text-gray-600 hover:text-gray-900 hover:bg-gray-200 rounded transition-colors"
-                                    title="Link"
-                                >
-                                    <Link size={16} />
-                                </button>
-                                
-                                {/* Clear Formatting */}
-                                <button
-                                    type="button"
-                                    onClick={() => {
-                                        const editor = document.getElementById(`rich-editor-${selectedElement.id}`) as HTMLDivElement;
-                                        if (editor) {
-                                            editor.focus();
-                                            document.execCommand('removeFormat', false);
-                                            updateElement(selectedElement.id, { content: editor.innerHTML });
-                                        }
-                                    }}
-                                    className="w-8 h-8 flex items-center justify-center text-gray-600 hover:text-gray-900 hover:bg-gray-200 rounded transition-colors"
-                                    title="Clear Formatting"
-                                >
-                                    <FileX size={16} />
-                                </button>
-                                
-                                {/* Image */}
-                                <button
-                                    type="button"
-                                    onClick={() => {
-                                        const editor = document.getElementById(`rich-editor-${selectedElement.id}`) as HTMLDivElement;
-                                        if (editor) {
-                                            // Store the current cursor position before opening file dialog
-                                            editor.focus();
-                                            const selection = window.getSelection();
-                                            let storedRange: Range | null = null;
-                                            
-                                            if (selection && selection.rangeCount > 0) {
-                                                storedRange = selection.getRangeAt(0).cloneRange();
-                                            }
-                                            
-                                            // Create a hidden file input
-                                            const fileInput = document.createElement('input');
-                                            fileInput.type = 'file';
-                                            fileInput.accept = 'image/*';
-                                            fileInput.style.display = 'none';
-                                            
-                                            fileInput.onchange = (e) => {
-                                                const file = (e.target as HTMLInputElement).files?.[0];
-                                                if (file) {
-                                                    const reader = new FileReader();
-                                                    reader.onload = (event) => {
-                                                        if (event.target?.result) {
-                                                            // Create the image element
-                                                            const img = document.createElement('img');
-                                                            img.src = event.target.result as string;
-                                                            img.style.maxWidth = '100%';
-                                                            img.style.height = 'auto';
-                                                            img.style.display = 'inline-block';
-                                                            img.style.margin = '2px';
-                                                            
-                                                            // Restore focus and cursor position
-                                                            editor.focus();
-                                                            
-                                                            if (storedRange) {
-                                                                // Restore the stored cursor position
-                                                                const newSelection = window.getSelection();
-                                                                newSelection?.removeAllRanges();
-                                                                newSelection?.addRange(storedRange);
-                                                                
-                                                                // Insert the image at the restored cursor position
-                                                                storedRange.deleteContents();
-                                                                storedRange.insertNode(img);
-                                                                
-                                                                // Move cursor after the image
-                                                                storedRange.setStartAfter(img);
-                                                                storedRange.collapse(true);
-                                                                newSelection?.removeAllRanges();
-                                                                newSelection?.addRange(storedRange);
-                                                            } else {
-                                                                // Fallback: append at the end
-                                                                editor.appendChild(img);
-                                                            }
-                                                            
-                                                            // Update the content
-                                                            updateElement(selectedElement.id, { content: editor.innerHTML });
-                                                        }
-                                                    };
-                                                    reader.readAsDataURL(file);
-                                                }
-                                                // Clean up the temporary input
-                                                document.body.removeChild(fileInput);
-                                            };
-                                            
-                                            // Add to DOM temporarily and trigger click
-                                            document.body.appendChild(fileInput);
-                                            fileInput.click();
-                                        }
-                                    }}
-                                    className="w-8 h-8 flex items-center justify-center text-gray-600 hover:text-gray-900 hover:bg-gray-200 rounded transition-colors"
-                                    title="Upload Image"
-                                >
-                                    <Image size={16} />
-                                </button>
-                            </div>
+
+                {/* Collapsible Text Properties for text components */}
+                {(selectedElement.type === 'rich-text' || selectedElement.type === 'text-block' || selectedElement.type === 'heading') && (
+                        <div className="pt-4 border-t border-slate-100">
+                            <button
+                                type="button"
+                                onClick={() => setTextPropsOpen(!textPropsOpen)}
+                                className="flex items-center justify-between w-full p-3 text-left bg-slate-50 hover:bg-slate-100 border border-slate-200 rounded-lg transition-colors"
+                            >
+                                <div className="flex items-center gap-2">
+                                    <Type size={16} className="text-slate-600" />
+                                    <span className="text-sm font-medium text-slate-700">Text Styling</span>
+                                </div>
+                                {textPropsOpen ? <ChevronUp size={16} className="text-slate-500" /> : <ChevronDown size={16} className="text-slate-500" />}
+                            </button>
                             
-                            {/* Editor */}
-                            <RichTextEditor
-                                selectedElement={selectedElement}
-                                onContentChange={(content) => updateElement(selectedElement.id, { content })}
-                            />
+                            {textPropsOpen && (
+                                <div className="mt-3 space-y-4 p-4 border border-slate-200 rounded-lg bg-white">
+                                    {/* Font Family */}
+                                    <div>
+                                        <label className="block text-xs font-medium text-gray-600 mb-2">Font Family</label>
+                                        <select
+                                            value={selectedElement.fontFamily || ''}
+                                            onChange={(e) => updateElement(selectedElement.id, { fontFamily: e.target.value || undefined })}
+                                            className="w-full p-2.5 bg-slate-50 border border-slate-200 rounded-lg text-sm text-slate-700 focus:ring-2 focus:ring-brand-500 focus:border-transparent transition-all outline-none"
+                                        >
+                                            <option value="">Select...</option>
+                                            <option value="Arial, sans-serif">Arial</option>
+                                            <option value="Helvetica, sans-serif">Helvetica</option>
+                                            <option value="Georgia, serif">Georgia</option>
+                                            <option value="Times New Roman, serif">Times New Roman</option>
+                                            <option value="Courier New, monospace">Courier New</option>
+                                            <option value="Verdana, sans-serif">Verdana</option>
+                                            <option value="Impact, sans-serif">Impact</option>
+                                        </select>
+                                    </div>
+                                    
+                                    {/* Font Weight */}
+                                    <div>
+                                        <label className="block text-xs font-medium text-gray-600 mb-2">Font Weight</label>
+                                        <select
+                                            value={selectedElement.fontWeight || 'normal'}
+                                            onChange={(e) => updateElement(selectedElement.id, { fontWeight: e.target.value as any })}
+                                            className="w-full p-2.5 bg-slate-50 border border-slate-200 rounded-lg text-sm text-slate-700 focus:ring-2 focus:ring-brand-500 focus:border-transparent transition-all outline-none"
+                                        >
+                                            <option value="normal">Regular</option>
+                                            <option value="medium">Medium</option>
+                                            <option value="semibold">Semi Bold</option>
+                                            <option value="bold">Bold</option>
+                                        </select>
+                                    </div>
+                                    
+                                    {/* Font Size */}
+                                    <div>
+                                        <label className="block text-xs font-medium text-gray-600 mb-2">Font Size</label>
+                                        <div className="flex items-center gap-2">
+                                            <input
+                                                type="number"
+                                                min="8"
+                                                max="96"
+                                                value={selectedElement.fontSize || 16}
+                                                onChange={(e) => updateElement(selectedElement.id, { fontSize: parseInt(e.target.value) || 16 })}
+                                                className="flex-1 p-2.5 bg-slate-50 border border-slate-200 rounded-lg text-sm text-slate-700 focus:ring-2 focus:ring-brand-500 focus:border-transparent transition-all outline-none"
+                                            />
+                                            <span className="text-sm text-slate-500 bg-slate-100 border border-slate-200 rounded-lg px-3 py-2.5">px</span>
+                                            <button
+                                                type="button"
+                                                onClick={() => updateElement(selectedElement.id, { fontSize: Math.max(8, (selectedElement.fontSize || 16) - 1) })}
+                                                className="p-2.5 bg-slate-50 border border-slate-200 rounded-lg hover:bg-slate-100 transition-colors"
+                                            >
+                                                <Minus size={14} />
+                                            </button>
+                                            <button
+                                                type="button"
+                                                onClick={() => updateElement(selectedElement.id, { fontSize: Math.min(96, (selectedElement.fontSize || 16) + 1) })}
+                                                className="p-2.5 bg-slate-50 border border-slate-200 rounded-lg hover:bg-slate-100 transition-colors"
+                                            >
+                                                <Plus size={14} />
+                                            </button>
+                                        </div>
+                                    </div>
+                                    
+                                    {/* Color */}
+                                    <div>
+                                        <label className="block text-xs font-medium text-gray-600 mb-2">Color</label>
+                                        <div className="flex items-center gap-3">
+                                            <input
+                                                type="color"
+                                                value={selectedElement.textColor || '#000000'}
+                                                onChange={(e) => updateElement(selectedElement.id, { textColor: e.target.value })}
+                                                className="w-12 h-10 border border-slate-200 rounded-lg cursor-pointer"
+                                            />
+                                            <input
+                                                type="text"
+                                                value={selectedElement.textColor || '#000000'}
+                                                onChange={(e) => updateElement(selectedElement.id, { textColor: e.target.value })}
+                                                className="flex-1 p-2.5 bg-slate-50 border border-slate-200 rounded-lg text-sm text-slate-700 focus:ring-2 focus:ring-brand-500 focus:border-transparent transition-all outline-none font-mono"
+                                                placeholder="#000000"
+                                            />
+                                            <button
+                                                type="button"
+                                                onClick={() => updateElement(selectedElement.id, { textColor: undefined })}
+                                                className="p-2 text-slate-400 hover:text-slate-600 hover:bg-slate-100 rounded-lg transition-colors"
+                                                title="Reset color"
+                                            >
+                                                <X size={16} />
+                                            </button>
+                                        </div>
+                                    </div>
+                                    
+                                    {/* Text Alignment */}
+                                    <div>
+                                        <label className="block text-xs font-medium text-gray-600 mb-2">Text Align</label>
+                                        <div className="flex rounded-lg border border-gray-200 p-1 bg-gray-50">
+                                            <button
+                                                type="button"
+                                                onClick={() => updateElement(selectedElement.id, { textAlign: 'left' })}
+                                                className={`flex items-center justify-center w-10 h-8 rounded transition-all ${
+                                                    (selectedElement.textAlign ?? 'left') === 'left'
+                                                        ? 'bg-gray-800 text-white shadow-sm'
+                                                        : 'text-gray-400 hover:text-gray-600 hover:bg-gray-100'
+                                                }`}
+                                            >
+                                                <AlignLeft size={16} />
+                                            </button>
+                                            <button
+                                                type="button"
+                                                onClick={() => updateElement(selectedElement.id, { textAlign: 'center' })}
+                                                className={`flex items-center justify-center w-10 h-8 rounded transition-all ${
+                                                    selectedElement.textAlign === 'center'
+                                                        ? 'bg-gray-800 text-white shadow-sm'
+                                                        : 'text-gray-400 hover:text-gray-600 hover:bg-gray-100'
+                                                }`}
+                                            >
+                                                <AlignCenter size={16} />
+                                            </button>
+                                            <button
+                                                type="button"
+                                                onClick={() => updateElement(selectedElement.id, { textAlign: 'right' })}
+                                                className={`flex items-center justify-center w-10 h-8 rounded transition-all ${
+                                                    selectedElement.textAlign === 'right'
+                                                        ? 'bg-gray-800 text-white shadow-sm'
+                                                        : 'text-gray-400 hover:text-gray-600 hover:bg-gray-100'
+                                                }`}
+                                            >
+                                                <AlignRight size={16} />
+                                            </button>
+                                            <button
+                                                type="button"
+                                                onClick={() => updateElement(selectedElement.id, { textAlign: 'justify' })}
+                                                className={`flex items-center justify-center w-10 h-8 rounded transition-all ${
+                                                    selectedElement.textAlign === 'justify'
+                                                        ? 'bg-gray-800 text-white shadow-sm'
+                                                        : 'text-gray-400 hover:text-gray-600 hover:bg-gray-100'
+                                                }`}
+                                            >
+                                                <AlignJustify size={16} />
+                                            </button>
+                                        </div>
+                                    </div>
+                                    
+                                    {/* Line Height */}
+                                    <div>
+                                        <label className="block text-xs font-medium text-gray-600 mb-2">Line Height</label>
+                                        <div className="flex items-center gap-2">
+                                            <input
+                                                type="number"
+                                                min="80"
+                                                max="200"
+                                                step="10"
+                                                value={selectedElement.lineHeight || 140}
+                                                onChange={(e) => updateElement(selectedElement.id, { lineHeight: parseInt(e.target.value) || 140 })}
+                                                className="flex-1 p-2.5 bg-slate-50 border border-slate-200 rounded-lg text-sm text-slate-700 focus:ring-2 focus:ring-brand-500 focus:border-transparent transition-all outline-none"
+                                            />
+                                            <span className="text-sm text-slate-500 bg-slate-100 border border-slate-200 rounded-lg px-3 py-2.5">%</span>
+                                            <button
+                                                type="button"
+                                                onClick={() => updateElement(selectedElement.id, { lineHeight: Math.max(80, (selectedElement.lineHeight || 140) - 10) })}
+                                                className="p-2.5 bg-slate-50 border border-slate-200 rounded-lg hover:bg-slate-100 transition-colors"
+                                            >
+                                                <Minus size={14} />
+                                            </button>
+                                            <button
+                                                type="button"
+                                                onClick={() => updateElement(selectedElement.id, { lineHeight: Math.min(200, (selectedElement.lineHeight || 140) + 10) })}
+                                                className="p-2.5 bg-slate-50 border border-slate-200 rounded-lg hover:bg-slate-100 transition-colors"
+                                            >
+                                                <Plus size={14} />
+                                            </button>
+                                        </div>
+                                    </div>
+                                    
+                                    {/* Letter Spacing */}
+                                    <div>
+                                        <label className="block text-xs font-medium text-gray-600 mb-2">Letter Spacing</label>
+                                        <div className="flex items-center gap-2">
+                                            <input
+                                                type="number"
+                                                min="-5"
+                                                max="10"
+                                                step="0.5"
+                                                value={selectedElement.letterSpacing || 0}
+                                                onChange={(e) => updateElement(selectedElement.id, { letterSpacing: parseFloat(e.target.value) || 0 })}
+                                                className="flex-1 p-2.5 bg-slate-50 border border-slate-200 rounded-lg text-sm text-slate-700 focus:ring-2 focus:ring-brand-500 focus:border-transparent transition-all outline-none"
+                                            />
+                                            <span className="text-sm text-slate-500 bg-slate-100 border border-slate-200 rounded-lg px-3 py-2.5">px</span>
+                                            <button
+                                                type="button"
+                                                onClick={() => updateElement(selectedElement.id, { letterSpacing: Math.max(-5, (selectedElement.letterSpacing || 0) - 0.5) })}
+                                                className="p-2.5 bg-slate-50 border border-slate-200 rounded-lg hover:bg-slate-100 transition-colors"
+                                            >
+                                                <Minus size={14} />
+                                            </button>
+                                            <button
+                                                type="button"
+                                                onClick={() => updateElement(selectedElement.id, { letterSpacing: Math.min(10, (selectedElement.letterSpacing || 0) + 0.5) })}
+                                                className="p-2.5 bg-slate-50 border border-slate-200 rounded-lg hover:bg-slate-100 transition-colors"
+                                            >
+                                                <Plus size={14} />
+                                            </button>
+                                        </div>
+                                    </div>
+                                </div>
+                            )}
                         </div>
-                        <p className="text-xs text-slate-400 mt-1">Use the toolbar to format text or type directly in the editor.</p>
-                    </div>
                 )}
 
                 {isFormProject && selectedElement.type !== 'hidden' && selectedElement.type !== 'rich-text' && selectedElement.type !== 'text-block' && (
@@ -1682,6 +1396,97 @@ export default MyForm;`;
                         </button>
                     </div>
                 </div>
+                
+                {/* Image Width and Alignment - positioned after background color */}
+                {selectedElement.type === 'image' && (
+                    <div className="pt-4 border-t border-slate-100 space-y-4">
+                        {/* Width Percentage */}
+                        <div>
+                            <label className="block text-xs font-medium text-gray-600 mb-2">
+                                Width: <span className="font-semibold">{selectedElement.imageWidthPercent || 100}%</span>
+                            </label>
+                            <div className="flex items-center gap-3">
+                                <input
+                                    type="range"
+                                    min="10"
+                                    max="100"
+                                    step="5"
+                                    value={selectedElement.imageWidthPercent || 100}
+                                    onChange={(e) => updateElement(selectedElement.id, { imageWidthPercent: parseInt(e.target.value) })}
+                                    className="flex-1 h-2 bg-slate-200 rounded-lg appearance-none cursor-pointer"
+                                />
+                                <input
+                                    type="number"
+                                    min="10"
+                                    max="100"
+                                    step="5"
+                                    value={selectedElement.imageWidthPercent || 100}
+                                    onChange={(e) => updateElement(selectedElement.id, { imageWidthPercent: parseInt(e.target.value) || 100 })}
+                                    className="w-16 px-2 py-1 text-xs border border-slate-200 rounded"
+                                />
+                            </div>
+                            <div className="flex justify-between text-xs text-slate-400 mt-1">
+                                <span>10%</span>
+                                <span>100% (Full width)</span>
+                            </div>
+                        </div>
+
+                        {/* Image Alignment */}
+                        <div>
+                            <h3 className="text-xs font-medium text-gray-600 mb-3">Align</h3>
+                            <div className="flex rounded-lg border border-gray-200 p-1 bg-gray-50">
+                                <button
+                                    type="button"
+                                    onClick={() => updateElement(selectedElement.id, { imageAlign: 'left' })}
+                                    className={`flex items-center justify-center w-10 h-8 rounded transition-all ${
+                                        (selectedElement.imageAlign ?? 'left') === 'left'
+                                            ? 'bg-gray-800 text-white shadow-sm'
+                                            : 'text-gray-400 hover:text-gray-600 hover:bg-gray-100'
+                                    }`}
+                                    title="Align Left"
+                                >
+                                    <AlignLeft size={16} />
+                                </button>
+                                <button
+                                    type="button"
+                                    onClick={() => updateElement(selectedElement.id, { imageAlign: 'center' })}
+                                    className={`flex items-center justify-center w-10 h-8 rounded transition-all ${
+                                        selectedElement.imageAlign === 'center'
+                                            ? 'bg-gray-800 text-white shadow-sm'
+                                            : 'text-gray-400 hover:text-gray-600 hover:bg-gray-100'
+                                    }`}
+                                    title="Align Center"
+                                >
+                                    <AlignCenter size={16} />
+                                </button>
+                                <button
+                                    type="button"
+                                    onClick={() => updateElement(selectedElement.id, { imageAlign: 'right' })}
+                                    className={`flex items-center justify-center w-10 h-8 rounded transition-all ${
+                                        selectedElement.imageAlign === 'right'
+                                            ? 'bg-gray-800 text-white shadow-sm'
+                                            : 'text-gray-400 hover:text-gray-600 hover:bg-gray-100'
+                                    }`}
+                                    title="Align Right"
+                                >
+                                    <AlignRight size={16} />
+                                </button>
+                                <button
+                                    type="button"
+                                    onClick={() => updateElement(selectedElement.id, { imageAlign: 'justify' })}
+                                    className={`flex items-center justify-center w-10 h-8 rounded transition-all ${
+                                        selectedElement.imageAlign === 'justify'
+                                            ? 'bg-gray-800 text-white shadow-sm'
+                                            : 'text-gray-400 hover:text-gray-600 hover:bg-gray-100'
+                                    }`}
+                                    title="Justify"
+                                >
+                                    <AlignJustify size={16} />
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                )}
                 
                 {/* Layout Panel */}
                 {!['hidden'].includes(selectedElement.type) && (
@@ -2270,30 +2075,80 @@ export default MyForm;`;
                             <p className="text-xs text-slate-400 mt-1">Number of columns (1-4). Note: On mobile, columns stack vertically.</p>
                         </div>
                         
-                        <div>
-                            <div className="flex justify-between items-center mb-2">
-                                <label className="block text-xs font-semibold text-slate-500 uppercase tracking-wider">
-                                    Column Gap
-                                </label>
-                                <span className="text-xs font-medium text-brand-600 bg-brand-50 px-2 py-0.5 rounded">
-                                    {selectedElement.gap ?? 4}
-                                </span>
+                        {/* Column Cell Backgrounds */}
+                        <div className="pt-4 border-t border-slate-100">
+                            <label className="block text-xs font-semibold text-slate-500 uppercase tracking-wider mb-3">
+                                Column Cell Backgrounds
+                            </label>
+                            <div className="space-y-2">
+                                {Array.from({ length: selectedElement.columnCount || 2 }).map((_, index) => (
+                                    <div key={index} className="flex items-center gap-2">
+                                        <span className="text-sm font-medium text-slate-600 w-20">Cell {index + 1}:</span>
+                                        <input
+                                            type="color"
+                                            value={selectedElement.columnBackgrounds?.[index] || '#f8fafc'}
+                                            onChange={(e) => {
+                                                const newBackgrounds = [...(selectedElement.columnBackgrounds || Array(selectedElement.columnCount || 2).fill(null))];
+                                                newBackgrounds[index] = e.target.value;
+                                                updateElement(selectedElement.id, { columnBackgrounds: newBackgrounds });
+                                            }}
+                                            className="w-12 h-8 border border-slate-300 rounded cursor-pointer"
+                                        />
+                                        <button
+                                            onClick={() => {
+                                                const newBackgrounds = [...(selectedElement.columnBackgrounds || Array(selectedElement.columnCount || 2).fill(null))];
+                                                newBackgrounds[index] = null;
+                                                updateElement(selectedElement.id, { columnBackgrounds: newBackgrounds });
+                                            }}
+                                            className="px-2 py-1 text-xs text-slate-500 hover:text-red-500 hover:bg-red-50 rounded transition-colors"
+                                        >
+                                            Clear
+                                        </button>
+                                    </div>
+                                ))}
                             </div>
-                            <input
-                                type="range"
-                                min="0"
-                                max="12"
-                                step="1"
-                                value={selectedElement.gap ?? 4}
-                                onChange={(e) => updateElement(selectedElement.id, { gap: parseInt(e.target.value) })}
-                                className="w-full h-2 bg-slate-200 rounded-lg appearance-none cursor-pointer accent-brand-600"
-                            />
-                            <p className="text-xs text-slate-400 mt-1">Space between columns (0-12). Uses Tailwind gap classes.</p>
                         </div>
                     </div>
                 )}
 
-                {!['container', 'columns', 'rich-text', 'text-block', 'star-rating', 'hidden', 'button'].includes(selectedElement.type) && (
+                {selectedElement.type === 'rows' && (
+                    <div className="p-3 border border-slate-200 rounded-lg">
+                        <div className="space-y-3">
+                            <label className="block text-xs font-semibold text-slate-500 uppercase tracking-wider mb-3">
+                                Row Cell Backgrounds
+                            </label>
+                            <div className="space-y-2">
+                                {Array.from({ length: selectedElement.rowCount || 1 }).map((_, index) => (
+                                    <div key={index} className="flex items-center gap-2">
+                                        <span className="text-sm font-medium text-slate-600 w-20">Row {index + 1}:</span>
+                                        <input
+                                            type="color"
+                                            value={selectedElement.rowBackgrounds?.[index] || '#ffffff'}
+                                            onChange={(e) => {
+                                                const newBackgrounds = [...(selectedElement.rowBackgrounds || Array(selectedElement.rowCount || 1).fill(null))];
+                                                newBackgrounds[index] = e.target.value === '#ffffff' ? null : e.target.value;
+                                                updateElement(selectedElement.id, { rowBackgrounds: newBackgrounds });
+                                            }}
+                                            className="w-12 h-8 border border-slate-300 rounded cursor-pointer"
+                                        />
+                                        <button
+                                            onClick={() => {
+                                                const newBackgrounds = [...(selectedElement.rowBackgrounds || Array(selectedElement.rowCount || 1).fill(null))];
+                                                newBackgrounds[index] = null;
+                                                updateElement(selectedElement.id, { rowBackgrounds: newBackgrounds });
+                                            }}
+                                            className="px-2 py-1 text-xs text-slate-500 hover:text-red-500 hover:bg-red-50 rounded transition-colors"
+                                        >
+                                            Clear
+                                        </button>
+                                    </div>
+                                ))}
+                            </div>
+                        </div>
+                    </div>
+                )}
+
+                {isFormProject && !['container', 'columns', 'rich-text', 'text-block', 'star-rating', 'hidden', 'button', 'image', 'heading'].includes(selectedElement.type) && (
                     <div className="flex items-center justify-between p-3 bg-slate-50 rounded-lg border border-slate-200">
                         <label htmlFor="required" className="text-sm font-medium text-slate-700">
                             Required Field
@@ -2308,6 +2163,96 @@ export default MyForm;`;
                             />
                             <label htmlFor="required" className={`toggle-label block overflow-hidden h-5 rounded-full cursor-pointer transition-colors ${selectedElement.required ? 'bg-brand-500' : 'bg-slate-300'}`}></label>
                         </div>
+                    </div>
+                )}
+
+                {selectedElement.type === 'image' && (
+                    <div className="pt-4 border-t border-slate-100 space-y-4">
+                        <h3 className="text-xs font-semibold text-slate-500 uppercase tracking-wider">Image Properties</h3>
+                        
+                        {/* Image Selection */}
+                        <div>
+                            <label className="block text-xs font-medium text-gray-600 mb-2">
+                                Image
+                            </label>
+                            <div className="space-y-3">
+                                {/* Image Picker */}
+                                <ImagePicker
+                                    selectedImageUrl={selectedElement.imageUrl}
+                                    onImageSelect={(imageUrl, image) => {
+                                        updateElement(selectedElement.id, { 
+                                            imageUrl: imageUrl,
+                                            imageAlt: image?.alt || selectedElement.imageAlt || 'Image',
+                                            imageWidth: image?.width || selectedElement.imageWidth,
+                                            imageHeight: image?.height || selectedElement.imageHeight
+                                        });
+                                    }}
+                                    className="w-full h-32"
+                                />
+                                
+                                {/* Manual URL input */}
+                                <div>
+                                    <label className="block text-xs font-medium text-gray-500 mb-1">
+                                        Or enter URL manually
+                                    </label>
+                                    <input
+                                        type="url"
+                                        value={selectedElement.imageUrl || ''}
+                                        onChange={(e) => updateElement(selectedElement.id, { imageUrl: e.target.value })}
+                                        placeholder="https://example.com/image.jpg"
+                                        className="w-full p-2 bg-slate-50 border border-slate-200 rounded text-sm text-slate-700 focus:ring-1 focus:ring-blue-500 focus:border-blue-500 transition-all outline-none"
+                                    />
+                                </div>
+                            </div>
+                        </div>
+                        
+                        {/* Alt Text */}
+                        <div>
+                            <label className="block text-xs font-medium text-gray-600 mb-2">
+                                Alt Text
+                            </label>
+                            <input
+                                type="text"
+                                value={selectedElement.imageAlt || ''}
+                                onChange={(e) => updateElement(selectedElement.id, { imageAlt: e.target.value })}
+                                placeholder="Description of the image"
+                                className="w-full p-3 bg-slate-50 border border-slate-200 rounded-lg text-sm text-slate-700 focus:ring-2 focus:ring-brand-500 focus:border-transparent transition-all outline-none"
+                            />
+                            <p className="text-xs text-slate-400 mt-1">Describe the image for accessibility and SEO.</p>
+                        </div>
+                        
+                        {/* Image Dimensions */}
+                        <div className="grid grid-cols-2 gap-3">
+                            <div>
+                                <label className="block text-xs font-medium text-gray-600 mb-2">
+                                    Width (px)
+                                </label>
+                                <input
+                                    type="number"
+                                    min="50"
+                                    max="1200"
+                                    value={selectedElement.imageWidth || ''}
+                                    onChange={(e) => updateElement(selectedElement.id, { imageWidth: parseInt(e.target.value) || undefined })}
+                                    placeholder="400"
+                                    className="w-full p-3 bg-slate-50 border border-slate-200 rounded-lg text-sm text-slate-700 focus:ring-2 focus:ring-brand-500 focus:border-transparent transition-all outline-none"
+                                />
+                            </div>
+                            <div>
+                                <label className="block text-xs font-medium text-gray-600 mb-2">
+                                    Height (px)
+                                </label>
+                                <input
+                                    type="number"
+                                    min="50"
+                                    max="800"
+                                    value={selectedElement.imageHeight || ''}
+                                    onChange={(e) => updateElement(selectedElement.id, { imageHeight: parseInt(e.target.value) || undefined })}
+                                    placeholder="200"
+                                    className="w-full p-3 bg-slate-50 border border-slate-200 rounded-lg text-sm text-slate-700 focus:ring-2 focus:ring-brand-500 focus:border-transparent transition-all outline-none"
+                                />
+                            </div>
+                        </div>
+                        <p className="text-xs text-slate-400">Leave dimensions empty for auto-sizing. Aspect ratio will be maintained.</p>
                     </div>
                 )}
 
@@ -2392,6 +2337,76 @@ export default MyForm;`;
                                 className="w-full flex items-center justify-center gap-2 p-2 mt-2 text-sm font-medium text-brand-600 bg-brand-50 hover:bg-brand-100 rounded-lg transition-colors border border-brand-200"
                             >
                                 <Plus size={16} /> Add Option
+                            </button>
+                        </div>
+                    </div>
+                )}
+
+                {selectedElement.type === 'menu' && (
+                    <div className="pt-4 border-t border-slate-100">
+                        <label className="block text-xs font-semibold text-slate-500 uppercase tracking-wider mb-3">
+                            Menu Items
+                        </label>
+                        <div className="space-y-2">
+                            {selectedElement.menuItems?.map((item, index) => (
+                                <div key={index} className="space-y-2 p-3 bg-slate-50 border border-slate-200 rounded-lg group">
+                                    <div className="flex gap-2">
+                                        <input
+                                            type="text"
+                                            value={item.label}
+                                            onChange={(e) => {
+                                                const newItems = [...(selectedElement.menuItems || [])];
+                                                newItems[index] = { ...item, label: e.target.value };
+                                                updateElement(selectedElement.id, { menuItems: newItems });
+                                            }}
+                                            className="flex-1 p-2 bg-white border border-slate-200 rounded-md text-sm focus:ring-2 focus:ring-brand-500 focus:border-transparent outline-none"
+                                            placeholder="Menu Label"
+                                        />
+                                        <button
+                                            onClick={() => {
+                                                const newItems = selectedElement.menuItems?.filter((_, i) => i !== index);
+                                                updateElement(selectedElement.id, { menuItems: newItems });
+                                            }}
+                                            className="p-2 text-slate-400 hover:text-red-500 hover:bg-red-50 rounded-md transition-colors"
+                                        >
+                                            <Trash size={16} />
+                                        </button>
+                                    </div>
+                                    <div className="flex gap-2">
+                                        <input
+                                            type="text"
+                                            value={item.href}
+                                            onChange={(e) => {
+                                                const newItems = [...(selectedElement.menuItems || [])];
+                                                newItems[index] = { ...item, href: e.target.value };
+                                                updateElement(selectedElement.id, { menuItems: newItems });
+                                            }}
+                                            className="flex-1 p-2 bg-white border border-slate-200 rounded-md text-sm focus:ring-2 focus:ring-brand-500 focus:border-transparent outline-none"
+                                            placeholder="URL or path (e.g., /about, https://example.com)"
+                                        />
+                                        <select
+                                            value={item.target || '_self'}
+                                            onChange={(e) => {
+                                                const newItems = [...(selectedElement.menuItems || [])];
+                                                newItems[index] = { ...item, target: e.target.value as '_blank' | '_self' };
+                                                updateElement(selectedElement.id, { menuItems: newItems });
+                                            }}
+                                            className="p-2 bg-white border border-slate-200 rounded-md text-sm focus:ring-2 focus:ring-brand-500 focus:border-transparent outline-none"
+                                        >
+                                            <option value="_self">Same Tab</option>
+                                            <option value="_blank">New Tab</option>
+                                        </select>
+                                    </div>
+                                </div>
+                            ))}
+                            <button
+                                onClick={() => {
+                                    const newItems = [...(selectedElement.menuItems || []), { label: 'New Menu Item', href: '#' }];
+                                    updateElement(selectedElement.id, { menuItems: newItems });
+                                }}
+                                className="w-full flex items-center justify-center gap-2 p-2 mt-2 text-sm font-medium text-brand-600 bg-brand-50 hover:bg-brand-100 rounded-lg transition-colors border border-brand-200"
+                            >
+                                <Plus size={16} /> Add Menu Item
                             </button>
                         </div>
                     </div>

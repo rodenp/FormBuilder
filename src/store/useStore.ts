@@ -1,6 +1,6 @@
 import { create } from 'zustand';
 import { persist } from 'zustand/middleware';
-import type { FormElement, FormSettings, FormElementType, Project, ProjectType } from '../types';
+import type { FormElement, FormSettings, FormElementType, Project, ProjectType, GalleryImage } from '../types';
 import { v4 as uuidv4 } from 'uuid';
 
 interface FormStore {
@@ -14,6 +14,7 @@ interface FormStore {
     selectedElementId: string | null;
     settings: FormSettings;
     addElement: (type: FormElementType, parentId?: string) => void;
+    addElementAtStart: (type: FormElementType) => void;
     removeElement: (id: string) => void;
     duplicateElement: (id: string) => void;
     updateElement: (id: string, updates: Partial<FormElement>) => void;
@@ -21,6 +22,7 @@ interface FormStore {
     reorderElements: (elements: FormElement[]) => void;
     moveElementToContainer: (elementId: string, containerId: string) => void;
     moveElementToColumnPosition: (elementId: string, containerId: string, columnIndex: number) => void;
+    moveElementToRowPosition: (elementId: string, containerId: string, rowIndex: number) => void;
     insertElementBefore: (elementId: string, targetElementId: string, targetParentId?: string) => void;
     insertElementAfter: (elementId: string, targetElementId: string, targetParentId?: string) => void;
     addElementBefore: (type: FormElementType, targetElementId: string, targetParentId?: string) => void;
@@ -40,6 +42,13 @@ interface FormStore {
     updateProjectName: (name: string) => void;
     setProjectListOpen: (open: boolean) => void;
     clearCurrentProject: () => void;
+    
+    // Image gallery management
+    imageGallery: GalleryImage[];
+    addImageToGallery: (image: Omit<GalleryImage, 'id' | 'createdAt'>) => GalleryImage;
+    removeImageFromGallery: (imageId: string) => void;
+    updateGalleryImage: (imageId: string, updates: Partial<GalleryImage>) => void;
+    clearImageGallery: () => void;
 }
 
 export const useStore = create<FormStore>()(
@@ -59,6 +68,9 @@ export const useStore = create<FormStore>()(
                 submitButtonText: 'Submit',
                 submissionActions: [],
             },
+            
+            // Image gallery state
+            imageGallery: [],
 
     addElement: (type, parentId) => set((state) => {
         const label = type === 'rich-text' ? '' : `New ${type.charAt(0).toUpperCase() + type.slice(1)}`;
@@ -75,9 +87,11 @@ export const useStore = create<FormStore>()(
             options: type === 'select' ? [{ label: 'Option 1', value: 'option1' }] : 
                      type === 'radio' ? [{ label: 'Option 1', value: 'option1' }, { label: 'Option 2', value: 'option2' }] : undefined,
             maxStars: type === 'star-rating' ? 5 : undefined,
-            children: (type === 'container' || type === 'columns' || type === 'rows' || type === 'grid') ? [] : undefined,
+            children: (type === 'container' || type === 'columns' || type === 'rows' || type === 'grid' || type === 'menu') ? [] : undefined,
             columnCount: type === 'columns' ? 2 : undefined,
+            rowCount: type === 'rows' ? 1 : undefined,
             gap: (type === 'container' || type === 'columns' || type === 'rows' || type === 'grid') ? 0 : undefined,
+            rowGap: (type === 'rows') ? 0 : undefined,
             labelSize: type !== 'hidden' && type !== 'rich-text' ? 'sm' : undefined,
             labelWeight: type !== 'hidden' && type !== 'rich-text' ? 'medium' : undefined,
             value: type === 'hidden' ? '' : undefined,
@@ -97,6 +111,8 @@ export const useStore = create<FormStore>()(
             imageAlt: type === 'image' ? 'Placeholder image' : undefined,
             imageWidth: type === 'image' ? 400 : undefined,
             imageHeight: type === 'image' ? 200 : undefined,
+            imageWidthPercent: type === 'image' ? 100 : undefined,
+            imageAlign: type === 'image' ? 'left' : undefined,
             // For Navigation
             navItems: type === 'navigation' ? [
                 { label: 'Home', href: '#home' },
@@ -157,7 +173,8 @@ export const useStore = create<FormStore>()(
                 children: [],
                 display: 'flex',
                 flexDirection: 'column',
-                gap: 4,
+                gap: 0,
+                rowGap: 0,
                 paddingTop: 8,
                 paddingBottom: 8,
                 paddingLeft: 8,
@@ -165,36 +182,33 @@ export const useStore = create<FormStore>()(
                 backgroundColor: 'transparent',
                 borderRadius: 4
             }));
+            // Initialize columnBackgrounds array similar to menuItems
+            newElement.columnBackgrounds = Array(columnCount).fill(null);
         } else if (type === 'rows') {
-            // Add default row cells as children
-            newElement.children = [
-                {
-                    id: uuidv4(),
-                    type: 'text' as FormElementType,
-                    label: 'Row 1',
-                    name: 'row_1',
-                    placeholder: 'Enter text...',
-                    required: false,
-                    width: 12, // Full width
-                    paddingTop: 8,
-                    paddingBottom: 8,
-                    paddingLeft: 12,
-                    paddingRight: 12
-                },
-                {
-                    id: uuidv4(),
-                    type: 'text' as FormElementType,
-                    label: 'Row 2',
-                    name: 'row_2',
-                    placeholder: 'Enter text...',
-                    required: false,
-                    width: 12, // Full width
-                    paddingTop: 8,
-                    paddingBottom: 8,
-                    paddingLeft: 12,
-                    paddingRight: 12
-                }
-            ];
+            // Rows start with empty cells that can contain multiple elements
+            const rowCount = newElement.rowCount || 1;
+            newElement.children = Array(rowCount).fill(null).map((_, index) => ({
+                id: uuidv4(),
+                type: 'container' as FormElementType,
+                label: `Row ${index + 1}`,
+                name: `row_${index + 1}`,
+                placeholder: '',
+                required: false,
+                width: 12,
+                children: [],
+                display: 'flex',
+                flexDirection: 'column',
+                gap: 0,
+                rowGap: 0,
+                paddingTop: 8,
+                paddingBottom: 8,
+                paddingLeft: 8,
+                paddingRight: 8,
+                backgroundColor: 'transparent',
+                borderRadius: 4
+            }));
+            // Initialize rowBackgrounds array similar to columnBackgrounds
+            newElement.rowBackgrounds = Array(rowCount).fill(null);
         } else if (type === 'grid') {
             newElement.children = [];
         } else if (type === 'menu') {
@@ -249,6 +263,12 @@ export const useStore = create<FormStore>()(
                     paddingRight: 8
                 }
             ];
+            // Also initialize menuItems property to sync with children
+            newElement.menuItems = [
+                { label: 'Item 1', href: '#', target: '_self' },
+                { label: 'Item 2', href: '#', target: '_self' },
+                { label: 'Item 3', href: '#', target: '_self' }
+            ];
         }
         
         if (parentId) {
@@ -292,7 +312,144 @@ export const useStore = create<FormStore>()(
         }
     }),
 
+    addElementAtStart: (type) => set((state) => {
+        const label = type === 'rich-text' ? '' : `New ${type.charAt(0).toUpperCase() + type.slice(1)}`;
+        const name = label.toLowerCase().replace(/[^a-z0-9]/g, '_');
+
+        const newElement: FormElement = {
+            id: uuidv4(),
+            type,
+            label,
+            name,
+            placeholder: '',
+            required: false,
+            width: 12,
+            options: type === 'select' ? [{ label: 'Option 1', value: 'option1' }] : 
+                     type === 'radio' ? [{ label: 'Option 1', value: 'option1' }, { label: 'Option 2', value: 'option2' }] : undefined,
+            maxStars: type === 'star-rating' ? 5 : undefined,
+            children: (type === 'container' || type === 'columns' || type === 'rows' || type === 'grid' || type === 'menu') ? [] : undefined,
+            columnCount: type === 'columns' ? 2 : undefined,
+            gap: (type === 'container' || type === 'columns' || type === 'rows' || type === 'grid') ? 0 : undefined,
+            labelSize: type !== 'hidden' && type !== 'rich-text' ? 'sm' : undefined,
+            labelWeight: type !== 'hidden' && type !== 'rich-text' ? 'medium' : undefined,
+            value: type === 'hidden' ? '' : undefined,
+            content: type === 'rich-text' ? '<p>Your rich text content here</p>' : 
+                    type === 'text-block' ? '<p>Click to edit this text block</p>' : undefined,
+            buttonText: type === 'button' ? 'Click me' : undefined,
+            buttonType: type === 'button' ? 'button' : undefined,
+            buttonStyle: type === 'button' ? 'primary' : undefined,
+            buttonSize: type === 'button' ? 'md' : undefined,
+            buttonAction: type === 'button' ? 'none' : undefined,
+            buttonUrl: type === 'button' ? '' : undefined,
+            buttonTarget: type === 'button' ? '_self' : undefined,
+            headingLevel: type === 'heading' ? 1 : undefined,
+            imageUrl: type === 'image' ? 'https://placehold.co/400x200/e2e8f0/94a3b8?text=Image' : undefined,
+            imageAlt: type === 'image' ? 'Placeholder image' : undefined,
+            imageWidth: type === 'image' ? 400 : undefined,
+            imageHeight: type === 'image' ? 200 : undefined,
+            imageWidthPercent: type === 'image' ? 100 : undefined,
+            imageAlign: type === 'image' ? 'left' : undefined,
+            navItems: type === 'navigation' ? [
+                { label: 'Home', href: '#home' },
+                { label: 'About', href: '#about' },
+                { label: 'Contact', href: '#contact' }
+            ] : undefined,
+            menuItems: type === 'menu' ? [
+                { label: 'Item 1', href: '#' },
+                { label: 'Item 2', href: '#' },
+                { label: 'Item 3', href: '#' }
+            ] : undefined,
+            socialLinks: type === 'social' ? [
+                { platform: 'facebook', url: 'https://facebook.com', icon: 'facebook' },
+                { platform: 'twitter', url: 'https://twitter.com', icon: 'twitter' },
+                { platform: 'instagram', url: 'https://instagram.com', icon: 'instagram' }
+            ] : undefined,
+            paddingTop: ['text-block', 'heading', 'social'].includes(type) ? 4 : (type === 'container' || type === 'columns' || type === 'rows' || type === 'grid') ? 16 : 8,
+            paddingRight: (type === 'container' || type === 'columns' || type === 'rows' || type === 'grid') ? 16 : 8,
+            paddingBottom: (type === 'container' || type === 'columns' || type === 'rows' || type === 'grid') ? 16 : 8,
+            paddingLeft: (type === 'container' || type === 'columns' || type === 'rows' || type === 'grid') ? 16 : 8,
+            marginTop: type === 'text-block' ? 4 : 8,
+            marginRight: 0,
+            marginBottom: 0,
+            marginLeft: 0,
+            fontSize: type === 'text-block' ? 14 : undefined,
+            borderRadius: type === 'image' ? 8 : undefined,
+        };
+        
+        // Handle menu component special initialization
+        if (type === 'menu') {
+            newElement.children = [
+                {
+                    id: uuidv4(),
+                    type: 'button' as FormElementType,
+                    label: '',
+                    name: 'menu_item_1',
+                    required: false,
+                    width: 12,
+                    buttonText: 'Item 1',
+                    buttonStyle: 'link',
+                    buttonSize: 'sm',
+                    paddingTop: 4,
+                    paddingBottom: 4,
+                    paddingLeft: 8,
+                    paddingRight: 8
+                },
+                {
+                    id: uuidv4(),
+                    type: 'button' as FormElementType,
+                    label: '',
+                    name: 'menu_item_2',
+                    required: false,
+                    width: 12,
+                    buttonText: 'Item 2',
+                    buttonStyle: 'link',
+                    buttonSize: 'sm',
+                    paddingTop: 4,
+                    paddingBottom: 4,
+                    paddingLeft: 8,
+                    paddingRight: 8
+                },
+                {
+                    id: uuidv4(),
+                    type: 'button' as FormElementType,
+                    label: '',
+                    name: 'menu_item_3',
+                    required: false,
+                    width: 12,
+                    buttonText: 'Item 3',
+                    buttonStyle: 'link',
+                    buttonSize: 'sm',
+                    paddingTop: 4,
+                    paddingBottom: 4,
+                    paddingLeft: 8,
+                    paddingRight: 8
+                }
+            ];
+        }
+        
+        // Add to beginning of root level
+        return {
+            elements: [newElement, ...state.elements],
+            selectedElementId: newElement.id,
+        };
+    }),
+
     removeElement: (id) => set((state) => {
+        // Helper function to sync menu items based on children
+        const syncMenuItems = (element: FormElement): FormElement => {
+            if (element.type === 'menu' && element.children) {
+                const menuItems = element.children
+                    .filter(child => child && child.type === 'button')
+                    .map(child => ({
+                        label: child.buttonText || 'Menu Item',
+                        href: child.buttonUrl || '#',
+                        target: child.buttonTarget || '_self' as '_self' | '_blank'
+                    }));
+                return { ...element, menuItems };
+            }
+            return element;
+        };
+
         // Helper function to find the parent of the element to be removed
         const findParent = (elements: FormElement[], targetId: string): FormElement | null => {
             for (const el of elements) {
@@ -319,19 +476,35 @@ export const useStore = create<FormStore>()(
                     
                     // Special handling for columns - replace with undefined instead of removing
                     if (el.type === 'columns' && el.children) {
-                        const updatedChildren = el.children.map(child => 
-                            child && child.id === id ? undefined : child
-                        );
-                        return {
+                        const updatedChildren = el.children.map(child => {
+                            if (!child) return child;
+                            // If the direct child is the target, replace with undefined
+                            if (child.id === id) {
+                                return undefined;
+                            }
+                            // If the child has its own children, process them recursively
+                            if (child.children) {
+                                const processedChild = {
+                                    ...child,
+                                    children: removeFromElements(child.children)
+                                };
+                                return processedChild;
+                            }
+                            return child;
+                        });
+                        return syncMenuItems({
                             ...el,
                             children: updatedChildren
-                        };
+                        });
                     }
                     
-                    return {
+                    const updatedEl = {
                         ...el,
                         children: el.children ? removeFromElements(el.children) : undefined
                     };
+                    
+                    // Sync menu items if this is a menu component
+                    return syncMenuItems(updatedEl);
                 });
         };
 
@@ -342,6 +515,21 @@ export const useStore = create<FormStore>()(
     }),
 
     duplicateElement: (id) => set((state) => {
+        // Helper function to sync menu items based on children
+        const syncMenuItems = (element: FormElement): FormElement => {
+            if (element.type === 'menu' && element.children) {
+                const menuItems = element.children
+                    .filter(child => child && child.type === 'button')
+                    .map(child => ({
+                        label: child.buttonText || 'Menu Item',
+                        href: child.buttonUrl || '#',
+                        target: child.buttonTarget || '_self' as '_self' | '_blank'
+                    }));
+                return { ...element, menuItems };
+            }
+            return element;
+        };
+
         // Helper function to recursively duplicate elements with new IDs
         const cloneElementWithNewIds = (element: FormElement): FormElement => {
             const newElement = {
@@ -374,10 +562,10 @@ export const useStore = create<FormStore>()(
                     if (updatedChildren !== elements[i].children) {
                         // A duplication happened in children, update this parent
                         const newElements = [...elements];
-                        newElements[i] = {
+                        newElements[i] = syncMenuItems({
                             ...elements[i],
                             children: updatedChildren
-                        };
+                        });
                         return newElements;
                     }
                 }
@@ -447,6 +635,21 @@ export const useStore = create<FormStore>()(
     reorderElements: (elements) => set({ elements }),
 
     moveElementToContainer: (elementId, containerId) => set((state) => {
+        // Helper function to sync menu items based on children
+        const syncMenuItems = (element: FormElement): FormElement => {
+            if (element.type === 'menu' && element.children) {
+                const menuItems = element.children
+                    .filter(child => child && child.type === 'button')
+                    .map(child => ({
+                        label: child.buttonText || 'Menu Item',
+                        href: child.buttonUrl || '#',
+                        target: child.buttonTarget || '_self' as '_self' | '_blank'
+                    }));
+                return { ...element, menuItems };
+            }
+            return element;
+        };
+
         // Prevent moving an element into itself or its descendants
         const isDescendant = (parentId: string, elements: FormElement[]): boolean => {
             for (const el of elements) {
@@ -496,25 +699,37 @@ export const useStore = create<FormStore>()(
         // Then add it to the target container (recursively search)
         const addToContainer = (elements: FormElement[]): FormElement[] => {
             return elements.map(el => {
-                if (el.id === containerId && (el.type === 'container' || el.type === 'columns' || el.type === 'rows' || el.type === 'grid')) {
+                if (el.id === containerId && (el.type === 'container' || el.type === 'columns' || el.type === 'rows' || el.type === 'grid' || el.type === 'menu')) {
                     // Adjust width based on container type
                     if (el.type === 'columns' && elementToMove) {
                         const columnWidth = 12 / (el.columnCount || 2);
                         elementToMove.width = columnWidth;
-                    } else if ((el.type === 'container' || el.type === 'rows' || el.type === 'grid') && elementToMove) {
-                        // If moving to container, rows, or grid, set to full width
+                    } else if ((el.type === 'container' || el.type === 'rows' || el.type === 'grid' || el.type === 'menu') && elementToMove) {
+                        // If moving to container, rows, grid, or menu, set to full width
                         elementToMove.width = 12;
+                        
+                        // If moving a button to a menu, apply menu item styling
+                        if (el.type === 'menu' && elementToMove.type === 'button') {
+                            elementToMove.buttonStyle = 'link';
+                            elementToMove.buttonSize = 'sm';
+                            elementToMove.paddingTop = 4;
+                            elementToMove.paddingBottom = 4;
+                            elementToMove.paddingLeft = 8;
+                            elementToMove.paddingRight = 8;
+                        }
                     }
-                    return {
+                    const updatedEl = {
                         ...el,
                         children: [...(el.children || []), elementToMove!]
                     };
+                    return syncMenuItems(updatedEl);
                 }
                 if (el.children) {
-                    return {
+                    const updatedEl = {
                         ...el,
                         children: addToContainer(el.children)
                     };
+                    return syncMenuItems(updatedEl);
                 }
                 return el;
             });
@@ -653,6 +868,136 @@ export const useStore = create<FormStore>()(
 
         return {
             elements: addToColumnPosition(newElements),
+        };
+    }),
+
+    moveElementToRowPosition: (elementId, containerId, rowIndex) => set((state) => {
+        // Prevent moving an element into itself or its descendants
+        const isDescendant = (parentId: string, elements: FormElement[]): boolean => {
+            for (const el of elements) {
+                if (el.id === parentId) return true;
+                if (el.children && isDescendant(parentId, el.children)) return true;
+            }
+            return false;
+        };
+        
+        // Find the element to move
+        const findElement = (id: string, elements: FormElement[]): FormElement | null => {
+            for (const el of elements) {
+                if (!el) continue;
+                if (el.id === id) return el;
+                if (el.children) {
+                    const found = findElement(id, el.children);
+                    if (found) return found;
+                }
+            }
+            return null;
+        };
+        
+        const elementToMoveRef = findElement(elementId, state.elements);
+        if (elementToMoveRef && elementToMoveRef.children && isDescendant(containerId, elementToMoveRef.children)) {
+            return state; // Prevent circular nesting
+        }
+        
+        // First find and remove the element from wherever it is
+        let elementToMove: FormElement | null = null;
+        
+        const removeFromElements = (elements: FormElement[]): FormElement[] => {
+            return elements.map(el => {
+                if (!el) return el;
+                
+                // If this is the element we're looking for, capture it and remove
+                if (el.id === elementId) {
+                    elementToMove = el;
+                    return undefined; // Remove it by setting to undefined
+                }
+                
+                // Special handling for rows - replace with undefined instead of removing completely
+                if (el.type === 'rows' && el.children) {
+                    const updatedChildren = el.children.map(child => {
+                        if (child && child.id === elementId) {
+                            elementToMove = child;
+                            return undefined; // Replace with undefined to maintain position
+                        }
+                        return child;
+                    });
+                    
+                    // Check if we found the element in this row's children
+                    if (elementToMove) {
+                        return {
+                            ...el,
+                            children: updatedChildren
+                        };
+                    }
+                    
+                    // Continue recursing if not found yet
+                    return {
+                        ...el,
+                        children: el.children ? removeFromElements(el.children) : undefined
+                    };
+                }
+                
+                // For non-row containers, use filter to remove completely
+                if (el.children) {
+                    return {
+                        ...el,
+                        children: removeFromElements(el.children)
+                    };
+                }
+                
+                return el;
+            }).filter(el => el !== undefined); // Remove undefined elements from root level
+        };
+
+        const newElements = removeFromElements(state.elements);
+        
+        if (!elementToMove) return state;
+
+        // Then add it to the specific row position
+        const addToRowPosition = (elements: FormElement[]): FormElement[] => {
+            return elements.map(el => {
+                if (!el) return el;
+                if (el.id === containerId && el.type === 'rows') {
+                    // Clone the children array and ensure it has the right structure
+                    const children = el.children || [];
+                    const rowCount = el.rowCount || 2;
+                    
+                    // Create new children array with correct length
+                    const updatedChildren = Array(rowCount).fill(undefined);
+                    
+                    // Copy existing elements to their positions, but only up to rowCount
+                    for (let i = 0; i < Math.min(children.length, rowCount); i++) {
+                        if (children[i]) {
+                            updatedChildren[i] = children[i];
+                        }
+                    }
+                    
+                    // Set width to full width for rows and create new element object
+                    const updatedElementToMove = {
+                        ...elementToMove!,
+                        width: 12
+                    };
+                    
+                    // Place element at specific row index
+                    updatedChildren[rowIndex] = updatedElementToMove;
+                    
+                    return {
+                        ...el,
+                        children: updatedChildren
+                    };
+                }
+                if (el.children) {
+                    return {
+                        ...el,
+                        children: addToRowPosition(el.children)
+                    };
+                }
+                return el;
+            });
+        };
+
+        return {
+            elements: addToRowPosition(newElements),
         };
     }),
 
@@ -868,7 +1213,7 @@ export const useStore = create<FormStore>()(
             options: type === 'select' ? [{ label: 'Option 1', value: 'option1' }] : 
                      type === 'radio' ? [{ label: 'Option 1', value: 'option1' }, { label: 'Option 2', value: 'option2' }] : undefined,
             maxStars: type === 'star-rating' ? 5 : undefined,
-            children: (type === 'container' || type === 'columns' || type === 'rows' || type === 'grid') ? [] : undefined,
+            children: (type === 'container' || type === 'columns' || type === 'rows' || type === 'grid' || type === 'menu') ? [] : undefined,
             columnCount: type === 'columns' ? 2 : undefined,
             gap: (type === 'container' || type === 'columns' || type === 'rows' || type === 'grid') ? 0 : undefined,
             labelSize: type !== 'hidden' && type !== 'rich-text' ? 'sm' : undefined,
@@ -901,6 +1246,63 @@ export const useStore = create<FormStore>()(
             marginTop: !targetParentId && !['columns', 'grid'].includes(type) ? 
                       (type === 'text-block' ? 4 : 8) : 0,
         };
+
+        // Handle menu component special initialization
+        if (type === 'menu') {
+            newElement.children = [
+                {
+                    id: uuidv4(),
+                    type: 'button' as FormElementType,
+                    label: '',
+                    name: 'menu_item_1',
+                    required: false,
+                    width: 12,
+                    buttonText: 'Item 1',
+                    buttonStyle: 'link',
+                    buttonSize: 'sm',
+                    paddingTop: 4,
+                    paddingBottom: 4,
+                    paddingLeft: 8,
+                    paddingRight: 8
+                },
+                {
+                    id: uuidv4(),
+                    type: 'button' as FormElementType,
+                    label: '',
+                    name: 'menu_item_2',
+                    required: false,
+                    width: 12,
+                    buttonText: 'Item 2',
+                    buttonStyle: 'link',
+                    buttonSize: 'sm',
+                    paddingTop: 4,
+                    paddingBottom: 4,
+                    paddingLeft: 8,
+                    paddingRight: 8
+                },
+                {
+                    id: uuidv4(),
+                    type: 'button' as FormElementType,
+                    label: '',
+                    name: 'menu_item_3',
+                    required: false,
+                    width: 12,
+                    buttonText: 'Item 3',
+                    buttonStyle: 'link',
+                    buttonSize: 'sm',
+                    paddingTop: 4,
+                    paddingBottom: 4,
+                    paddingLeft: 8,
+                    paddingRight: 8
+                }
+            ];
+            // Also initialize menuItems property to sync with children
+            newElement.menuItems = [
+                { label: 'Item 1', href: '#', target: '_self' },
+                { label: 'Item 2', href: '#', target: '_self' },
+                { label: 'Item 3', href: '#', target: '_self' }
+            ];
+        }
 
         // Insert before the target element
         const insertIntoElements = (elements: FormElement[]): FormElement[] => {
@@ -967,7 +1369,7 @@ export const useStore = create<FormStore>()(
             options: type === 'select' ? [{ label: 'Option 1', value: 'option1' }] : 
                      type === 'radio' ? [{ label: 'Option 1', value: 'option1' }, { label: 'Option 2', value: 'option2' }] : undefined,
             maxStars: type === 'star-rating' ? 5 : undefined,
-            children: (type === 'container' || type === 'columns' || type === 'rows' || type === 'grid') ? [] : undefined,
+            children: (type === 'container' || type === 'columns' || type === 'rows' || type === 'grid' || type === 'menu') ? [] : undefined,
             columnCount: type === 'columns' ? 2 : undefined,
             gap: (type === 'container' || type === 'columns' || type === 'rows' || type === 'grid') ? 0 : undefined,
             labelSize: type !== 'hidden' && type !== 'rich-text' ? 'sm' : undefined,
@@ -1000,6 +1402,63 @@ export const useStore = create<FormStore>()(
             marginTop: !targetParentId && !['columns', 'grid'].includes(type) ? 
                       (type === 'text-block' ? 4 : 8) : 0,
         };
+
+        // Handle menu component special initialization
+        if (type === 'menu') {
+            newElement.children = [
+                {
+                    id: uuidv4(),
+                    type: 'button' as FormElementType,
+                    label: '',
+                    name: 'menu_item_1',
+                    required: false,
+                    width: 12,
+                    buttonText: 'Item 1',
+                    buttonStyle: 'link',
+                    buttonSize: 'sm',
+                    paddingTop: 4,
+                    paddingBottom: 4,
+                    paddingLeft: 8,
+                    paddingRight: 8
+                },
+                {
+                    id: uuidv4(),
+                    type: 'button' as FormElementType,
+                    label: '',
+                    name: 'menu_item_2',
+                    required: false,
+                    width: 12,
+                    buttonText: 'Item 2',
+                    buttonStyle: 'link',
+                    buttonSize: 'sm',
+                    paddingTop: 4,
+                    paddingBottom: 4,
+                    paddingLeft: 8,
+                    paddingRight: 8
+                },
+                {
+                    id: uuidv4(),
+                    type: 'button' as FormElementType,
+                    label: '',
+                    name: 'menu_item_3',
+                    required: false,
+                    width: 12,
+                    buttonText: 'Item 3',
+                    buttonStyle: 'link',
+                    buttonSize: 'sm',
+                    paddingTop: 4,
+                    paddingBottom: 4,
+                    paddingLeft: 8,
+                    paddingRight: 8
+                }
+            ];
+            // Also initialize menuItems property to sync with children
+            newElement.menuItems = [
+                { label: 'Item 1', href: '#', target: '_self' },
+                { label: 'Item 2', href: '#', target: '_self' },
+                { label: 'Item 3', href: '#', target: '_self' }
+            ];
+        }
 
         // Insert after the target element
         const insertIntoElements = (elements: FormElement[]): FormElement[] => {
@@ -1051,9 +1510,24 @@ export const useStore = create<FormStore>()(
     }),
 
     removeElementFromContainer: (elementId, containerId) => set((state) => {
+        // Helper function to sync menu items based on children
+        const syncMenuItems = (element: FormElement): FormElement => {
+            if (element.type === 'menu' && element.children) {
+                const menuItems = element.children
+                    .filter(child => child && child.type === 'button')
+                    .map(child => ({
+                        label: child.buttonText || 'Menu Item',
+                        href: child.buttonUrl || '#',
+                        target: child.buttonTarget || '_self' as '_self' | '_blank'
+                    }));
+                return { ...element, menuItems };
+            }
+            return element;
+        };
+
         const updateContainer = (elements: FormElement[]): FormElement[] => {
             return elements.map(el => {
-                if (el.id === containerId && (el.type === 'container' || el.type === 'columns' || el.type === 'rows' || el.type === 'grid')) {
+                if (el.id === containerId && (el.type === 'container' || el.type === 'columns' || el.type === 'rows' || el.type === 'grid' || el.type === 'menu')) {
                     if (el.type === 'columns') {
                         // For columns, maintain array structure with undefined/null slots
                         const updatedChildren = [...(el.children || [])];
@@ -1061,16 +1535,16 @@ export const useStore = create<FormStore>()(
                         if (elementIndex !== -1) {
                             updatedChildren[elementIndex] = undefined; // Keep the slot but make it empty
                         }
-                        return {
+                        return syncMenuItems({
                             ...el,
                             children: updatedChildren
-                        };
+                        });
                     } else {
                         // For other containers, remove completely
-                        return {
+                        return syncMenuItems({
                             ...el,
-                            children: (el.children || []).filter(child => child.id !== elementId)
-                        };
+                            children: (el.children || []).filter(child => child && child.id !== elementId)
+                        });
                     }
                 }
                 if (el.children) {
@@ -1089,17 +1563,32 @@ export const useStore = create<FormStore>()(
     }),
 
     moveElementUp: (id, parentId) => set((state) => {
+        // Helper function to sync menu items based on children
+        const syncMenuItems = (element: FormElement): FormElement => {
+            if (element.type === 'menu' && element.children) {
+                const menuItems = element.children
+                    .filter(child => child && child.type === 'button')
+                    .map(child => ({
+                        label: child.buttonText || 'Menu Item',
+                        href: child.buttonUrl || '#',
+                        target: child.buttonTarget || '_self' as '_self' | '_blank'
+                    }));
+                return { ...element, menuItems };
+            }
+            return element;
+        };
+
         if (parentId) {
             // Move within container
             const updateContainer = (elements: FormElement[]): FormElement[] => {
                 return elements.map(el => {
-                    if (el.id === parentId && (el.type === 'container' || el.type === 'columns' || el.type === 'rows' || el.type === 'grid') && el.children) {
+                    if (el.id === parentId && (el.type === 'container' || el.type === 'columns' || el.type === 'rows' || el.type === 'grid' || el.type === 'menu') && el.children) {
                         const children = [...el.children];
-                        const index = children.findIndex(child => child.id === id);
+                        const index = children.findIndex(child => child && child.id === id);
                         if (index > 0) {
                             [children[index - 1], children[index]] = [children[index], children[index - 1]];
                         }
-                        return { ...el, children };
+                        return syncMenuItems({ ...el, children });
                     }
                     if (el.children) {
                         return { ...el, children: updateContainer(el.children) };
@@ -1120,17 +1609,32 @@ export const useStore = create<FormStore>()(
     }),
 
     moveElementDown: (id, parentId) => set((state) => {
+        // Helper function to sync menu items based on children
+        const syncMenuItems = (element: FormElement): FormElement => {
+            if (element.type === 'menu' && element.children) {
+                const menuItems = element.children
+                    .filter(child => child && child.type === 'button')
+                    .map(child => ({
+                        label: child.buttonText || 'Menu Item',
+                        href: child.buttonUrl || '#',
+                        target: child.buttonTarget || '_self' as '_self' | '_blank'
+                    }));
+                return { ...element, menuItems };
+            }
+            return element;
+        };
+
         if (parentId) {
             // Move within container
             const updateContainer = (elements: FormElement[]): FormElement[] => {
                 return elements.map(el => {
-                    if (el.id === parentId && (el.type === 'container' || el.type === 'columns' || el.type === 'rows' || el.type === 'grid') && el.children) {
+                    if (el.id === parentId && (el.type === 'container' || el.type === 'columns' || el.type === 'rows' || el.type === 'grid' || el.type === 'menu') && el.children) {
                         const children = [...el.children];
-                        const index = children.findIndex(child => child.id === id);
+                        const index = children.findIndex(child => child && child.id === id);
                         if (index < children.length - 1) {
                             [children[index], children[index + 1]] = [children[index + 1], children[index]];
                         }
-                        return { ...el, children };
+                        return syncMenuItems({ ...el, children });
                     }
                     if (el.children) {
                         return { ...el, children: updateContainer(el.children) };
@@ -1286,7 +1790,7 @@ export const useStore = create<FormStore>()(
             options: type === 'select' ? [{ label: 'Option 1', value: 'option1' }] : 
                      type === 'radio' ? [{ label: 'Option 1', value: 'option1' }, { label: 'Option 2', value: 'option2' }] : undefined,
             maxStars: type === 'star-rating' ? 5 : undefined,
-            children: (type === 'container' || type === 'columns' || type === 'rows' || type === 'grid') ? [] : undefined,
+            children: (type === 'container' || type === 'columns' || type === 'rows' || type === 'grid' || type === 'menu') ? [] : undefined,
             columnCount: type === 'columns' ? 2 : undefined,
             gap: (type === 'container' || type === 'columns' || type === 'rows' || type === 'grid') ? 0 : undefined,
             labelSize: type !== 'hidden' && type !== 'rich-text' ? 'sm' : undefined,
@@ -1306,6 +1810,8 @@ export const useStore = create<FormStore>()(
             imageAlt: type === 'image' ? 'Placeholder image' : undefined,
             imageWidth: type === 'image' ? 400 : undefined,
             imageHeight: type === 'image' ? 200 : undefined,
+            imageWidthPercent: type === 'image' ? 100 : undefined,
+            imageAlign: type === 'image' ? 'left' : undefined,
             display: (type === 'menu' || type === 'container') ? 'flex' : undefined,
             flexDirection: type === 'menu' ? 'row' : type === 'container' ? 'column' : undefined,
             // Set default padding: 0 for layout containers, 8px/16px for buttons, 16px for content elements, 12px for form inputs
@@ -1328,6 +1834,57 @@ export const useStore = create<FormStore>()(
             // Add default top margin for spacing between components (but 0 for column position since elements are inside containers)
             marginTop: type === 'text-block' ? 4 : 0,
         };
+
+        // Handle menu component special initialization
+        if (type === 'menu') {
+            newElement.children = [
+                {
+                    id: uuidv4(),
+                    type: 'button' as FormElementType,
+                    label: '',
+                    name: 'menu_item_1',
+                    required: false,
+                    width: 12,
+                    buttonText: 'Item 1',
+                    buttonStyle: 'link',
+                    buttonSize: 'sm',
+                    paddingTop: 4,
+                    paddingBottom: 4,
+                    paddingLeft: 8,
+                    paddingRight: 8
+                },
+                {
+                    id: uuidv4(),
+                    type: 'button' as FormElementType,
+                    label: '',
+                    name: 'menu_item_2',
+                    required: false,
+                    width: 12,
+                    buttonText: 'Item 2',
+                    buttonStyle: 'link',
+                    buttonSize: 'sm',
+                    paddingTop: 4,
+                    paddingBottom: 4,
+                    paddingLeft: 8,
+                    paddingRight: 8
+                },
+                {
+                    id: uuidv4(),
+                    type: 'button' as FormElementType,
+                    label: '',
+                    name: 'menu_item_3',
+                    required: false,
+                    width: 12,
+                    buttonText: 'Item 3',
+                    buttonStyle: 'link',
+                    buttonSize: 'sm',
+                    paddingTop: 4,
+                    paddingBottom: 4,
+                    paddingLeft: 8,
+                    paddingRight: 8
+                }
+            ];
+        }
 
         // Find and update the container
         const updateElements = (elements: FormElement[]): FormElement[] => {
@@ -1416,7 +1973,34 @@ export const useStore = create<FormStore>()(
             submitButtonText: 'Submit',
             submissionActions: [],
         }
-    })
+    }),
+
+    // Image gallery management functions
+    addImageToGallery: (image) => {
+        const newImage: GalleryImage = {
+            ...image,
+            id: uuidv4(),
+            createdAt: new Date().toISOString()
+        };
+        
+        set((state) => ({
+            imageGallery: [...state.imageGallery, newImage]
+        }));
+        
+        return newImage;
+    },
+
+    removeImageFromGallery: (imageId) => set((state) => ({
+        imageGallery: state.imageGallery.filter(img => img.id !== imageId)
+    })),
+
+    updateGalleryImage: (imageId, updates) => set((state) => ({
+        imageGallery: state.imageGallery.map(img => 
+            img.id === imageId ? { ...img, ...updates } : img
+        )
+    })),
+
+    clearImageGallery: () => set({ imageGallery: [] })
 
 }), 
 {

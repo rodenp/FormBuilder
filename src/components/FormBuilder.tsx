@@ -16,16 +16,19 @@ import { Canvas } from './Canvas';
 import { PropertiesPanel } from './PropertiesPanel';
 import { useStore } from '../store/useStore';
 import type { FormElementType, FormElement } from '../types';
-import { Eye, Layout, Share2, Monitor, Tablet, Smartphone, ArrowLeft, Save, FileText, Mail, Globe, Edit2 } from 'lucide-react';
+import { Eye, Layout, Share2, Monitor, Tablet, Smartphone, ArrowLeft, Save, FileText, Mail, Globe, Edit2, Image as ImageIcon } from 'lucide-react';
 import { Preview } from './Preview';
+import { ImageGallery } from './ImageGallery';
 
 export const FormBuilder: React.FC = () => {
     const { 
         elements, 
         addElement, 
+        addElementAtStart,
         reorderElements, 
         moveElementToContainer, 
         moveElementToColumnPosition,
+        moveElementToRowPosition,
         insertElementBefore,
         insertElementAfter,
         addElementBefore,
@@ -124,6 +127,7 @@ export const FormBuilder: React.FC = () => {
     const [activeDragType, setActiveDragType] = useState<FormElementType | null>(null);
     const [isPreviewMode, setIsPreviewMode] = useState(false);
     const [previewDevice, setPreviewDevice] = useState<'desktop' | 'tablet' | 'mobile'>('desktop');
+    const [showImageGallery, setShowImageGallery] = useState(false);
 
     const sensors = useSensors(
         useSensor(PointerSensor, {
@@ -167,9 +171,16 @@ export const FormBuilder: React.FC = () => {
         console.log('===================');
 
         // Dropping a sidebar item into the canvas
-        if (active.data.current?.isSidebar && (over.id === 'canvas' || over.id === 'canvas-end')) {
+        if (active.data.current?.isSidebar && (over.id === 'canvas' || over.id === 'canvas-end' || over.id === 'canvas-start')) {
             const type = active.data.current.type as FormElementType;
-            addElement(type);
+            
+            if (over.id === 'canvas-start') {
+                // Use the dedicated function to add at start
+                addElementAtStart(type);
+            } else {
+                // Regular canvas or canvas-end drops
+                addElement(type);
+            }
             return;
         }
 
@@ -240,7 +251,28 @@ export const FormBuilder: React.FC = () => {
         if (active.data.current?.isSidebar && over.data.current?.type === 'rows') {
             const type = active.data.current.type as FormElementType;
             const containerId = over.data.current.containerId;
-            addElement(type, containerId);
+            const rowIndex = over.data.current.rowIndex;
+            
+            if (rowIndex !== undefined) {
+                // Add to container first, then move to specific row position
+                addElement(type, containerId);
+                
+                // Get the newly added element and move it to the correct row position
+                setTimeout(() => {
+                    const state = useStore.getState();
+                    const container = state.elements.find(el => el.id === containerId);
+                    if (container && container.children && container.children.length > 0) {
+                        // Find the last element (the one we just added)
+                        const lastElement = container.children[container.children.length - 1];
+                        if (lastElement) {
+                            moveElementToRowPosition(lastElement.id, containerId, rowIndex);
+                        }
+                    }
+                }, 0);
+            } else {
+                // Fallback to general add
+                addElement(type, containerId);
+            }
             return;
         }
 
@@ -267,7 +299,7 @@ export const FormBuilder: React.FC = () => {
             });
             
             // Dropping onto canvas (root level) - check this FIRST
-            if (over.id === 'canvas' || over.id === 'canvas-end') {
+            if (over.id === 'canvas' || over.id === 'canvas-end' || over.id === 'canvas-start') {
                 console.log('✓ Canvas drop detected:', { draggedElementId, originalParentId, elementType: draggedElement.type });
                 
                 if (originalParentId) {
@@ -285,6 +317,9 @@ export const FormBuilder: React.FC = () => {
                     if (over.id === 'canvas-end') {
                         // Add to end
                         currentElements.push(elementToAdd);
+                    } else if (over.id === 'canvas-start') {
+                        // Add to beginning
+                        currentElements.unshift(elementToAdd);
                     } else {
                         // Add to end by default for now
                         currentElements.push(elementToAdd);
@@ -293,15 +328,19 @@ export const FormBuilder: React.FC = () => {
                     reorderElements(currentElements);
                 } else {
                     console.log('Element already at root level');
-                    // If dropping on canvas-end and element is already at root, move to end
-                    if (over.id === 'canvas-end') {
+                    // If dropping on canvas-start/end and element is already at root, move to start/end
+                    if (over.id === 'canvas-end' || over.id === 'canvas-start') {
                         const state = useStore.getState();
                         const currentElements = [...state.elements];
                         const elementIndex = currentElements.findIndex(el => el.id === draggedElementId);
                         
                         if (elementIndex !== -1) {
                             const [elementToMove] = currentElements.splice(elementIndex, 1);
-                            currentElements.push(elementToMove);
+                            if (over.id === 'canvas-start') {
+                                currentElements.unshift(elementToMove);
+                            } else {
+                                currentElements.push(elementToMove);
+                            }
                             reorderElements(currentElements);
                         }
                     }
@@ -326,8 +365,25 @@ export const FormBuilder: React.FC = () => {
                 return;
             }
             
+            // Dropping into a row cell
+            if (over.data.current?.type === 'rows') {
+                console.log('✓ Dropping into row cell', { 
+                    containerId: over.data.current.containerId, 
+                    rowIndex: over.data.current.rowIndex 
+                });
+                
+                if (over.data.current.rowIndex !== undefined) {
+                    // Drop into specific row position
+                    moveElementToRowPosition(draggedElementId, over.data.current.containerId, over.data.current.rowIndex);
+                } else {
+                    // Fallback to general container move
+                    moveElementToContainer(draggedElementId, over.data.current.containerId);
+                }
+                return;
+            }
+            
             // Dropping into other containers
-            if (over.data.current?.type === 'container' || over.data.current?.type === 'rows' || over.data.current?.type === 'grid') {
+            if (over.data.current?.type === 'container' || over.data.current?.type === 'grid') {
                 console.log('✓ Dropping into container');
                 moveElementToContainer(draggedElementId, over.data.current.containerId);
                 return;
@@ -471,6 +527,7 @@ export const FormBuilder: React.FC = () => {
     }
 
     return (
+        <>
         <DndContext
             sensors={sensors}
             onDragStart={handleDragStart}
@@ -567,6 +624,13 @@ export const FormBuilder: React.FC = () => {
                             {isSaving ? 'Saving...' : 'Save'}
                         </button>
                         <button 
+                            onClick={() => setShowImageGallery(true)}
+                            className="btn btn-secondary"
+                        >
+                            <ImageIcon size={16} />
+                            Gallery
+                        </button>
+                        <button 
                             onClick={() => setIsPreviewMode(true)}
                             className="btn btn-secondary"
                         >
@@ -610,5 +674,13 @@ export const FormBuilder: React.FC = () => {
                 </DragOverlay>
             </div>
         </DndContext>
+        
+        {/* Image Gallery Modal - Outside DndContext to avoid conflicts */}
+        <ImageGallery 
+            isOpen={showImageGallery}
+            onClose={() => setShowImageGallery(false)}
+            mode="manage"
+        />
+        </>
     );
 };
