@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
 import { useStore } from '../store/useStore';
 import type { ProjectType, Project } from '../types';
-import { Plus, FileText, Mail, Globe, Copy, Trash2, Edit2, Calendar, Clock } from 'lucide-react';
+import { Plus, FileText, Mail, Globe, Copy, Trash2, Edit2, Calendar, Clock, Download, Upload } from 'lucide-react';
 import { clsx } from 'clsx';
 
 export const ProjectManager: React.FC = () => {
@@ -10,7 +10,13 @@ export const ProjectManager: React.FC = () => {
         createProject, 
         loadProject, 
         deleteProject, 
-        duplicateProject 
+        duplicateProject,
+        currentProject,
+        elements,
+        settings,
+        clearCurrentProject,
+        reorderElements,
+        updateSettings
     } = useStore();
     
     const [showCreateDialog, setShowCreateDialog] = useState(false);
@@ -23,6 +29,81 @@ export const ProjectManager: React.FC = () => {
             setNewProjectName('');
             setShowCreateDialog(false);
         }
+    };
+
+    // Export specific project
+    const exportProject = (project: Project) => {
+        const projectData = {
+            project: project,
+            elements: project.elements || [],
+            settings: project.settings || {
+                title: project.name,
+                submitButtonText: 'Submit',
+                primaryColor: '#3B82F6',
+                buttonStyle: 'rounded',
+                inputBorderStyle: 'rounded',
+                submissionActions: []
+            },
+            exportDate: new Date().toISOString(),
+            version: '1.0'
+        };
+        
+        const dataStr = JSON.stringify(projectData, null, 2);
+        const dataUri = 'data:application/json;charset=utf-8,'+ encodeURIComponent(dataStr);
+        
+        const exportFileDefaultName = `${project.name.replace(/[^a-z0-9]/gi, '_').toLowerCase()}_project.json`;
+        
+        const linkElement = document.createElement('a');
+        linkElement.setAttribute('href', dataUri);
+        linkElement.setAttribute('download', exportFileDefaultName);
+        linkElement.click();
+    };
+
+    // Import project
+    const importProject = () => {
+        const fileInput = document.createElement('input');
+        fileInput.type = 'file';
+        fileInput.accept = '.json';
+        fileInput.onchange = (e) => {
+            const file = (e.target as HTMLInputElement).files?.[0];
+            if (!file) return;
+            
+            const reader = new FileReader();
+            reader.onload = (event) => {
+                try {
+                    const projectData = JSON.parse(event.target?.result as string);
+                    
+                    // Validate the imported data structure
+                    if (!projectData.project || !projectData.elements || !projectData.settings) {
+                        alert('Invalid project file format. Please select a valid exported project file.');
+                        return;
+                    }
+                    
+                    // Create a new project with imported data
+                    const importedProject = {
+                        ...projectData.project,
+                        id: Date.now().toString(), // Generate new ID
+                        name: `${projectData.project.name} (Imported)`,
+                        createdAt: new Date().toISOString(),
+                        updatedAt: new Date().toISOString()
+                    };
+                    
+                    // Create the new project
+                    createProject(importedProject.name, importedProject.type);
+                    
+                    // Load the elements and settings
+                    reorderElements(projectData.elements);
+                    updateSettings(projectData.settings);
+                    
+                    alert(`Project "${importedProject.name}" imported successfully!`);
+                } catch (error) {
+                    console.error('Error importing project:', error);
+                    alert('Error importing project. Please check the file format.');
+                }
+            };
+            reader.readAsText(file);
+        };
+        fileInput.click();
     };
 
     const getProjectIcon = (type: ProjectType) => {
@@ -77,13 +158,23 @@ export const ProjectManager: React.FC = () => {
                             <h1 className="text-2xl font-bold text-gray-900">My Projects</h1>
                             <p className="text-gray-600 mt-1">Create and manage your forms, emails, and websites</p>
                         </div>
-                        <button
-                            onClick={() => setShowCreateDialog(true)}
-                            className="flex items-center gap-2 bg-blue-600 text-white px-4 py-2 rounded-lg hover:bg-blue-700 transition-colors"
-                        >
-                            <Plus size={20} />
-                            New Project
-                        </button>
+                        <div className="flex items-center gap-3">
+                            <button
+                                onClick={importProject}
+                                className="flex items-center gap-2 bg-gray-600 text-white px-4 py-2 rounded-lg hover:bg-gray-700 transition-colors"
+                                title="Import Project"
+                            >
+                                <Upload size={20} />
+                                Import
+                            </button>
+                            <button
+                                onClick={() => setShowCreateDialog(true)}
+                                className="flex items-center gap-2 bg-blue-600 text-white px-4 py-2 rounded-lg hover:bg-blue-700 transition-colors"
+                            >
+                                <Plus size={20} />
+                                New Project
+                            </button>
+                        </div>
                     </div>
                 </div>
             </div>
@@ -131,6 +222,16 @@ export const ProjectManager: React.FC = () => {
                                         </div>
                                         
                                         <div className="flex items-center gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
+                                            <button
+                                                onClick={(e) => {
+                                                    e.stopPropagation();
+                                                    exportProject(project);
+                                                }}
+                                                className="p-2 text-gray-400 hover:text-green-600 hover:bg-green-50 rounded-lg transition-colors"
+                                                title="Export Project"
+                                            >
+                                                <Download size={16} />
+                                            </button>
                                             <button
                                                 onClick={(e) => {
                                                     e.stopPropagation();

@@ -4,7 +4,7 @@ import { Smartphone, Tablet, Laptop, RotateCw } from 'lucide-react';
 import { clsx } from 'clsx';
 import { DeviceFrameset } from 'react-device-frameset';
 import 'react-device-frameset/styles/marvel-devices.min.css';
-import { FormRenderer } from './FormRenderer';
+import { Renderer } from './Renderer';
 
 export const Preview: React.FC = () => {
     const { elements, settings } = useStore();
@@ -93,15 +93,11 @@ export const Preview: React.FC = () => {
                         selectedDevice === 'iPad Mini' ? "scale-[0.85]" : "scale-100"
                 )}>
                     <DeviceFrameset device={selectedDevice} color="black" landscape={isLandscape}>
-                        <div className="w-full h-full bg-slate-50 overflow-y-auto custom-scrollbar">
-                            <div className={clsx(
-                                "min-h-full",
-                                selectedDevice === 'MacBook Pro' ? "p-8" : "p-4"
-                            )}>
-                                <FormRenderer
+                        <div className="w-full h-full overflow-y-auto custom-scrollbar">
+                            <div className="min-h-full">
+                                <Renderer
                                     elements={elements}
                                     settings={settings}
-                                    className={selectedDevice === 'iPhone X' ? 'min-h-full' : ''}
                                 />
                             </div>
                         </div>

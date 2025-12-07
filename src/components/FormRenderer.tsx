@@ -1,8 +1,8 @@
-import React, { useState } from 'react';
+import React from 'react';
 import { useForm } from 'react-hook-form';
-import { CheckCircle, AlertCircle, ExternalLink, Info, AlertTriangle, X, Star } from 'lucide-react';
+import { CheckCircle, AlertCircle, ExternalLink, Info, AlertTriangle, X, Star, Plus, EyeOff } from 'lucide-react';
 import { clsx } from 'clsx';
-import type { FormElement, FormSettings, SubmissionAction } from '../types';
+import type { FormElement, FormSettings } from '../types';
 import { useStore } from '../store/useStore';
 
 interface FormRendererProps {
@@ -16,67 +16,6 @@ interface FormRendererProps {
     isLoading?: boolean;
     className?: string;
 }
-
-// Style utility functions
-const getButtonClasses = (settings: FormSettings) => {
-    const baseClasses = "w-full py-3 px-6 font-medium focus:outline-none focus:ring-2 focus:ring-offset-2 transition-all shadow-md hover:shadow-lg disabled:opacity-50 disabled:cursor-not-allowed";
-
-    let borderClasses = "";
-    switch (settings.buttonStyle) {
-        case 'square':
-            borderClasses = "rounded-none";
-            break;
-        case 'pill':
-            borderClasses = "rounded-full";
-            break;
-        default:
-            borderClasses = "rounded-lg";
-    }
-
-    return `${baseClasses} ${borderClasses}`;
-};
-
-const getInputClasses = (settings: FormSettings) => {
-    const baseClasses = "custom-input w-full p-3 border border-gray-300 focus:outline-none transition-all";
-
-    let borderClasses = "";
-    switch (settings.inputBorderStyle) {
-        case 'square':
-            borderClasses = "rounded-none";
-            break;
-        case 'pill':
-            borderClasses = "rounded-full";
-            break;
-        default:
-            borderClasses = "rounded-lg";
-    }
-
-    return `${baseClasses} ${borderClasses}`;
-};
-
-const getButtonStyle = (settings: FormSettings) => {
-    const primaryColor = settings.primaryColor || '#3B82F6';
-    return {
-        backgroundColor: primaryColor,
-        borderColor: primaryColor,
-        color: '#FFFFFF'
-    };
-};
-
-const getCheckboxClasses = () => {
-    return "custom-checkbox h-5 w-5 rounded border-gray-300 focus:outline-none transition-all";
-};
-
-const getRadioClasses = () => {
-    return "custom-radio h-5 w-5 border-gray-300 focus:outline-none transition-all";
-};
-
-const getCheckboxStyle = (settings: FormSettings) => {
-    const primaryColor = settings.primaryColor || '#3B82F6';
-    return {
-        accentColor: primaryColor
-    };
-};
 
 export const FormRenderer: React.FC<FormRendererProps> = ({
     schema,
@@ -100,775 +39,701 @@ export const FormRenderer: React.FC<FormRendererProps> = ({
     };
 
     const { register, handleSubmit, formState: { errors } } = useForm();
-    const [submitStatus, setSubmitStatus] = useState<'idle' | 'submitting' | 'success' | 'error'>('idle');
-    const [executedActions, setExecutedActions] = useState<SubmissionAction[]>([]);
-    const [actionMessages, setActionMessages] = useState<{ type: string; message: string; messageType?: string }[]>([]);
-
-    // Reset status when isLoading changes
-    React.useEffect(() => {
-        if (isLoading) {
-            setSubmitStatus('submitting');
-        } else if (submitStatus === 'submitting' && !isLoading) {
-            // If we were submitting and now loading is done, we don't necessarily know if it was success or error
-            // The parent component should handle the success state or we should have a prop for it
-            // For now, we'll assume if propOnSubmit is provided, the parent handles the state
-        }
-    }, [isLoading]);
-
-    const executeSubmissionActions = async (formData: any) => {
-        if (!settings.submissionActions) return;
-
-        const enabledActions = settings.submissionActions.filter(action => action.enabled);
-        const executed: SubmissionAction[] = [];
-        const messages: { type: string; message: string; messageType?: string }[] = [];
-
-        for (const action of enabledActions) {
-            try {
-                if (action.type === 'webhook' && action.webhook) {
-                    // Use CORS proxy for testing - in production, this should go through your backend
-                    const proxyUrl = `https://api.allorigins.win/raw?url=${encodeURIComponent(action.webhook.url)}`;
-
-                    const webhookPayload = {
-                        formData,
-                        metadata: {
-                            formTitle: settings.title,
-                            submittedAt: new Date().toISOString()
-                        }
-                    };
-
-                    let response;
-                    try {
-                        // Try direct request first
-                        response = await fetch(action.webhook.url, {
-                            method: action.webhook.method,
-                            headers: {
-                                'Content-Type': 'application/json',
-                                ...(action.webhook.headers || {})
-                            },
-                            body: JSON.stringify(webhookPayload),
-                        });
-                    } catch (corsError) {
-                        console.warn('Direct webhook failed (CORS), trying proxy...', corsError);
-                        // Fallback to proxy for GET requests only (most proxies don't support POST)
-                        if (action.webhook.method === 'POST') {
-                            // For POST requests, simulate success for demo purposes
-                            console.log('Webhook payload (simulated):', webhookPayload);
-                            executed.push(action);
-                            continue;
-                        } else {
-                            response = await fetch(proxyUrl);
-                        }
-                    }
-
-                    if (response && response.ok) {
-                        executed.push(action);
-                    } else if (response) {
-                        throw new Error(`Webhook failed with status ${response.status}`);
-                    }
-                } else if (action.type === 'redirect' && action.redirectUrl) {
-                    if (action.openInNewTab) {
-                        window.open(action.redirectUrl, '_blank');
-                    } else {
-                        window.location.href = action.redirectUrl;
-                        return; // Don't continue if redirecting
-                    }
-                    executed.push(action);
-                } else if (action.type === 'message' && action.message) {
-                    messages.push({
-                        type: action.type,
-                        message: action.message,
-                        messageType: action.messageType || 'success'
-                    });
-                    executed.push(action);
-                }
-            } catch (error) {
-                console.error(`Action failed:`, error);
-                // Continue with other actions even if one fails
-            }
-        }
-
-        setExecutedActions(executed);
-        setActionMessages(messages);
-
-        // Legacy webhook support
-        if (settings.webhookUrl) {
-            try {
-                await fetch(settings.webhookUrl, {
-                    method: 'POST',
-                    headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify(formData),
-                });
-            } catch (error) {
-                console.error('Legacy webhook error:', error);
-            }
-        }
-    };
 
     const handleFormSubmit = async (data: any) => {
-        console.log('Form Data:', data);
-        setSubmitStatus('submitting');
-
-        try {
-            if (propOnSubmit) {
-                await propOnSubmit(data);
-            } else {
-                await executeSubmissionActions(data);
-            }
-            setSubmitStatus('success');
-        } catch (error) {
-            console.error('Submission error:', error);
-            setSubmitStatus('error');
+        if (propOnSubmit) {
+            await propOnSubmit(data);
         }
     };
 
-    // Recursive function to render form elements
-    const renderElement = (element: any, isRootLevel = true): JSX.Element | null => {
-        // Handle null/undefined elements
-        if (!element) {
-            return null;
-        }
+    // Canvas-to-HTML rendering function - exact copy of Canvas logic without editor features
+    const renderElement = (element: FormElement, isRootLevel = true, parentType?: string): JSX.Element | null => {
+        if (!element) return null;
         
-        // Calculate width percentage for root level elements
-        const widthPercentage = isRootLevel ? (element.width || (element.type === 'image' ? 2 : 12)) / 12 * 100 : 100;
+        // Calculate width and layout - match Canvas logic exactly
+        const isNested = !isRootLevel;
+        const widthPercentage = (!isNested || ['columns', 'menu'].includes(parentType || '') ? 
+            (element.width || (element.type === 'image' ? 2 : 12)) / 12 * 100 : 100);
 
-        if (element.type === 'rich-text') {
-            return (
-                <div
-                    key={element.id}
-                    className={clsx(
-                        "prose prose-gray max-w-none mb-6", 
-                        element.backgroundColor && "p-4 rounded-lg"
-                    )}
-                    style={{
-                        ...(isRootLevel ? { width: `${widthPercentage}%` } : {}),
-                        backgroundColor: element.backgroundColor
-                    }}
-                    dangerouslySetInnerHTML={{ __html: element.content || '<p>Your rich text content here</p>' }}
-                />
-            );
-        }
-
-        if (element.type === 'container') {
-            return (
-                <div
-                    key={element.id}
-                    style={{
-                        ...(isRootLevel ? { width: `${widthPercentage}%` } : {}),
-                        // Apply margins
-                        marginTop: element.marginTop ? `${element.marginTop * 0.25}rem` : undefined,
-                        marginRight: element.marginRight ? `${element.marginRight * 0.25}rem` : undefined,
-                        marginBottom: element.marginBottom !== undefined ? `${element.marginBottom * 0.25}rem` : undefined,
-                        marginLeft: element.marginLeft ? `${element.marginLeft * 0.25}rem` : undefined
-                    }}
-                >
-                    <div 
-                        className="rounded-lg"
-                        style={{
-                            backgroundColor: element.backgroundColor,
-                            // Only apply padding for container when values are explicitly set
-                            paddingTop: element.paddingTop !== undefined ? `${element.paddingTop * 0.25}rem` : undefined,
-                            paddingRight: element.paddingRight !== undefined ? `${element.paddingRight * 0.25}rem` : undefined,
-                            paddingBottom: element.paddingBottom !== undefined ? `${element.paddingBottom * 0.25}rem` : undefined,
-                            paddingLeft: element.paddingLeft !== undefined ? `${element.paddingLeft * 0.25}rem` : undefined
-                        }}
-                    >
-                        {isFormProject && element.label && element.label.trim() && (
-                            <div
-                                style={{ marginBottom: element.labelGap !== undefined ? `${element.labelGap * 0.25}rem` : '0.75rem' }}
-                            >
-                                <h3 className={clsx(
-                                    "text-gray-800",
-                                    element.labelSize === 'xs' && "text-xs",
-                                    element.labelSize === 'sm' && "text-sm",
-                                    element.labelSize === 'base' && "text-base",
-                                    element.labelSize === 'lg' && "text-lg",
-                                    !element.labelSize && "text-lg",
-                                    element.labelBold && "font-bold",
-                                    !element.labelBold && element.labelWeight === 'normal' && "font-normal",
-                                    !element.labelBold && element.labelWeight === 'medium' && "font-medium",
-                                    !element.labelBold && element.labelWeight === 'semibold' && "font-semibold",
-                                    !element.labelBold && element.labelWeight === 'bold' && "font-bold",
-                                    !element.labelBold && !element.labelWeight && "font-semibold",
-                                    element.labelItalic && "italic",
-                                    element.labelUnderline && "underline",
-                                    element.labelStrikethrough && "line-through"
-                                )}>
-                                    {element.label}
-                                </h3>
-                            </div>
-                        )}
-                        {element.children && element.children.length > 0 && (
-                            <div 
-                                style={{
-                                    display: element.display || 'flex',
-                                    flexDirection: element.display === 'flex' ? (element.flexDirection || 'column') : undefined,
-                                    flexWrap: element.display === 'flex' ? (element.flexWrap || 'wrap') : undefined,
-                                    justifyContent: element.display !== 'block' ? element.justifyContent : undefined,
-                                    alignItems: element.display !== 'block' ? element.alignItems : undefined,
-                                    alignContent: element.display === 'flex' ? (element.alignContent || 'flex-start') : 'start',
-                                    gridTemplateColumns: element.display === 'grid' ? `repeat(${element.gridColumns || 3}, auto)` : undefined,
-                                    rowGap: element.display !== 'block' ? `${(element.rowGap || element.gap || 0) * 0.25}rem` : undefined,
-                                    columnGap: element.display !== 'block' ? `${(element.columnGap || element.gap || 0) * 0.25}rem` : undefined
-                                }}
-                            >
-                                {element.children.map((childElement: any) =>
-                                    renderElement(childElement, false)
-                                )}
-                            </div>
-                        )}
-                    </div>
-                </div>
-            );
-        }
-
-        if (element.type === 'columns' || element.type === 'rows' || element.type === 'grid') {
-            return (
-                <div
-                    key={element.id}
-                    style={{
-                        ...(isRootLevel ? { width: `${widthPercentage}%` } : {}),
-                        // Apply margins
-                        marginTop: element.marginTop ? `${element.marginTop * 0.25}rem` : undefined,
-                        marginRight: element.marginRight ? `${element.marginRight * 0.25}rem` : undefined,
-                        marginBottom: element.marginBottom !== undefined ? `${element.marginBottom * 0.25}rem` : undefined,
-                        marginLeft: element.marginLeft ? `${element.marginLeft * 0.25}rem` : undefined
-                    }}
-                >
-                    <div 
-                        className="rounded-lg"
-                        style={{
-                            backgroundColor: element.backgroundColor,
-                            // Only apply padding for columns when values are explicitly set
-                            paddingTop: element.paddingTop !== undefined ? `${element.paddingTop * 0.25}rem` : undefined,
-                            paddingRight: element.paddingRight !== undefined ? `${element.paddingRight * 0.25}rem` : undefined,
-                            paddingBottom: element.paddingBottom !== undefined ? `${element.paddingBottom * 0.25}rem` : undefined,
-                            paddingLeft: element.paddingLeft !== undefined ? `${element.paddingLeft * 0.25}rem` : undefined
-                        }}
-                    >
-                        {isFormProject && element.label && element.label.trim() && (
-                            <div
-                                style={{ marginBottom: element.labelGap !== undefined ? `${element.labelGap * 0.25}rem` : '0.75rem' }}
-                            >
-                                <h3 className={clsx(
-                                    "text-gray-800",
-                                    element.labelSize === 'xs' && "text-xs",
-                                    element.labelSize === 'sm' && "text-sm",
-                                    element.labelSize === 'base' && "text-base",
-                                    element.labelSize === 'lg' && "text-lg",
-                                    !element.labelSize && "text-lg",
-                                    element.labelBold && "font-bold",
-                                    !element.labelBold && element.labelWeight === 'normal' && "font-normal",
-                                    !element.labelBold && element.labelWeight === 'medium' && "font-medium",
-                                    !element.labelBold && element.labelWeight === 'semibold' && "font-semibold",
-                                    !element.labelBold && element.labelWeight === 'bold' && "font-bold",
-                                    !element.labelBold && !element.labelWeight && "font-semibold",
-                                    element.labelItalic && "italic",
-                                    element.labelUnderline && "underline",
-                                    element.labelStrikethrough && "line-through"
-                                )}>
-                                    {element.label}
-                                </h3>
-                            </div>
-                        )}
-                        {element.children && element.children.length > 0 && (
-                            <div 
-                                style={{
-                                    // Auto-set layout based on container type
-                                    display: element.type === 'columns' || element.type === 'rows' ? 'flex' : 
-                                             element.type === 'grid' ? 'grid' : (element.display || 'grid'),
-                                    flexDirection: element.type === 'columns' ? 'row' : element.type === 'rows' ? 'column' : 
-                                        (element.display === 'flex' ? (element.flexDirection || 'row') : undefined),
-                                    flexWrap: (element.type === 'columns' || element.type === 'rows' || element.display === 'flex') ? 
-                                        (element.flexWrap || 'wrap') : undefined,
-                                    justifyContent: (element.display !== 'block' || element.type === 'columns' || element.type === 'rows') ? 
-                                        element.justifyContent : undefined,
-                                    alignItems: (element.display !== 'block' || element.type === 'columns' || element.type === 'rows') ? 
-                                        element.alignItems : undefined,
-                                    alignContent: (element.type === 'columns' || element.type === 'rows' || element.display === 'flex') ? 
-                                        (element.alignContent || 'flex-start') : 'start',
-                                    gridTemplateColumns: (element.display === 'grid' || element.type === 'grid') && element.type !== 'columns' && element.type !== 'rows' ? 
-                                        `repeat(${element.gridColumns || element.columnCount || 3}, 1fr)` : undefined,
-                                    rowGap: (element.display !== 'block' || element.type === 'rows' || element.type === 'grid') ? 
-                                        `${(element.rowGap || element.gap || 0) * 0.25}rem` : undefined,
-                                    columnGap: (element.display !== 'block' || element.type === 'columns' || element.type === 'grid') ? 
-                                        `${(element.columnGap || element.gap || 0) * 0.25}rem` : undefined
-                                }}
-                            >
-                                {(element.type === 'columns' || element.type === 'rows' || element.type === 'grid' || element.display === 'flex') ? (
-                                    // For flex layout (including columns/rows) or grid, render children directly without column wrappers
-                                    element.children.map((childElement: any) => (
-                                        renderElement(childElement, false)
-                                    ))
-                                ) : (
-                                    // For grid layout, use column wrappers with background colors
-                                    element.children.map((childElement: any, index: number) => (
-                                        <div
-                                            key={childElement.id}
-                                            style={{
-                                                backgroundColor: element.columnBackgrounds?.[index] || 'transparent',
-                                                background: element.columnBackgrounds?.[index] || 'none'
-                                            }}
-                                            className="rounded"
-                                        >
-                                            {renderElement(childElement, false)}
-                                        </div>
-                                    ))
-                                )}
-                            </div>
-                        )}
-                    </div>
-                </div>
-            );
-        }
-
-        // Regular form elements and nested input handling
+        // Main element wrapper - match Canvas structure exactly
         return (
-            <div 
-                key={element.id} 
+            <div
+                key={element.id}
+                className={clsx(
+                    "relative flex flex-col",
+                    isNested && !['columns', 'menu'].includes(parentType || '') && "w-full"
+                )}
                 style={{
-                    ...(isRootLevel ? { width: `${widthPercentage}%` } : {}),
-                    // Apply margins - include default marginBottom like canvas
-                    marginTop: element.marginTop ? `${element.marginTop * 0.25}rem` : undefined,
-                    marginRight: element.marginRight ? `${element.marginRight * 0.25}rem` : undefined,
-                    marginBottom: element.marginBottom !== undefined ? `${element.marginBottom * 0.25}rem` : undefined,
-                    marginLeft: element.marginLeft ? `${element.marginLeft * 0.25}rem` : undefined,
+                    // Apply percentage width for root level elements, elements in columns, and elements in menu containers
+                    ...(!isNested || ['columns', 'menu'].includes(parentType || '') ? 
+                        (parentType === 'menu' ? 
+                            { flex: '0 0 auto', alignSelf: 'stretch' } : 
+                            { width: `${widthPercentage}%` }) : {}),
+                    // Apply margins
+                    marginTop: `${(element.marginTop ?? 0) * 0.25}rem`,
+                    marginRight: `${(element.marginRight ?? 0) * 0.25}rem`,
+                    marginBottom: `${(element.marginBottom ?? 0) * 0.25}rem`,
+                    marginLeft: `${(element.marginLeft ?? 0) * 0.25}rem`,
                     // Apply horizontal alignment for non-containers
-                    ...(element.horizontalAlign === 'center' ? { marginLeft: 'auto', marginRight: 'auto' } : {}),
-                    ...(element.horizontalAlign === 'right' ? { marginLeft: 'auto' } : {})
+                    ...(element.horizontalAlign === 'center' && !['container', 'columns', 'rows', 'grid'].includes(element.type) ? 
+                        { marginLeft: 'auto', marginRight: 'auto' } : {}),
+                    ...(element.horizontalAlign === 'right' && !['container', 'columns', 'rows', 'grid'].includes(element.type) ? 
+                        { marginLeft: 'auto' } : {})
                 }}
             >
+                {/* Visual wrapper around label and component */}
                 <div 
-                    className="rounded-lg"
+                    className="relative rounded-lg flex-1"
                     style={{
-                        backgroundColor: element.backgroundColor
+                        backgroundColor: ['container', 'columns', 'rows', 'grid', 'menu'].includes(element.type) ? element.backgroundColor : undefined,
+                        // Only apply padding for container, columns, rows, grid, and menu
+                        paddingTop: ['container', 'columns', 'rows', 'grid', 'menu'].includes(element.type) ? `${(element.paddingTop ?? 0) * 0.25}rem` : undefined,
+                        paddingRight: ['container', 'columns', 'rows', 'grid', 'menu'].includes(element.type) ? `${(element.paddingRight ?? 0) * 0.25}rem` : undefined,
+                        paddingBottom: ['container', 'columns', 'rows', 'grid', 'menu'].includes(element.type) ? `${(element.paddingBottom ?? 0) * 0.25}rem` : undefined,
+                        paddingLeft: ['container', 'columns', 'rows', 'grid', 'menu'].includes(element.type) ? `${(element.paddingLeft ?? 0) * 0.25}rem` : undefined
                     }}
                 >
-                    <div style={{
-                        // Apply padding only if values are explicitly set
-                        paddingTop: element.paddingTop !== undefined ? `${element.paddingTop * 0.25}rem` : undefined,
-                        paddingRight: element.paddingRight !== undefined ? `${element.paddingRight * 0.25}rem` : undefined,
-                        paddingBottom: element.paddingBottom !== undefined ? `${element.paddingBottom * 0.25}rem` : undefined,
-                        paddingLeft: element.paddingLeft !== undefined ? `${element.paddingLeft * 0.25}rem` : undefined
-                    }}>
-                {isFormProject && element.label && element.label.trim() && element.type !== 'rich-text' && (
-                    <div
-                        style={{ marginBottom: element.labelGap !== undefined ? `${element.labelGap * 0.25}rem` : '0.25rem' }}
-                    >
-                    <label className={clsx(
-                        "block text-gray-700",
-                        element.labelSize === 'xs' && "text-xs",
-                        element.labelSize === 'sm' && "text-sm",
-                        element.labelSize === 'base' && "text-base",
-                        element.labelSize === 'lg' && "text-lg",
-                        !element.labelSize && "text-sm",
-                        // Legacy labelWeight support (only if no new formatting is used)
-                        !element.labelBold && element.labelWeight === 'normal' && "font-normal",
-                        !element.labelBold && element.labelWeight === 'medium' && "font-medium",
-                        !element.labelBold && element.labelWeight === 'semibold' && "font-semibold",
-                        !element.labelBold && element.labelWeight === 'bold' && "font-bold",
-                        !element.labelBold && !element.labelWeight && "font-medium",
-                        // New formatting system takes priority
-                        element.labelBold && "font-bold",
-                        element.labelItalic && "italic",
-                        element.labelUnderline && "underline",
-                        element.labelStrikethrough && "line-through"
-                    )}>
-                        {element.label}
-                        {element.required && <span className="text-red-500 ml-1">*</span>}
-                    </label>
-                    </div>
-                )}
+                    {/* Labels for regular form elements */}
+                    {isFormProject && !['hidden', 'rich-text', 'container', 'columns', 'rows', 'grid', 'menu'].includes(element.type) && element.label && element.label.trim() && (
+                        <div 
+                            className="flex justify-between items-start"
+                            style={{ marginBottom: element.labelGap !== undefined ? `${element.labelGap * 0.25}rem` : '0.75rem' }}
+                        >
+                            <div>
+                                <label className={clsx(
+                                    "block text-slate-700",
+                                    element.labelSize === 'xs' && "text-xs",
+                                    element.labelSize === 'sm' && "text-sm",
+                                    element.labelSize === 'base' && "text-base",
+                                    element.labelSize === 'lg' && "text-lg",
+                                    !element.labelSize && "text-sm",
+                                    // Legacy labelWeight support
+                                    !element.labelBold && element.labelWeight === 'normal' && "font-normal",
+                                    !element.labelBold && element.labelWeight === 'medium' && "font-medium", 
+                                    !element.labelBold && element.labelWeight === 'semibold' && "font-semibold",
+                                    !element.labelBold && element.labelWeight === 'bold' && "font-bold",
+                                    !element.labelBold && !element.labelWeight && "font-medium",
+                                    // New formatting system takes priority
+                                    element.labelBold && "font-bold",
+                                    element.labelItalic && "italic",
+                                    element.labelUnderline && "underline",
+                                    element.labelStrikethrough && "line-through"
+                                )}>
+                                    {element.label}
+                                    {element.required && <span className="text-red-500 ml-1">*</span>}
+                                </label>
+                            </div>
+                        </div>
+                    )}
 
-                {element.type === 'textarea' ? (
-                    <textarea
-                        {...register(element.id, { required: element.required })}
-                        placeholder={element.placeholder}
-                        className={getInputClasses(settings)}
-                        rows={4}
-                    />
-                ) : element.type === 'select' ? (
-                    <select
-                        {...register(element.id, { required: element.required })}
-                        className={getInputClasses(settings)}
+                    {/* Labels for container elements */}
+                    {isFormProject && ['container', 'columns', 'rows', 'grid', 'menu'].includes(element.type) && element.label && element.label.trim() && (
+                        <div 
+                            className="flex justify-between items-start"
+                            style={{ marginBottom: element.labelGap !== undefined ? `${element.labelGap * 0.25}rem` : '0.75rem' }}
+                        >
+                            <div>
+                                <label 
+                                    className={clsx(
+                                        "block text-slate-700",
+                                        element.labelSize === 'xs' && "text-xs",
+                                        element.labelSize === 'sm' && "text-sm",
+                                        element.labelSize === 'base' && "text-base",
+                                        element.labelSize === 'lg' && "text-lg",
+                                        !element.labelSize && "text-sm",
+                                        // Legacy labelWeight support
+                                        !element.labelBold && element.labelWeight === 'normal' && "font-normal",
+                                        !element.labelBold && element.labelWeight === 'medium' && "font-medium",
+                                        !element.labelBold && element.labelWeight === 'semibold' && "font-semibold", 
+                                        !element.labelBold && element.labelWeight === 'bold' && "font-bold",
+                                        !element.labelBold && !element.labelWeight && "font-medium",
+                                        // New formatting system takes priority
+                                        element.labelBold && "font-bold",
+                                        element.labelItalic && "italic",
+                                        element.labelUnderline && "underline",
+                                        element.labelStrikethrough && "line-through"
+                                    )}
+                                >
+                                    {element.label}
+                                    {element.required && <span className="text-red-500 ml-1">*</span>}
+                                </label>
+                            </div>
+                        </div>
+                    )}
+
+                    {/* Element Content */}
+                    <div 
+                        style={{
+                            // Apply padding to regular form elements (not containers/columns/buttons) only if padding values are set
+                            paddingTop: (!['container', 'columns', 'rows', 'button', 'textarea', 'select', 'checkbox', 'radio'].includes(element.type)) ? `${(element.paddingTop ?? 0) * 0.25}rem` : undefined,
+                            paddingRight: (!['container', 'columns', 'rows', 'button', 'textarea', 'select', 'checkbox', 'radio'].includes(element.type)) ? `${(element.paddingRight ?? 0) * 0.25}rem` : undefined,
+                            paddingBottom: (!['container', 'columns', 'rows', 'button', 'textarea', 'select', 'checkbox', 'radio'].includes(element.type)) ? `${(element.paddingBottom ?? 0) * 0.25}rem` : undefined,
+                            paddingLeft: (!['container', 'columns', 'rows', 'button', 'textarea', 'select', 'checkbox', 'radio'].includes(element.type)) ? `${(element.paddingLeft ?? 0) * 0.25}rem` : undefined
+                        }}
                     >
-                        <option value="">Select an option</option>
-                        {element.options?.map((opt: any, idx: number) => (
+                        {renderElementContent(element)}
+                    </div>
+                </div>
+            </div>
+        );
+    };
+
+    // Render element content - exact copy of Canvas element rendering logic
+    const renderElementContent = (element: FormElement): JSX.Element | null => {
+        if (element.type === 'textarea') {
+            return (
+                <textarea
+                    {...register(element.id, { required: element.required })}
+                    className={clsx(
+                        "w-full rounded-lg text-slate-500 text-sm resize-none",
+                        isFormProject && "border border-slate-200"
+                    )}
+                    style={{
+                        backgroundColor: element.backgroundColor,
+                        paddingTop: `${(element.paddingTop ?? 3) * 0.25}rem`,
+                        paddingRight: `${(element.paddingRight ?? 3) * 0.25}rem`,
+                        paddingBottom: `${(element.paddingBottom ?? 3) * 0.25}rem`,
+                        paddingLeft: `${(element.paddingLeft ?? 3) * 0.25}rem`
+                    }}
+                    placeholder={element.placeholder}
+                    rows={3}
+                />
+            );
+        } else if (element.type === 'select') {
+            return (
+                <div className="relative">
+                    <select 
+                        {...register(element.id, { required: element.required })}
+                        className={clsx(
+                            "w-full rounded-lg text-slate-500 text-sm appearance-none",
+                            isFormProject && "border border-slate-200"
+                        )} 
+                        style={{
+                            backgroundColor: element.backgroundColor,
+                            paddingTop: element.paddingTop !== undefined ? `${element.paddingTop * 0.25}rem` : '0.75rem',
+                            paddingRight: element.paddingRight !== undefined ? `${element.paddingRight * 0.25}rem` : '0.75rem',
+                            paddingBottom: element.paddingBottom !== undefined ? `${element.paddingBottom * 0.25}rem` : '0.75rem',
+                            paddingLeft: element.paddingLeft !== undefined ? `${element.paddingLeft * 0.25}rem` : '0.75rem'
+                        }}
+                    >
+                        {element.options?.map((opt, idx) => (
                             <option key={idx} value={opt.value}>{opt.label}</option>
                         ))}
                     </select>
-                ) : element.type === 'checkbox' ? (
-                    <div className="flex items-center gap-3">
-                        <input
-                            type="checkbox"
-                            {...register(element.id, { required: element.required })}
-                            className={getCheckboxClasses()}
-                            style={getCheckboxStyle(settings)}
-                        />
-                        <span className="text-sm text-gray-600">
-                            {element.placeholder || 'Checkbox option'}
-                        </span>
+                    <div className="absolute right-3 top-1/2 -translate-y-1/2 text-slate-400">
+                        <svg width="10" height="6" viewBox="0 0 10 6" fill="none" xmlns="http://www.w3.org/2000/svg">
+                            <path d="M1 1L5 5L9 1" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" />
+                        </svg>
                     </div>
-                ) : element.type === 'radio' ? (
-                    <div className="space-y-3">
-                        {(element.options || [{ label: 'Option 1', value: 'option1' }, { label: 'Option 2', value: 'option2' }]).map((opt: any, idx: number) => (
-                            <div key={idx} className="flex items-center gap-3">
-                                <input
-                                    type="radio"
-                                    {...register(element.id, { required: element.required })}
-                                    value={opt.value}
-                                    className={getRadioClasses()}
-                                    style={getCheckboxStyle(settings)}
-                                />
-                                <span className="text-sm text-gray-600">{opt.label}</span>
-                            </div>
-                        ))}
-                    </div>
-                ) : element.type === 'star-rating' ? (
-                    <div className="flex gap-1 items-center">
-                        {[...Array(element.maxStars || 5)].map((_, i) => (
-                            <button
-                                key={i}
-                                type="button"
-                                className="text-gray-300 hover:text-yellow-400 focus:text-yellow-400 transition-colors"
-                                onClick={() => { }}
-                            >
-                                <Star size={24} className="fill-current" />
-                            </button>
-                        ))}
-                    </div>
-                ) : element.type === 'button' ? (
-                    element.buttonType === 'submit' && element.buttonUrl ? (
-                        <a
-                            href={element.buttonUrl}
-                            target={element.buttonTarget || '_self'}
-                            rel={element.buttonTarget === '_blank' ? 'noopener noreferrer' : undefined}
-                            className={clsx(
-                                "inline-block font-medium transition-all rounded-lg border text-center cursor-pointer no-underline",
-                                element.buttonSize === 'sm' && "px-3 py-1.5 text-sm",
-                                element.buttonSize === 'lg' && "px-6 py-3 text-lg",
-                                (!element.buttonSize || element.buttonSize === 'md') && "px-4 py-2 text-base",
-                                element.buttonStyle === 'primary' && "bg-blue-600 border-blue-600 text-white hover:bg-blue-700",
-                                element.buttonStyle === 'secondary' && "bg-gray-600 border-gray-600 text-white hover:bg-gray-700",
-                                element.buttonStyle === 'outline' && "bg-transparent border-gray-300 text-gray-700 hover:bg-gray-50",
-                                element.buttonStyle === 'text' && "bg-transparent border-transparent text-blue-600 hover:bg-blue-50",
-                                (!element.buttonStyle || element.buttonStyle === 'primary') && "bg-blue-600 border-blue-600 text-white hover:bg-blue-700"
-                            )}
-                            style={getButtonStyle(settings)}
-                        >
-                            {element.buttonText || element.label || 'Button'}
-                        </a>
-                    ) : (
-                        <button
-                            type={element.buttonType || 'button'}
-                            className={clsx(
-                                "font-medium transition-all rounded-lg border",
-                                element.buttonSize === 'sm' && "px-3 py-1.5 text-sm",
-                                element.buttonSize === 'lg' && "px-6 py-3 text-lg",
-                                (!element.buttonSize || element.buttonSize === 'md') && "px-4 py-2 text-base",
-                                element.buttonStyle === 'primary' && "bg-blue-600 border-blue-600 text-white hover:bg-blue-700",
-                                element.buttonStyle === 'secondary' && "bg-gray-600 border-gray-600 text-white hover:bg-gray-700",
-                                element.buttonStyle === 'outline' && "bg-transparent border-gray-300 text-gray-700 hover:bg-gray-50",
-                                element.buttonStyle === 'text' && "bg-transparent border-transparent text-blue-600 hover:bg-blue-50",
-                                (!element.buttonStyle || element.buttonStyle === 'primary') && "bg-blue-600 border-blue-600 text-white hover:bg-blue-700"
-                            )}
-                            style={getButtonStyle(settings)}
-                        >
-                            {element.buttonText || element.label || 'Button'}
-                        </button>
-                    )
-                ) : element.type === 'text-block' ? (
-                    <div className="rounded-lg" style={{
-                        backgroundColor: element.backgroundColor
-                    }}>
-                        <div 
-                            className="prose prose-sm max-w-none text-gray-700"
-                            dangerouslySetInnerHTML={{ __html: element.content || '<p>Your text content here</p>' }}
-                        />
-                    </div>
-                ) : element.type === 'heading' ? (
-                    <div className="rounded-lg" style={{
-                        backgroundColor: element.backgroundColor,
-                        padding: '1rem'
-                    }}>
-                        {React.createElement(
-                            `h${element.headingLevel || 1}`,
-                            {
-                                className: clsx(
-                                    "text-gray-800 font-bold",
-                                    element.headingLevel === 1 && "text-4xl",
-                                    element.headingLevel === 2 && "text-3xl",
-                                    element.headingLevel === 3 && "text-2xl",
-                                    element.headingLevel === 4 && "text-xl",
-                                    element.headingLevel === 5 && "text-lg",
-                                    element.headingLevel === 6 && "text-base",
-                                    !element.headingLevel && "text-4xl"
-                                )
-                            },
-                            element.content || 'Your heading here'
-                        )}
-                    </div>
-                ) : element.type === 'menu' ? (
-                    <div className="border border-gray-200 rounded-lg" style={{
-                        backgroundColor: element.backgroundColor,
-                        padding: '1rem'
-                    }}>
-                        <nav 
-                            style={{
-                                display: element.display || 'flex',
-                                flexDirection: element.display === 'flex' ? (element.flexDirection || (element.menuLayout === 'vertical' ? 'column' : 'row')) : undefined,
-                                flexWrap: element.display === 'flex' ? (element.flexWrap || 'wrap') : undefined,
-                                justifyContent: element.display !== 'block' ? element.justifyContent : undefined,
-                                alignItems: element.display !== 'block' ? element.alignItems : undefined,
-                                alignContent: element.display === 'flex' ? (element.alignContent || 'flex-start') : 'start',
-                                gridTemplateColumns: element.display === 'grid' ? `repeat(${element.gridColumns || 3}, auto)` : undefined,
-                                rowGap: element.display !== 'block' ? `${(element.rowGap || element.gap || 16) * 0.25}rem` : '1rem',
-                                columnGap: element.display !== 'block' ? `${(element.columnGap || element.gap || 16) * 0.25}rem` : '1rem'
-                            }}
-                        >
-                            {(element.menuItems || [{ label: 'Home', href: '#' }, { label: 'About', href: '#' }, { label: 'Contact', href: '#' }]).map((item, index) => (
-                                <a
-                                    key={index}
-                                    href={item.href}
-                                    target={item.target || '_self'}
-                                    className="text-blue-600 hover:text-blue-800 font-medium transition-colors"
-                                >
-                                    {item.label}
-                                </a>
-                            ))}
-                        </nav>
-                    </div>
-                ) : element.type === 'social' ? (
-                    <div className="border border-gray-200 rounded-lg" style={{
-                        backgroundColor: element.backgroundColor,
-                        padding: '1rem'
-                    }}>
-                        <div 
-                            style={{
-                                display: element.display || 'flex',
-                                flexDirection: element.display === 'flex' ? (element.flexDirection || (element.socialLayout === 'vertical' ? 'column' : 'row')) : undefined,
-                                flexWrap: element.display === 'flex' ? (element.flexWrap || 'wrap') : undefined,
-                                justifyContent: element.display !== 'block' ? element.justifyContent : undefined,
-                                alignItems: element.display !== 'block' ? element.alignItems : undefined,
-                                alignContent: element.display === 'flex' ? (element.alignContent || 'flex-start') : 'start',
-                                gridTemplateColumns: element.display === 'grid' ? `repeat(${element.gridColumns || 3}, auto)` : undefined,
-                                rowGap: element.display !== 'block' ? `${(element.rowGap || element.gap || 12) * 0.25}rem` : '0.75rem',
-                                columnGap: element.display !== 'block' ? `${(element.columnGap || element.gap || 12) * 0.25}rem` : '0.75rem'
-                            }}
-                        >
-                            {(element.socialLinks || [
-                                { platform: 'Facebook', url: '#', icon: '📘' },
-                                { platform: 'Twitter', url: '#', icon: '🐦' },
-                                { platform: 'LinkedIn', url: '#', icon: '💼' }
-                            ]).map((social, index) => (
-                                <a
-                                    key={index}
-                                    href={social.url}
-                                    target="_blank"
-                                    rel="noopener noreferrer"
-                                    className="flex items-center gap-2 text-blue-600 hover:text-blue-800 font-medium transition-colors"
-                                >
-                                    <span>{social.icon || '🔗'}</span>
-                                    {social.platform}
-                                </a>
-                            ))}
+                </div>
+            );
+        } else if (element.type === 'checkbox') {
+            return (
+                <div className={clsx(
+                    "flex items-center rounded-lg",
+                    isFormProject && "border border-slate-200"
+                )} style={{
+                    backgroundColor: element.backgroundColor || '#f8fafc',
+                    paddingTop: element.paddingTop !== undefined ? `${element.paddingTop * 0.25}rem` : '0.75rem',
+                    paddingRight: element.paddingRight !== undefined ? `${element.paddingRight * 0.25}rem` : '0.75rem',
+                    paddingBottom: element.paddingBottom !== undefined ? `${element.paddingBottom * 0.25}rem` : '0.75rem',
+                    paddingLeft: element.paddingLeft !== undefined ? `${element.paddingLeft * 0.25}rem` : '0.75rem'
+                }}>
+                    <input 
+                        type="checkbox" 
+                        {...register(element.id, { required: element.required })}
+                        className="h-4 w-4 text-brand-600 rounded border-slate-300" 
+                    />
+                    <span className="ml-3 text-sm text-slate-600">{element.placeholder || 'Checkbox option'}</span>
+                </div>
+            );
+        } else if (element.type === 'radio') {
+            return (
+                <div className={clsx(
+                    "space-y-2 rounded-lg",
+                    isFormProject && "border border-slate-200"
+                )} style={{
+                    backgroundColor: element.backgroundColor || '#f8fafc',
+                    paddingTop: element.paddingTop !== undefined ? `${element.paddingTop * 0.25}rem` : '0.75rem',
+                    paddingRight: element.paddingRight !== undefined ? `${element.paddingRight * 0.25}rem` : '0.75rem',
+                    paddingBottom: element.paddingBottom !== undefined ? `${element.paddingBottom * 0.25}rem` : '0.75rem',
+                    paddingLeft: element.paddingLeft !== undefined ? `${element.paddingLeft * 0.25}rem` : '0.75rem'
+                }}>
+                    {(element.options || [{ label: 'Option 1', value: 'option1' }, { label: 'Option 2', value: 'option2' }]).map((opt, idx) => (
+                        <div key={idx} className="flex items-center">
+                            <input 
+                                type="radio" 
+                                {...register(element.id, { required: element.required })}
+                                name={element.id} 
+                                value={opt.value}
+                                className="h-4 w-4 text-brand-600 border-slate-300 focus:ring-brand-500" 
+                            />
+                            <span className="ml-3 text-sm text-slate-600">{opt.label}</span>
                         </div>
+                    ))}
+                </div>
+            );
+        } else if (element.type === 'star-rating') {
+            return (
+                <div className="flex gap-1 items-center">
+                    {[...Array(element.maxStars || 5)].map((_, i) => (
+                        <Star key={i} size={24} className="text-slate-300 fill-slate-100" />
+                    ))}
+                </div>
+            );
+        } else if (element.type === 'container') {
+            return renderContainer(element);
+        } else if (element.type === 'columns') {
+            return renderColumns(element);
+        } else if (element.type === 'rows') {
+            return renderRows(element);
+        } else if (element.type === 'grid') {
+            return renderContainer(element);
+        } else if (element.type === 'hidden') {
+            return (
+                <input
+                    type="hidden"
+                    {...register(element.id)}
+                    value={element.value || ''}
+                />
+            );
+        } else if (element.type === 'rich-text') {
+            return (
+                <div className="rounded-lg" style={{
+                    backgroundColor: element.backgroundColor || 'transparent',
+                    paddingTop: element.paddingTop !== undefined ? `${element.paddingTop * 0.25}rem` : '0',
+                    paddingRight: element.paddingRight !== undefined ? `${element.paddingRight * 0.25}rem` : '0',
+                    paddingBottom: element.paddingBottom !== undefined ? `${element.paddingBottom * 0.25}rem` : '0',
+                    paddingLeft: element.paddingLeft !== undefined ? `${element.paddingLeft * 0.25}rem` : '0'
+                }}>
+                    <div 
+                        className={clsx(
+                            "prose prose-sm max-w-none text-slate-600",
+                            element.textAlign === 'left' && "text-left",
+                            element.textAlign === 'center' && "text-center",
+                            element.textAlign === 'right' && "text-right",
+                            element.textAlign === 'justify' && "text-justify",
+                            !element.textAlign && "text-left"
+                        )}
+                        style={{
+                            fontFamily: element.fontFamily || undefined,
+                            fontSize: element.fontSize ? `${element.fontSize}px` : undefined,
+                            fontWeight: element.fontWeight || undefined,
+                            color: element.textColor || undefined,
+                            lineHeight: element.lineHeight ? `${element.lineHeight}%` : undefined,
+                            letterSpacing: element.letterSpacing ? `${element.letterSpacing}px` : undefined
+                        }}
+                        dangerouslySetInnerHTML={{ __html: element.content || '<p>Rich text content</p>' }}
+                    />
+                </div>
+            );
+        } else if (element.type === 'button') {
+            return (
+                <div className="relative">
+                    <button
+                        type={element.buttonType || 'button'}
+                        className={clsx(
+                            "font-medium rounded-lg border",
+                            element.buttonSize === 'sm' && "text-sm",
+                            element.buttonSize === 'lg' && "text-lg", 
+                            (!element.buttonSize || element.buttonSize === 'md') && "text-base",
+                            element.buttonStyle === 'primary' && "bg-blue-600 border-blue-600 text-white hover:bg-blue-700",
+                            element.buttonStyle === 'secondary' && "bg-gray-600 border-gray-600 text-white hover:bg-gray-700",
+                            element.buttonStyle === 'outline' && "bg-transparent border-gray-300 text-gray-700",
+                            element.buttonStyle === 'text' && "bg-transparent border-transparent text-blue-600 hover:bg-blue-50",
+                            element.buttonStyle === 'link' && "bg-transparent border-transparent text-blue-600 hover:text-blue-800 hover:underline",
+                            (!element.buttonStyle || element.buttonStyle === 'primary') && "bg-blue-600 border-blue-600 text-white hover:bg-blue-700"
+                        )}
+                        style={{
+                            backgroundColor: element.backgroundColor && element.buttonStyle !== 'text' && element.buttonStyle !== 'outline' && element.buttonStyle !== 'link' ? 
+                                element.backgroundColor : undefined,
+                            paddingTop: element.paddingTop !== undefined ? `${element.paddingTop * 0.25}rem` : undefined,
+                            paddingRight: element.paddingRight !== undefined ? `${element.paddingRight * 0.25}rem` : undefined,
+                            paddingBottom: element.paddingBottom !== undefined ? `${element.paddingBottom * 0.25}rem` : undefined,
+                            paddingLeft: element.paddingLeft !== undefined ? `${element.paddingLeft * 0.25}rem` : undefined,
+                            marginTop: element.marginTop !== undefined ? `${element.marginTop * 0.25}rem` : undefined,
+                            marginRight: element.marginRight !== undefined ? `${element.marginRight * 0.25}rem` : undefined,
+                            marginBottom: element.marginBottom !== undefined ? `${element.marginBottom * 0.25}rem` : undefined,
+                            marginLeft: element.marginLeft !== undefined ? `${element.marginLeft * 0.25}rem` : undefined
+                        }}
+                    >
+                        {element.buttonText || element.label || 'Button'}
+                    </button>
+                </div>
+            );
+        } else if (element.type === 'text-block') {
+            return (
+                <div style={{
+                    backgroundColor: element.backgroundColor || 'transparent'
+                }}>
+                    <div 
+                        className={clsx(
+                            "prose prose-sm max-w-none text-slate-600",
+                            element.textAlign === 'left' && "text-left",
+                            element.textAlign === 'center' && "text-center",
+                            element.textAlign === 'right' && "text-right",
+                            element.textAlign === 'justify' && "text-justify",
+                            !element.textAlign && "text-left"
+                        )}
+                        style={{
+                            fontFamily: element.fontFamily || undefined,
+                            fontSize: element.fontSize ? `${element.fontSize}px` : undefined,
+                            fontWeight: element.fontWeight || undefined,
+                            color: element.textColor || undefined,
+                            lineHeight: element.lineHeight ? `${element.lineHeight}%` : undefined,
+                            letterSpacing: element.letterSpacing ? `${element.letterSpacing}px` : undefined
+                        }}
+                        dangerouslySetInnerHTML={{ __html: element.content || '<p>Text block content</p>' }}
+                    />
+                </div>
+            );
+        } else if (element.type === 'heading') {
+            const HeadingTag = element.headingLevel === 'h1' ? 'h1' : 
+                               element.headingLevel === 'h2' ? 'h2' : 
+                               element.headingLevel === 'h3' ? 'h3' : 
+                               element.headingLevel === 'h4' ? 'h4' : 
+                               element.headingLevel === 'h5' ? 'h5' : 
+                               element.headingLevel === 'h6' ? 'h6' : 'h2';
+            
+            return (
+                <HeadingTag
+                    className={clsx(
+                        "font-bold text-slate-800",
+                        element.headingLevel === 'h1' && "text-4xl",
+                        element.headingLevel === 'h2' && "text-3xl",
+                        element.headingLevel === 'h3' && "text-2xl",
+                        element.headingLevel === 'h4' && "text-xl",
+                        element.headingLevel === 'h5' && "text-lg",
+                        element.headingLevel === 'h6' && "text-base",
+                        !element.headingLevel && "text-3xl",
+                        element.textAlign === 'left' && "text-left",
+                        element.textAlign === 'center' && "text-center",
+                        element.textAlign === 'right' && "text-right",
+                        element.textAlign === 'justify' && "text-justify",
+                        !element.textAlign && "text-left"
+                    )}
+                    style={{
+                        backgroundColor: element.backgroundColor,
+                        fontFamily: element.fontFamily || undefined,
+                        fontSize: element.fontSize ? `${element.fontSize}px` : undefined,
+                        fontWeight: element.fontWeight || undefined,
+                        color: element.textColor || undefined,
+                        lineHeight: element.lineHeight ? `${element.lineHeight}%` : undefined,
+                        letterSpacing: element.letterSpacing ? `${element.letterSpacing}px` : undefined
+                    }}
+                >
+                    {element.content || 'Heading'}
+                </HeadingTag>
+            );
+        } else if (element.type === 'menu') {
+            return (
+                <div 
+                    className="min-h-[40px]"
+                    style={{
+                        display: 'flex',
+                        flexDirection: element.flexDirection || (element.menuLayout === 'vertical' ? 'column' : 'row'),
+                        flexWrap: element.flexWrap || 'nowrap',
+                        justifyContent: element.justifyContent || 'flex-start',
+                        alignItems: element.alignItems || 'center',
+                        alignContent: element.alignContent || 'flex-start',
+                        rowGap: `${(element.rowGap || element.gap || 0) * 0.25}rem`,
+                        columnGap: `${(element.columnGap || element.gap || 16) * 0.25}rem`
+                    }}
+                >
+                    {element.children && element.children.length > 0 ? (
+                        element.children.map((child) => (
+                            <div key={child.id}>
+                                {renderElement(child, false, 'menu')}
+                            </div>
+                        ))
+                    ) : (
+                        <div className="text-gray-400 text-sm italic">
+                            No menu items
+                        </div>
+                    )}
+                </div>
+            );
+        } else if (element.type === 'social') {
+            return (
+                <div className={clsx(
+                    "rounded-lg",
+                    isFormProject && "border border-slate-200"
+                )} style={{
+                    backgroundColor: element.backgroundColor,
+                    paddingTop: element.paddingTop !== undefined ? `${element.paddingTop * 0.25}rem` : '1rem',
+                    paddingRight: element.paddingRight !== undefined ? `${element.paddingRight * 0.25}rem` : '1rem',
+                    paddingBottom: element.paddingBottom !== undefined ? `${element.paddingBottom * 0.25}rem` : '1rem',
+                    paddingLeft: element.paddingLeft !== undefined ? `${element.paddingLeft * 0.25}rem` : '1rem'
+                }}>
+                    <div className={clsx(
+                        "flex gap-3",
+                        element.socialLayout === 'vertical' ? "flex-col" : "flex-row"
+                    )}>
+                        {(element.socialLinks || [
+                            { platform: 'Facebook', url: '#', icon: '📘' },
+                            { platform: 'Twitter', url: '#', icon: '🐦' },
+                            { platform: 'LinkedIn', url: '#', icon: '💼' }
+                        ]).map((social, index) => (
+                            <a
+                                key={index}
+                                href={social.url}
+                                target="_blank"
+                                rel="noopener noreferrer"
+                                className="flex items-center gap-2 text-blue-600 hover:text-blue-800 font-medium"
+                            >
+                                <span>{social.icon || '🔗'}</span>
+                                {social.platform}
+                            </a>
+                        ))}
                     </div>
-                ) : element.type === 'image' ? (
+                </div>
+            );
+        } else if (element.type === 'image') {
+            return (
+                <div 
+                    className={clsx(
+                        element.imageAlign === 'center' && "flex justify-center",
+                        element.imageAlign === 'right' && "flex justify-end",
+                        element.imageAlign === 'justify' && "flex justify-center",
+                        (!element.imageAlign || element.imageAlign === 'left') && "flex justify-start"
+                    )}
+                    style={{
+                        width: `${element.imageWidthPercent || 100}%`,
+                        marginLeft: element.imageAlign === 'center' ? 'auto' : element.imageAlign === 'right' ? 'auto' : undefined,
+                        marginRight: element.imageAlign === 'center' ? 'auto' : element.imageAlign === 'right' ? undefined : element.imageAlign === 'left' ? 'auto' : undefined
+                    }}
+                >
                     <img
                         src={element.imageUrl || 'https://placehold.co/400x200/e2e8f0/94a3b8?text=Image'}
                         alt={element.imageAlt || 'Image'}
-                        className="rounded-lg border border-gray-200 block w-full h-auto"
+                        className="rounded-lg block h-auto w-full"
                         style={{
                             backgroundColor: element.backgroundColor
                         }}
                     />
-                ) : (
-                    <input
-                        type={element.type}
-                        {...register(element.id, { required: element.required })}
-                        placeholder={element.placeholder}
-                        className={getInputClasses(settings)}
-                    />
-                )}
+                </div>
+            );
+        } else {
+            // Default input rendering for text, email, password, number, tel, url, date, time, datetime-local
+            return (
+                <input
+                    type={element.type}
+                    {...register(element.id, { required: element.required })}
+                    className={clsx(
+                        "w-full rounded-lg text-slate-500 text-sm",
+                        isFormProject && "border border-slate-200"
+                    )}
+                    style={{
+                        backgroundColor: element.backgroundColor,
+                        paddingTop: element.paddingTop !== undefined ? `${element.paddingTop * 0.25}rem` : '0.75rem',
+                        paddingRight: element.paddingRight !== undefined ? `${element.paddingRight * 0.25}rem` : '0.75rem',
+                        paddingBottom: element.paddingBottom !== undefined ? `${element.paddingBottom * 0.25}rem` : '0.75rem',
+                        paddingLeft: element.paddingLeft !== undefined ? `${element.paddingLeft * 0.25}rem` : '0.75rem'
+                    }}
+                    placeholder={element.placeholder}
+                />
+            );
+        }
+    };
 
-                {errors[element.id] && (
-                    <p className="text-red-500 text-xs mt-1 flex items-center gap-1">
-                        <AlertCircle size={12} />
-                        This field is required
-                    </p>
+    // Container rendering - copy Canvas container logic
+    const renderContainer = (element: FormElement) => {
+        return (
+            <div
+                className={clsx(
+                    "rounded-lg relative",
+                    isFormProject && "border border-slate-200"
                 )}
-                    </div>
+                style={{
+                    backgroundColor: element.backgroundColor || 'transparent'
+                }}
+            >
+                <div 
+                    className="min-h-[40px]"
+                    style={{
+                        display: 'flex',
+                        flexDirection: element.flexDirection || 'column',
+                        flexWrap: element.flexWrap || 'nowrap',
+                        justifyContent: element.justifyContent || 'flex-start',
+                        alignItems: element.alignItems || 'stretch',
+                        alignContent: element.alignContent || 'flex-start',
+                        rowGap: `${(element.rowGap ?? element.gap ?? 0) * 0.25}rem`,
+                        columnGap: element.display !== 'block' ? `${(element.columnGap || element.gap || 12) * 0.25}rem` : '0.75rem'
+                    }}
+                >
+                    {element.children && element.children.length > 0 ? (
+                        element.children.map((child) => (
+                            renderElement(child, false, 'container')
+                        ))
+                    ) : (
+                        <div className="text-gray-400 text-sm italic p-4">
+                            Container content will appear here
+                        </div>
+                    )}
                 </div>
             </div>
         );
     };
 
-    if (submitStatus === 'success' && !propOnSubmit) {
+    // Columns rendering - copy Canvas columns logic
+    const renderColumns = (element: FormElement) => {
         return (
-            <div className="p-4">
-                {/* Custom Messages */}
-                {actionMessages.map((msg, index) => (
-                    <div key={index} className={`p-4 rounded-lg mb-4 flex items-start gap-3 ${msg.messageType === 'success' ? 'bg-green-50 border border-green-200' :
-                        msg.messageType === 'info' ? 'bg-blue-50 border border-blue-200' :
-                            msg.messageType === 'warning' ? 'bg-yellow-50 border border-yellow-200' :
-                                'bg-red-50 border border-red-200'
-                        }`}>
-                        <div className={`flex-shrink-0 ${msg.messageType === 'success' ? 'text-green-500' :
-                            msg.messageType === 'info' ? 'text-blue-500' :
-                                msg.messageType === 'warning' ? 'text-yellow-500' :
-                                    'text-red-500'
-                            }`}>
-                            {msg.messageType === 'success' ? <CheckCircle size={20} /> :
-                                msg.messageType === 'info' ? <Info size={20} /> :
-                                    msg.messageType === 'warning' ? <AlertTriangle size={20} /> :
-                                        <X size={20} />}
-                        </div>
-                        <div className="flex-1">
-                            <p className={`text-sm ${msg.messageType === 'success' ? 'text-green-800' :
-                                msg.messageType === 'info' ? 'text-blue-800' :
-                                    msg.messageType === 'warning' ? 'text-yellow-800' :
-                                        'text-red-800'
-                                }`}>
-                                {msg.message}
-                            </p>
-                        </div>
-                    </div>
-                ))}
-
-                {/* Default success message if no custom messages */}
-                {actionMessages.length === 0 && (
-                    <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-12 text-center">
-                        <div className="w-16 h-16 bg-green-100 text-green-600 rounded-full flex items-center justify-center mx-auto mb-4">
-                            <CheckCircle size={32} />
-                        </div>
-                        <h2 className="text-2xl font-bold text-gray-800 mb-2">Thank You!</h2>
-                        <p className="text-gray-600 mb-6">Your form has been successfully submitted.</p>
-                    </div>
+            <div
+                className={clsx(
+                    "rounded-lg relative",
+                    isFormProject && "border border-slate-200"
                 )}
-
-                {/* Action Status Summary */}
-                {executedActions.length > 0 && (
-                    <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-6 mt-4">
-                        <h3 className="text-lg font-medium text-gray-800 mb-4">Actions Executed</h3>
-                        <div className="space-y-2">
-                            {executedActions.map((action, index) => (
-                                <div key={index} className="flex items-center gap-3 text-sm">
-                                    <div className="w-2 h-2 bg-green-500 rounded-full"></div>
-                                    <span className="text-gray-600">
-                                        {action.type === 'webhook' ? `Webhook: ${action.webhook?.url} (simulated)` :
-                                            action.type === 'redirect' ? `Redirect: ${action.redirectUrl}` :
-                                                action.type === 'message' ? 'Message displayed' :
-                                                    action.type}
-                                    </span>
-                                    {action.type === 'redirect' && action.openInNewTab && (
-                                        <ExternalLink size={12} className="text-gray-400" />
-                                    )}
-                                </div>
-                            ))}
-                        </div>
-                    </div>
-                )}
-
-                <div className="text-center mt-6">
-                    <button
-                        onClick={() => {
-                            setSubmitStatus('idle');
-                            setExecutedActions([]);
-                            setActionMessages([]);
-                        }}
-                        className={getButtonClasses(settings).replace('w-full', 'px-6 py-2')}
-                        style={getButtonStyle(settings)}
-                    >
-                        Submit Another Response
-                    </button>
+                style={{
+                    backgroundColor: element.backgroundColor || 'transparent'
+                }}
+            >
+                <div 
+                    style={{
+                        display: 'grid',
+                        gridTemplateColumns: `repeat(${element.columnCount || 2}, 1fr)`,
+                        gap: `${(element.columnGap || element.gap || 12) * 0.25}rem`
+                    }}
+                >
+                    {Array.from({ length: element.columnCount || 2 }).map((_, index) => {
+                        const child = element.children?.[index];
+                        return (
+                            <div
+                                key={index}
+                                className="min-h-[32px]"
+                                style={{
+                                    backgroundColor: element.columnBackgrounds?.[index] || 'transparent'
+                                }}
+                            >
+                                {child ? renderElement(child, false, 'columns') : (
+                                    <div className="text-gray-400 text-sm italic p-4 text-center">
+                                        Column {index + 1}
+                                    </div>
+                                )}
+                            </div>
+                        );
+                    })}
                 </div>
             </div>
         );
-    }
+    };
 
-    return isFormProject ? (
+    // Rows rendering - copy Canvas rows logic  
+    const renderRows = (element: FormElement) => {
+        return (
+            <div
+                className={clsx(
+                    "rounded-lg relative",
+                    isFormProject && "border border-slate-200"
+                )}
+                style={{
+                    backgroundColor: element.backgroundColor || 'transparent'
+                }}
+            >
+                <div 
+                    style={{
+                        display: 'flex',
+                        flexDirection: 'column',
+                        flexWrap: element.flexWrap || 'nowrap',
+                        justifyContent: element.justifyContent || 'flex-start',
+                        alignItems: element.alignItems || 'stretch',
+                        alignContent: element.alignContent || 'flex-start',
+                        rowGap: `${(element.rowGap ?? element.gap ?? 0) * 0.25}rem`,
+                        columnGap: `${(element.columnGap ?? element.gap ?? 0) * 0.25}rem`
+                    }}
+                >
+                    {Array.from({ length: element.rowCount || 1 }).map((_, index) => {
+                        const child = element.children?.[index];
+                        return (
+                            <div
+                                key={index}
+                                className="min-h-[32px]"
+                                style={{
+                                    backgroundColor: element.rowBackgrounds?.[index] || 'transparent'
+                                }}
+                            >
+                                {child ? renderElement(child, false, 'rows') : (
+                                    <div className="text-gray-400 text-sm italic p-4 text-center">
+                                        Row {index + 1}
+                                    </div>
+                                )}
+                            </div>
+                        );
+                    })}
+                </div>
+            </div>
+        );
+    };
+
+    // Match Canvas structure exactly
+    const content = (
         <div
             className={clsx(
-                "rounded-xl shadow-sm border border-gray-200 px-8 pt-8 pb-8",
-                className
+                "min-h-[800px] bg-white rounded-2xl shadow-card px-8 pb-8",
+                currentProject?.type !== 'form' && "pt-0",
+                currentProject?.type === 'form' && "pt-8",
+                elements.length === 0 && "flex items-center justify-center"
             )}
             style={{
-                backgroundColor: settings.formBackground || '#FFFFFF'
+                backgroundColor: settings.formBackground || '#ffffff'
             }}
         >
-            <div className="mb-8 border-b border-gray-200 pb-6">
-                <h1 className="text-3xl font-bold text-gray-900 mb-2">{settings.title}</h1>
-                {settings.description && (
-                    <p className="text-gray-600">{settings.description}</p>
-                )}
-            </div>
+            {elements.length === 0 ? (
+                <div className="text-center">
+                    <div className="w-16 h-16 bg-blue-100 text-blue-600 rounded-full flex items-center justify-center mx-auto mb-4">
+                        <Info size={24} />
+                    </div>
+                    <h3 className="text-2xl font-bold text-slate-600 mb-3">No Content</h3>
+                    <p className="text-slate-500 max-w-md leading-relaxed mx-auto">
+                        This preview will show your content once you add elements to the canvas.
+                    </p>
+                </div>
+            ) : (
+                <form
+                    onSubmit={handleSubmit(handleFormSubmit)}
+                    className="flex flex-col"
+                >
+                    {/* Hidden fields */}
+                    {elements.filter(el => el.type === 'hidden').map((element) => (
+                        <input
+                            key={element.id}
+                            type="hidden"
+                            {...register(element.id)}
+                            value={element.value || ''}
+                        />
+                    ))}
 
-            <form
-                onSubmit={handleSubmit(handleFormSubmit)}
-                action={settings.formAction || undefined}
-                method={settings.formMethod || 'POST'}
-                target={settings.formTarget || undefined}
-            >
-                {/* Custom CSS for dynamic theming */}
-                <style dangerouslySetInnerHTML={{
-                    __html: `
-                        .custom-input:focus {
-                            --tw-ring-color: ${settings.primaryColor || '#3B82F6'};
-                            border-color: ${settings.primaryColor || '#3B82F6'};
-                            box-shadow: 0 0 0 2px ${settings.primaryColor || '#3B82F6'}33;
-                        }
-                        .custom-checkbox:focus,
-                        .custom-radio:focus {
-                            --tw-ring-color: ${settings.primaryColor || '#3B82F6'};
-                            box-shadow: 0 0 0 2px ${settings.primaryColor || '#3B82F6'}33;
-                        }
-                    `
-                }} />
-
-                {/* Hidden fields */}
-                {elements.filter(el => el.type === 'hidden').map((element) => (
-                    <input
-                        key={element.id}
-                        type="hidden"
-                        {...register(element.id)}
-                        value={element.value || ''}
-                    />
-                ))}
-
-                {/* Form elements layout */}
-                <div className="flex flex-col mb-6">
+                    {/* Render elements exactly like Canvas */}
                     {elements.filter(el => el.type !== 'hidden').map((element) =>
                         renderElement(element, true)
                     )}
-                </div>
 
-                {isFormProject && (
-                    <div className="pt-6">
-                        <button
-                            type="submit"
-                            disabled={submitStatus === 'submitting' || isLoading}
-                            className={getButtonClasses(settings)}
-                            style={getButtonStyle(settings)}
-                        >
-                            {submitStatus === 'submitting' || isLoading ? 'Processing...' : settings.submitButtonText}
-                        </button>
-                    </div>
-                )}
-            </form>
+                    {/* Submit button only for form projects */}
+                    {isFormProject && (
+                        <div className="pt-6">
+                            <button
+                                type="submit"
+                                disabled={isLoading}
+                                className="w-full py-3 px-6 font-medium focus:outline-none focus:ring-2 focus:ring-offset-2 transition-all shadow-md hover:shadow-lg disabled:opacity-50 disabled:cursor-not-allowed rounded-lg"
+                                style={{
+                                    backgroundColor: settings.primaryColor || '#3B82F6',
+                                    borderColor: settings.primaryColor || '#3B82F6',
+                                    color: '#FFFFFF'
+                                }}
+                            >
+                                {isLoading ? 'Processing...' : settings.submitButtonText}
+                            </button>
+                        </div>
+                    )}
+                </form>
+            )}
         </div>
-    ) : (
-        // Non-form projects: render full width like canvas
-        <div 
-            className={className}
-            style={{
-                backgroundColor: settings.formBackground || '#FFFFFF',
-                minHeight: '100vh'
-            }}
-        >
-            <div className="flex flex-col">
-                {elements.filter(el => el.type !== 'hidden').map((element) =>
-                    renderElement(element, true)
-                )}
+    );
+
+    // Use exact Canvas structure and CSS classes
+    return (
+        <div className="form-builder-canvas">
+            <div className="form-builder-canvas-inner">
+                {content}
             </div>
         </div>
     );

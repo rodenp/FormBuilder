@@ -613,6 +613,50 @@ export const useStore = create<FormStore>()(
                         }));
                     }
                     
+                    // Handle column count changes for columns components
+                    if (updatedElement.type === 'columns' && updates.columnCount !== undefined) {
+                        const newColumnCount = updates.columnCount;
+                        const currentChildren = updatedElement.children || [];
+                        
+                        if (newColumnCount > currentChildren.length) {
+                            // Add new container children for additional columns
+                            const newContainers = [];
+                            for (let i = currentChildren.length; i < newColumnCount; i++) {
+                                newContainers.push({
+                                    id: uuidv4(),
+                                    type: 'container' as FormElementType,
+                                    label: `Column ${i + 1}`,
+                                    name: `column_${i + 1}`,
+                                    placeholder: '',
+                                    required: false,
+                                    width: 12,
+                                    children: [],
+                                    display: 'flex',
+                                    flexDirection: 'column',
+                                    gap: 0,
+                                    rowGap: 0,
+                                    paddingTop: 8,
+                                    paddingBottom: 8,
+                                    paddingLeft: 8,
+                                    paddingRight: 8,
+                                    backgroundColor: 'transparent',
+                                    borderRadius: 4
+                                });
+                            }
+                            updatedElement.children = [...currentChildren, ...newContainers];
+                            
+                            // Update columnBackgrounds array to match new count
+                            updatedElement.columnBackgrounds = [
+                                ...(updatedElement.columnBackgrounds || []).slice(0, newColumnCount),
+                                ...Array(Math.max(0, newColumnCount - (updatedElement.columnBackgrounds || []).length)).fill(null)
+                            ];
+                        } else if (newColumnCount < currentChildren.length) {
+                            // Remove excess columns
+                            updatedElement.children = currentChildren.slice(0, newColumnCount);
+                            updatedElement.columnBackgrounds = (updatedElement.columnBackgrounds || []).slice(0, newColumnCount);
+                        }
+                    }
+                    
                     return updatedElement;
                 }
                 if (el.children) {

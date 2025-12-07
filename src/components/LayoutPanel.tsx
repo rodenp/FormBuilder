@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
 import type { FormElement } from '../types';
 import { useStore } from '../store/useStore';
+import { AlignLeft, AlignCenter, AlignRight, AlignJustify } from 'lucide-react';
 
 interface LayoutPanelProps {
     selectedElement: FormElement;
@@ -97,8 +98,8 @@ export const LayoutPanel: React.FC<LayoutPanelProps> = ({ selectedElement, updat
                     justifyContent: selectedElement.justifyContent ?? 'flex-start',
                     alignItems: selectedElement.alignItems ?? 'flex-start',
                     alignContent: selectedElement.alignContent ?? 'flex-start',
-                    rowGap: `${selectedElement.rowGap ?? 16}px`,
-                    columnGap: `${selectedElement.columnGap ?? 16}px`,
+                    rowGap: `${selectedElement.rowGap ?? 0}px`,
+                    columnGap: `${selectedElement.columnGap ?? 0}px`,
                     padding: `${p.top}px ${p.right}px ${p.bottom}px ${p.left}px`,
                     minHeight: '200px'
                 };
@@ -109,8 +110,8 @@ export const LayoutPanel: React.FC<LayoutPanelProps> = ({ selectedElement, updat
                     justifyContent: selectedElement.justifyContent ?? 'flex-start',
                     alignItems: selectedElement.alignItems ?? 'flex-start',
                     alignContent: 'start',
-                    rowGap: `${selectedElement.rowGap ?? 16}px`,
-                    columnGap: `${selectedElement.columnGap ?? 16}px`,
+                    rowGap: `${selectedElement.rowGap ?? 0}px`,
+                    columnGap: `${selectedElement.columnGap ?? 0}px`,
                     padding: `${p.top}px ${p.right}px ${p.bottom}px ${p.left}px`,
                     minHeight: '200px'
                 };
@@ -354,14 +355,14 @@ export const LayoutPanel: React.FC<LayoutPanelProps> = ({ selectedElement, updat
                     {(selectedElement.display ?? 'flex') !== 'block' && !['columns', 'menu'].includes(selectedElement.type) && (
                         <div className="mb-4">
                             <label className="block text-xs font-medium text-gray-600 mb-2">
-                                Row Gap: <span className="font-semibold">{selectedElement.rowGap ?? 16}px</span>
+                                Row Gap: <span className="font-semibold">{selectedElement.rowGap ?? 0}px</span>
                             </label>
                             <div className="flex items-center gap-2">
                                 <input
                                     type="range"
                                     min="0"
                                     max="40"
-                                    value={selectedElement.rowGap ?? 16}
+                                    value={selectedElement.rowGap ?? 0}
                                     onChange={(e) => updateElement(selectedElement.id, { rowGap: parseInt(e.target.value) })}
                                     className="flex-1 h-1 bg-gray-200 rounded-lg appearance-none cursor-pointer"
                                 />
@@ -369,7 +370,7 @@ export const LayoutPanel: React.FC<LayoutPanelProps> = ({ selectedElement, updat
                                     type="number"
                                     min="0"
                                     max="40"
-                                    value={selectedElement.rowGap ?? 16}
+                                    value={selectedElement.rowGap ?? 0}
                                     onChange={(e) => updateElement(selectedElement.id, { rowGap: parseInt(e.target.value) || 0 })}
                                     className="w-12 px-2 py-1 text-xs border border-gray-300 rounded"
                                 />
@@ -377,18 +378,18 @@ export const LayoutPanel: React.FC<LayoutPanelProps> = ({ selectedElement, updat
                         </div>
                     )}
                     
-                    {/* Column Gap - for flex and grid (not rows) */}
-                    {(selectedElement.display ?? 'flex') !== 'block' && selectedElement.type !== 'rows' && (
+                    {/* Column Gap - for flex and grid (not rows, columns, or column cells) */}
+                    {(selectedElement.display ?? 'flex') !== 'block' && selectedElement.type !== 'rows' && selectedElement.type !== 'columns' && !isColumnCellContainer && (
                         <div className="mb-4">
                             <label className="block text-xs font-medium text-gray-600 mb-2">
-                                Column Gap: <span className="font-semibold">{selectedElement.columnGap ?? 16}px</span>
+                                Column Gap: <span className="font-semibold">{selectedElement.columnGap ?? 0}px</span>
                             </label>
                             <div className="flex items-center gap-2">
                                 <input
                                     type="range"
                                     min="0"
                                     max="40"
-                                    value={selectedElement.columnGap ?? 16}
+                                    value={selectedElement.columnGap ?? 0}
                                     onChange={(e) => updateElement(selectedElement.id, { columnGap: parseInt(e.target.value) })}
                                     className="flex-1 h-1 bg-gray-200 rounded-lg appearance-none cursor-pointer"
                                 />
@@ -396,7 +397,7 @@ export const LayoutPanel: React.FC<LayoutPanelProps> = ({ selectedElement, updat
                                     type="number"
                                     min="0"
                                     max="40"
-                                    value={selectedElement.columnGap ?? 16}
+                                    value={selectedElement.columnGap ?? 0}
                                     onChange={(e) => updateElement(selectedElement.id, { columnGap: parseInt(e.target.value) || 0 })}
                                     className="w-12 px-2 py-1 text-xs border border-gray-300 rounded"
                                 />
@@ -421,6 +422,62 @@ export const LayoutPanel: React.FC<LayoutPanelProps> = ({ selectedElement, updat
                 </>
             )}
             
+            {/* Text Alignment - for heading and text-block components */}
+            {(selectedElement.type === 'heading' || selectedElement.type === 'text-block') && (
+                <div className="mb-6">
+                    <h3 className="text-xs font-medium text-gray-600 mb-3">Text Alignment</h3>
+                    <div className="flex rounded-lg border border-gray-200 p-1 bg-gray-50">
+                        <button
+                            type="button"
+                            onClick={() => updateElement(selectedElement.id, { textAlign: 'left' })}
+                            className={`flex items-center justify-center w-10 h-8 rounded transition-all ${
+                                (selectedElement.textAlign ?? 'left') === 'left'
+                                    ? 'bg-gray-800 text-white shadow-sm'
+                                    : 'text-gray-400 hover:text-gray-600 hover:bg-gray-100'
+                            }`}
+                            title="Align Left"
+                        >
+                            <AlignLeft size={16} />
+                        </button>
+                        <button
+                            type="button"
+                            onClick={() => updateElement(selectedElement.id, { textAlign: 'center' })}
+                            className={`flex items-center justify-center w-10 h-8 rounded transition-all ${
+                                selectedElement.textAlign === 'center'
+                                    ? 'bg-gray-800 text-white shadow-sm'
+                                    : 'text-gray-400 hover:text-gray-600 hover:bg-gray-100'
+                            }`}
+                            title="Align Center"
+                        >
+                            <AlignCenter size={16} />
+                        </button>
+                        <button
+                            type="button"
+                            onClick={() => updateElement(selectedElement.id, { textAlign: 'right' })}
+                            className={`flex items-center justify-center w-10 h-8 rounded transition-all ${
+                                selectedElement.textAlign === 'right'
+                                    ? 'bg-gray-800 text-white shadow-sm'
+                                    : 'text-gray-400 hover:text-gray-600 hover:bg-gray-100'
+                            }`}
+                            title="Align Right"
+                        >
+                            <AlignRight size={16} />
+                        </button>
+                        <button
+                            type="button"
+                            onClick={() => updateElement(selectedElement.id, { textAlign: 'justify' })}
+                            className={`flex items-center justify-center w-10 h-8 rounded transition-all ${
+                                selectedElement.textAlign === 'justify'
+                                    ? 'bg-gray-800 text-white shadow-sm'
+                                    : 'text-gray-400 hover:text-gray-600 hover:bg-gray-100'
+                            }`}
+                            title="Justify"
+                        >
+                            <AlignJustify size={16} />
+                        </button>
+                    </div>
+                </div>
+            )}
 
             {/* Box Model - Margin and Padding like in mockup */}
             <div className="mt-6" style={{ padding: '20px 0', pointerEvents: 'auto' }}>

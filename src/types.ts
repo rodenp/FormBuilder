@@ -55,11 +55,15 @@ export interface FormElement {
     children?: FormElement[];
     // For Columns
     columnCount?: number;
+    // For Rows
+    rowCount?: number;
     gap?: number;
     rowGap?: number;
     columnGap?: number;
     columnBackgrounds?: string[]; // Individual background colors for each column cell
+    rowBackgrounds?: string[]; // Individual background colors for each row cell
     selectedColumnIndex?: number; // For tracking which column cell is selected
+    selectedRowIndex?: number; // For tracking which row cell is selected
     // Spacing settings
     marginTop?: number;
     marginRight?: number;
@@ -80,6 +84,8 @@ export interface FormElement {
     // Alignment settings (for non-containers)
     horizontalAlign?: 'left' | 'center' | 'right';
     verticalAlign?: 'top' | 'middle' | 'bottom';
+    // Text alignment (for text-based components)
+    textAlign?: 'left' | 'center' | 'right' | 'justify';
     // For Label styling
     labelSize?: 'xs' | 'sm' | 'base' | 'lg';
     labelWeight?: 'normal' | 'medium' | 'semibold' | 'bold';
@@ -110,6 +116,8 @@ export interface FormElement {
     imageAlt?: string;
     imageWidth?: number;
     imageHeight?: number;
+    imageWidthPercent?: number; // Width as percentage (0-100)
+    imageAlign?: 'left' | 'center' | 'right' | 'justify';
     // For Navigation
     navItems?: { label: string; href: string; }[];
     // For Hero section
@@ -129,6 +137,13 @@ export interface FormElement {
     // For Social
     socialLinks?: { platform: string; url: string; icon?: string }[];
     socialLayout?: 'horizontal' | 'vertical';
+    // For Text Styling (heading, text-block, rich-text)
+    fontFamily?: string;
+    fontSize?: number;
+    fontWeight?: 'normal' | 'medium' | 'semibold' | 'bold';
+    textColor?: string;
+    lineHeight?: number;
+    letterSpacing?: number;
 }
 
 export interface WebhookAction {
@@ -169,6 +184,15 @@ export interface FormSettings {
     buttonStyle?: 'rounded' | 'square' | 'pill';
     inputBorderStyle?: 'rounded' | 'square' | 'pill';
     formBackground?: string;
+    // Body properties
+    textColor?: string;
+    contentWidth?: number;
+    contentAlignment?: 'left' | 'center' | 'right';
+    fontFamily?: string;
+    fontWeight?: string;
+    linkColor?: string;
+    linkUnderline?: boolean;
+    htmlTitle?: string;
 }
 
 export interface Project {
@@ -179,6 +203,18 @@ export interface Project {
     updatedAt: string;
     settings: FormSettings;
     elements: FormElement[];
+}
+
+export interface GalleryImage {
+    id: string;
+    name: string;
+    url: string;
+    type: 'upload' | 'url';
+    width?: number;
+    height?: number;
+    alt?: string;
+    createdAt: string;
+    size?: number; // File size in bytes (for uploads)
 }
 
 export interface FormSchema {

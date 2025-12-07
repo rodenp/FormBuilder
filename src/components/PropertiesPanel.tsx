@@ -19,7 +19,7 @@ export const PropertiesPanel: React.FC = () => {
     } = useStore();
 
     const [showActionSelector, setShowActionSelector] = useState(false);
-    const [activeFormTab, setActiveFormTab] = useState<'settings' | 'styling' | 'actions' | 'code'>('settings');
+    const [activeFormTab, setActiveFormTab] = useState<'settings' | 'actions' | 'code'>('settings');
     const [codeType, setCodeType] = useState<'html' | 'react' | 'json'>('html');
     const [copiedCode, setCopiedCode] = useState(false);
     const [textPropsOpen, setTextPropsOpen] = useState(false);
@@ -37,6 +37,7 @@ export const PropertiesPanel: React.FC = () => {
             return generateJSONCode();
         }
     };
+
 
     const generateHTMLCode = () => {
         const formStyle = `
@@ -372,12 +373,6 @@ export default MyForm;`;
                         Settings
                     </button>
                     <button
-                        onClick={() => setActiveFormTab('styling')}
-                        className={clsx("tab", activeFormTab === 'styling' && "active")}
-                    >
-                        Styling
-                    </button>
-                    <button
                         onClick={() => setActiveFormTab('actions')}
                         className={clsx("tab", activeFormTab === 'actions' && "active")}
                         >
@@ -430,91 +425,9 @@ export default MyForm;`;
                         />
                     </div>
 
-
                         </>
                     )}
 
-                    {activeFormTab === 'styling' && (
-                        <div className="space-y-6">
-                            <div>
-                                <label className="block text-xs font-semibold text-slate-500 uppercase tracking-wider mb-2">
-                                    Primary Color
-                                </label>
-                                <div className="flex gap-3 items-center">
-                                    <input
-                                        type="color"
-                                        value={settings.primaryColor || '#3B82F6'}
-                                        onChange={(e) => updateSettings({ primaryColor: e.target.value })}
-                                        className="w-12 h-12 border border-slate-200 rounded-lg cursor-pointer"
-                                    />
-                                    <div className="flex-1">
-                                        <input
-                                            type="text"
-                                            value={settings.primaryColor || '#3B82F6'}
-                                            onChange={(e) => updateSettings({ primaryColor: e.target.value })}
-                                            className="w-full p-3 bg-slate-50 border border-slate-200 rounded-lg text-sm text-slate-700 focus:ring-2 focus:ring-brand-500 focus:border-transparent transition-all outline-none font-mono"
-                                        />
-                                    </div>
-                                </div>
-                                <p className="text-xs text-slate-400 mt-1">Used for buttons, focus states, and accents</p>
-                            </div>
-                            
-                            <div>
-                                <label className="block text-xs font-semibold text-slate-500 uppercase tracking-wider mb-2">
-                                    Button Style
-                                </label>
-                                <select
-                                    value={settings.buttonStyle || 'rounded'}
-                                    onChange={(e) => updateSettings({ buttonStyle: e.target.value as any })}
-                                    className="w-full p-3 bg-slate-50 border border-slate-200 rounded-lg text-sm text-slate-700 focus:ring-2 focus:ring-brand-500 focus:border-transparent transition-all outline-none"
-                                >
-                                    <option value="rounded">Rounded Corners</option>
-                                    <option value="square">Square Corners</option>
-                                    <option value="pill">Pill Shape</option>
-                                </select>
-                                <p className="text-xs text-slate-400 mt-1">Style applied to submit buttons</p>
-                            </div>
-
-                            <div>
-                                <label className="block text-xs font-semibold text-slate-500 uppercase tracking-wider mb-2">
-                                    Input Border Style
-                                </label>
-                                <select
-                                    value={settings.inputBorderStyle || 'rounded'}
-                                    onChange={(e) => updateSettings({ inputBorderStyle: e.target.value as any })}
-                                    className="w-full p-3 bg-slate-50 border border-slate-200 rounded-lg text-sm text-slate-700 focus:ring-2 focus:ring-brand-500 focus:border-transparent transition-all outline-none"
-                                >
-                                    <option value="rounded">Rounded Corners</option>
-                                    <option value="square">Square Corners</option>
-                                    <option value="pill">Pill Shape</option>
-                                </select>
-                                <p className="text-xs text-slate-400 mt-1">Style applied to form inputs</p>
-                            </div>
-
-                            <div>
-                                <label className="block text-xs font-semibold text-slate-500 uppercase tracking-wider mb-2">
-                                    Form Background
-                                </label>
-                                <div className="flex gap-3 items-center">
-                                    <input
-                                        type="color"
-                                        value={settings.formBackground || '#FFFFFF'}
-                                        onChange={(e) => updateSettings({ formBackground: e.target.value })}
-                                        className="w-12 h-12 border border-slate-200 rounded-lg cursor-pointer"
-                                    />
-                                    <div className="flex-1">
-                                        <input
-                                            type="text"
-                                            value={settings.formBackground || '#FFFFFF'}
-                                            onChange={(e) => updateSettings({ formBackground: e.target.value })}
-                                            className="w-full p-3 bg-slate-50 border border-slate-200 rounded-lg text-sm text-slate-700 focus:ring-2 focus:ring-brand-500 focus:border-transparent transition-all outline-none font-mono"
-                                        />
-                                    </div>
-                                </div>
-                                <p className="text-xs text-slate-400 mt-1">Background color of the form container</p>
-                            </div>
-                        </div>
-                    )}
 
                     {activeFormTab === 'actions' && (
                         <div className="space-y-6">
@@ -1372,12 +1285,29 @@ export default MyForm;`;
                         Background Color
                     </label>
                     <div className="flex gap-3 items-center">
-                        <input
-                            type="color"
-                            value={selectedElement.backgroundColor || '#ffffff'}
-                            onChange={(e) => updateElement(selectedElement.id, { backgroundColor: e.target.value })}
-                            className="w-12 h-12 border border-slate-200 rounded-lg cursor-pointer"
-                        />
+                        <div 
+                            className="w-12 h-12 rounded-lg border border-slate-200 relative overflow-hidden cursor-pointer"
+                            style={{
+                                backgroundColor: selectedElement.backgroundColor || '#ffffff'
+                            }}
+                            onClick={() => {
+                                // Create a color input element and trigger click
+                                const colorInput = document.createElement('input');
+                                colorInput.type = 'color';
+                                colorInput.value = selectedElement.backgroundColor || '#ffffff';
+                                colorInput.onchange = (e) => {
+                                    const target = e.target as HTMLInputElement;
+                                    updateElement(selectedElement.id, { backgroundColor: target.value });
+                                };
+                                colorInput.click();
+                            }}
+                        >
+                            {!selectedElement.backgroundColor && (
+                                <svg className="absolute inset-0 w-full h-full" viewBox="0 0 48 48">
+                                    <path d="M6 42L42 6" stroke="#ef4444" strokeWidth="2"/>
+                                </svg>
+                            )}
+                        </div>
                         <div className="flex-1">
                             <input
                                 type="text"

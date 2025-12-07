@@ -54,8 +54,8 @@ const ColumnPlaceholder: React.FC<{ element: FormElement; index: number }> = ({ 
                 isOver 
                     ? (isFormProject ? "border-solid border-blue-500 bg-blue-100 shadow-lg transform scale-105" : "bg-blue-100 shadow-lg transform scale-105")
                     : isDescendantOfSelected 
-                        ? "border-solid border-blue-400 bg-blue-50/20 hover:border-blue-500 hover:bg-blue-50/30"
-                        : (isFormProject ? "border-dashed border-slate-300 bg-slate-100/50 hover:border-brand-400 hover:bg-brand-50/30" : "bg-slate-100/50 hover:bg-brand-50/30")
+                        ? "border-solid border-blue-400 hover:border-blue-500"
+                        : (isFormProject ? "border-dashed border-slate-300" : "")
             )}
         >
             {isOver ? (
@@ -63,11 +63,10 @@ const ColumnPlaceholder: React.FC<{ element: FormElement; index: number }> = ({ 
                     Drop into Column {index + 1}
                 </div>
             ) : (
-                <>
+                <div className="text-center">
                     <Plus size={20} className="mb-1 opacity-60" />
-                    <p className="text-xs font-medium">Column {index + 1}</p>
-                    <p className="text-xs opacity-75">Drop here</p>
-                </>
+                    <p className="text-xs font-medium">Drop here to add to Column {index + 1}</p>
+                </div>
             )}
         </div>
     );
@@ -86,7 +85,7 @@ const ColumnCellDropZone: React.FC<{ containerId: string; columnIndex: number }>
                 "w-full h-full flex items-center justify-center text-center text-slate-400 text-sm transition-all",
                 isOver 
                     ? "bg-blue-100 text-blue-600" 
-                    : "hover:bg-slate-50"
+                    : ""
             )}
         >
             {isOver ? (
@@ -116,7 +115,7 @@ const RowCellDropZone: React.FC<{ containerId: string; rowIndex: number }> = ({ 
                 "w-full h-full flex items-center justify-center text-center text-slate-400 text-sm transition-all",
                 isOver 
                     ? "bg-blue-100 text-blue-600" 
-                    : "hover:bg-slate-50"
+                    : ""
             )}
         >
             {isOver ? (
@@ -181,8 +180,8 @@ const ColumnDropZone: React.FC<ColumnDropZoneProps> = ({ element, index, child, 
     const { setNodeRef, isOver } = useDroppable({
         id: `column-cell-${element.id}-${index}`,
         data: { 
-            type: child && child.type === 'container' ? 'container' : 'columns', 
-            containerId: child && child.type === 'container' ? child.id : element.id, 
+            type: 'columns', 
+            containerId: element.id, 
             columnIndex: index 
         }
     });
@@ -220,6 +219,7 @@ const ColumnDropZone: React.FC<ColumnDropZoneProps> = ({ element, index, child, 
         return isAncestor(child.id, selectedElementId, elements);
     })();
 
+
     const handleColumnClick = (e: React.MouseEvent) => {
         // If clicking on column cell with container child, select the child container
         if (child && child.type === 'container' && !cellEditMode) {
@@ -249,11 +249,12 @@ const ColumnDropZone: React.FC<ColumnDropZoneProps> = ({ element, index, child, 
                 "relative flex-1 min-h-[120px] transition-all duration-200",
                 cellEditMode && "border-orange-400 bg-orange-50 hover:border-orange-600 hover:bg-orange-100 cursor-pointer border-2 border-dashed",
                 isOver && !cellEditMode && (isFormProject ? "border-4 border-solid border-blue-500 bg-blue-100 rounded-lg shadow-lg transform scale-105" : "bg-blue-100 rounded-lg shadow-lg transform scale-105"),
-                !cellEditMode && !isOver && isDescendantOfSelected && "border-2 border-blue-400 border-dashed bg-blue-50/20 rounded-lg",
-                !cellEditMode && !isOver && !isDescendantOfSelected && isFormProject && "border-2 border-dashed border-slate-300 hover:border-slate-400 rounded-lg"
+                !cellEditMode && !isOver && isDescendantOfSelected && "border-2 border-blue-400 border-dashed rounded-lg hover:border-blue-500",
+                !cellEditMode && !isOver && !isDescendantOfSelected && isFormProject && "border-2 border-dashed border-slate-300 hover:border-blue-400 rounded-lg",
+                !cellEditMode && !isOver && !isDescendantOfSelected && !isFormProject && "hover:border-2 hover:border-dashed hover:border-blue-400 rounded-lg"
             )}
             style={{
-                backgroundColor: element.columnBackgrounds?.[index] || undefined
+                backgroundColor: element.columnBackgrounds?.[index] || child?.backgroundColor || element.backgroundColor || 'transparent'
             }}
             onClick={handleColumnClick}
         >
@@ -276,10 +277,11 @@ const ColumnDropZone: React.FC<ColumnDropZoneProps> = ({ element, index, child, 
             <div 
                 className={clsx(
                     "relative w-full h-full p-2 transition-all duration-200",
-                    child && child.type === 'container' && isDescendantOfSelected && "border border-blue-400 border-dashed bg-blue-50/20 rounded-lg"
+                    child && child.type === 'container' && isDescendantOfSelected && "border border-blue-400 border-dashed rounded-lg"
                 )}
                 style={{ 
                     pointerEvents: cellEditMode ? 'none' : 'auto',
+                    backgroundColor: 'transparent',
                     display: child && child.type === 'container' ? (child.display || 'flex') : 'flex',
                     flexDirection: child && child.type === 'container' ? (child.flexDirection || 'column') : 'column',
                     flexWrap: child && child.type === 'container' ? (child.flexWrap || 'wrap') : 'wrap',
@@ -316,11 +318,10 @@ const ColumnDropZone: React.FC<ColumnDropZoneProps> = ({ element, index, child, 
                 ) : (
                     // Fallback - should not happen with new structure
                     !cellEditMode && (
-                        <div className="flex items-center justify-center h-full text-slate-400 text-sm">
-                            <div className="text-center">
-                                <Plus size={20} className="mx-auto mb-2 opacity-60" />
-                                <p>Empty Column {index + 1}</p>
-                                <p className="text-xs opacity-75">No container</p>
+                        <div className="w-full h-full flex items-center justify-center text-center text-slate-400 text-sm transition-all">
+                            <div>
+                                <Plus size={16} className="mx-auto mb-1 opacity-60" />
+                                Drop here to add to Column {index + 1}
                             </div>
                         </div>
                     )
@@ -416,10 +417,10 @@ const RowDropZone: React.FC<RowDropZoneProps> = ({ element, index, child, cellEd
                 isOver && !cellEditMode && (isFormProject ? "border-4 border-solid border-blue-500 rounded-lg shadow-lg transform scale-105" : "rounded-lg shadow-lg transform scale-105"),
                 isOver && !cellEditMode && !element.rowBackgrounds?.[index] && "bg-blue-100",
                 !cellEditMode && !isOver && isDescendantOfSelected && "border-2 border-blue-400 border-dashed bg-blue-50/20 rounded-lg",
-                !cellEditMode && !isOver && !isDescendantOfSelected && isFormProject && "border-2 border-dashed border-slate-300 hover:border-slate-400 rounded-lg"
+                !cellEditMode && !isOver && !isDescendantOfSelected && isFormProject && "border-2 border-dashed border-slate-300 rounded-lg"
             )}
             style={{
-                backgroundColor: element.rowBackgrounds?.[index] || undefined
+                backgroundColor: element.rowBackgrounds?.[index] || element.backgroundColor || 'transparent'
             }}
             onClick={handleRowClick}
         >
@@ -519,16 +520,20 @@ const ContainerContent: React.FC<{ element: FormElement }> = ({ element }) => {
         id: `container-${element.id}`,
         data: { type: element.type, containerId: element.id }
     });
-    const { selectElement } = useStore();
+    const { selectElement, currentProject } = useStore();
+    const isFormProject = currentProject?.type === 'form';
 
     return (
         <div
             ref={setNodeRef}
             className={clsx(
                 "container-content rounded-lg",
-                isFormProject && "border-2 border-dashed border-slate-200 hover:border-brand-300",
-                element.type !== 'menu' && "bg-slate-50/30 hover:bg-brand-50/20"
+                isFormProject && "border-2 border-dashed border-slate-200",
+                false
             )}
+            style={{
+                backgroundColor: element.backgroundColor || 'transparent'
+            }}
         >
             {(!element.children || element.children.length === 0) ? (
                 element.type === 'columns' ? (
@@ -740,8 +745,9 @@ const ColumnsContent: React.FC<{ element: FormElement }> = ({ element }) => {
                                     : ''
                             }`}
                             style={{
-                                backgroundColor: element.columnBackgrounds?.[index] || 'transparent'
+                                backgroundColor: element.columnBackgrounds?.[index] || element.backgroundColor || 'transparent'
                             }}
+                            data-debug-legacy-cell={`index-${index}-bg-${element.columnBackgrounds?.[index] || 'none'}`}
                         >
                             {cellEditMode && (
                                 <div className="absolute top-1 right-1 bg-orange-600 text-white text-xs px-2 py-1 rounded font-medium z-40">
@@ -1131,9 +1137,11 @@ const SortableElement: React.FC<SortableElementProps> = ({ element, parentId }) 
                 // Default transparent border to prevent layout shift on hover
                 !isSelected && !isDescendantOfSelected && "border border-transparent",
                 // Show border when element is descendant of selected container
-                isDescendantOfSelected && !isSelected && "border border-blue-400 border-dashed bg-blue-50/20 rounded-lg",
-                // Hover highlighting - only for columns and main components when dragging
-                !isSelected && !isDragging && !isDescendantOfSelected && "hover:border-brand-500 hover:border-dashed hover:bg-brand-50/20 rounded-lg"
+                isDescendantOfSelected && !isSelected && "border border-blue-400 border-dashed rounded-lg",
+                // Hover highlighting - dashed for nested components
+                !isSelected && !isDragging && !isDescendantOfSelected && parentId && "hover:border-brand-500 hover:border-dashed rounded-lg",
+                // Hover highlighting - solid for outermost components (no parentId)
+                !isSelected && !isDragging && !isDescendantOfSelected && !parentId && "hover:border-brand-500 hover:border-solid rounded-lg"
             )}
             style={{
                 ...(parentId ? { pointerEvents: 'auto', position: 'relative' } : {}),
@@ -1265,7 +1273,7 @@ const SortableElement: React.FC<SortableElementProps> = ({ element, parentId }) 
                     isSelected && "ring-2 ring-brand-400 ring-opacity-50"
                 )}
                 style={{
-                    backgroundColor: ['container', 'columns', 'rows', 'grid', 'menu'].includes(element.type) ? element.backgroundColor : undefined,
+                    backgroundColor: element.backgroundColor || undefined,
                     // Only apply padding for container, columns, rows, grid, and menu - regular elements handle their own spacing
                     paddingTop: ['container', 'columns', 'rows', 'grid', 'menu'].includes(element.type) ? `${(element.paddingTop ?? 0) * 0.25}rem` : undefined,
                     paddingRight: ['container', 'columns', 'rows', 'grid', 'menu'].includes(element.type) ? `${(element.paddingRight ?? 0) * 0.25}rem` : undefined,
@@ -1523,7 +1531,7 @@ const SortableElement: React.FC<SortableElementProps> = ({ element, parentId }) 
                                     (!element.buttonSize || element.buttonSize === 'md') && "text-base",
                                     element.buttonStyle === 'primary' && "bg-blue-600 border-blue-600 text-white hover:bg-blue-700",
                                     element.buttonStyle === 'secondary' && "bg-gray-600 border-gray-600 text-white hover:bg-gray-700",
-                                    element.buttonStyle === 'outline' && "bg-transparent border-gray-300 text-gray-700 hover:bg-gray-50",
+                                    element.buttonStyle === 'outline' && "bg-transparent border-gray-300 text-gray-700",
                                     element.buttonStyle === 'text' && "bg-transparent border-transparent text-blue-600 hover:bg-blue-50",
                                     element.buttonStyle === 'link' && "bg-transparent border-transparent text-blue-600 hover:text-blue-800 hover:underline",
                                     (!element.buttonStyle || element.buttonStyle === 'primary') && "bg-blue-600 border-blue-600 text-white hover:bg-blue-700"
@@ -1568,8 +1576,12 @@ const SortableElement: React.FC<SortableElementProps> = ({ element, parentId }) 
                                 />
                             </div>
                         ) : (
-                            <div className="rounded-lg cursor-pointer hover:bg-gray-50" style={{
-                                backgroundColor: element.backgroundColor
+                            <div className="rounded-lg cursor-pointer" style={{
+                                backgroundColor: element.backgroundColor,
+                                paddingTop: element.paddingTop !== undefined ? `${element.paddingTop * 0.25}rem` : undefined,
+                                paddingRight: element.paddingRight !== undefined ? `${element.paddingRight * 0.25}rem` : undefined,
+                                paddingBottom: element.paddingBottom !== undefined ? `${element.paddingBottom * 0.25}rem` : undefined,
+                                paddingLeft: element.paddingLeft !== undefined ? `${element.paddingLeft * 0.25}rem` : undefined
                             }}>
                                 <div 
                                     className={clsx(
@@ -1611,7 +1623,7 @@ const SortableElement: React.FC<SortableElementProps> = ({ element, parentId }) 
                                 />
                             </div>
                         ) : (
-                            <div className="rounded-lg cursor-pointer hover:bg-gray-50" style={{
+                            <div className="rounded-lg cursor-pointer" style={{
                                 backgroundColor: element.backgroundColor,
                                 paddingTop: element.paddingTop !== undefined ? `${element.paddingTop * 0.25}rem` : undefined,
                                 paddingRight: element.paddingRight !== undefined ? `${element.paddingRight * 0.25}rem` : undefined,

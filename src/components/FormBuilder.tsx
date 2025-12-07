@@ -11,9 +11,8 @@ import {
     type DropAnimation,
 } from '@dnd-kit/core';
 import { arrayMove } from '@dnd-kit/sortable';
-import { Sidebar } from './Sidebar';
 import { Canvas } from './Canvas';
-import { PropertiesPanel } from './PropertiesPanel';
+import { SidePanel } from './SidePanel';
 import { useStore } from '../store/useStore';
 import type { FormElementType, FormElement } from '../types';
 import { Eye, Layout, Share2, Monitor, Tablet, Smartphone, ArrowLeft, Save, FileText, Mail, Globe, Edit2, Image as ImageIcon } from 'lucide-react';
@@ -33,6 +32,7 @@ export const FormBuilder: React.FC = () => {
         insertElementAfter,
         addElementBefore,
         addElementAfter,
+        addElementToColumnPosition,
         removeElementFromContainer,
         updateElement, 
         settings,
@@ -225,21 +225,8 @@ export const FormBuilder: React.FC = () => {
             const columnIndex = over.data.current.columnIndex;
             
             if (columnIndex !== undefined) {
-                // Add to container first, then move to specific column position
-                addElement(type, containerId);
-                
-                // Get the newly added element and move it to the correct column position
-                setTimeout(() => {
-                    const state = useStore.getState();
-                    const container = state.elements.find(el => el.id === containerId);
-                    if (container && container.children && container.children.length > 0) {
-                        // Find the last element (the one we just added)
-                        const lastElement = container.children[container.children.length - 1];
-                        if (lastElement) {
-                            moveElementToColumnPosition(lastElement.id, containerId, columnIndex);
-                        }
-                    }
-                }, 0);
+                // Use the dedicated function for adding to specific column position
+                addElementToColumnPosition(type, containerId, columnIndex);
             } else {
                 // Fallback to general add
                 addElement(type, containerId);
@@ -644,11 +631,12 @@ export const FormBuilder: React.FC = () => {
                     </div>
                 </div>
 
-                {/* Main 3-column grid layout */}
-                <div className="grid grid-cols-[360px_1fr_420px] gap-0 h-full">
-                    <Sidebar />
-                    <Canvas />
-                    <PropertiesPanel />
+                {/* Main 2-panel layout */}
+                <div className="flex h-full">
+                    <div className="flex-1 overflow-hidden">
+                        <Canvas />
+                    </div>
+                    <SidePanel />
                 </div>
 
                 {/* Drag Overlay */}

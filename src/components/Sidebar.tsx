@@ -79,13 +79,13 @@ export const Sidebar: React.FC = () => {
     const projectType = currentProject?.type || 'form';
 
     return (
-        <div className="w-[360px] bg-white border-r border-slate-200 flex flex-col h-full shadow-[4px_0_24px_rgba(0,0,0,0.02)] z-10">
+        <div className="w-full bg-white flex flex-col h-full">
             <div className="p-6 border-b border-slate-100">
                 <h2 className="text-lg font-bold text-slate-800">Components</h2>
                 <p className="text-sm text-slate-500 mt-1">Drag components to the canvas</p>
             </div>
 
-            <div className="p-4" style={{height: 'calc(100vh - 140px)', overflowY: 'scroll', overflowX: 'hidden'}}>
+            <div className="p-4 flex-1 overflow-y-auto overflow-x-hidden">
                 {/* For non-form projects, show limited components */}
                 {projectType !== 'form' ? (
                     <>
