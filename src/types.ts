@@ -44,6 +44,7 @@ export interface FormElement {
     required: boolean;
     width?: number; // 1-12
     options?: { label: string; value: string }[]; // For select inputs
+    category?: string; // For custom blocks
     validation?: {
         min?: number;
         max?: number;

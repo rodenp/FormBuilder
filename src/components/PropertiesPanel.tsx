@@ -425,6 +425,88 @@ export default MyForm;`;
                         />
                     </div>
 
+                    {/* Primary Color Control */}
+                    <div>
+                        <label className="block text-xs font-semibold text-slate-500 uppercase tracking-wider mb-2">
+                            Primary Color
+                        </label>
+                        <div className="relative inline-block">
+                            <div 
+                                className="w-12 h-12 rounded-lg border border-slate-200 relative overflow-hidden cursor-pointer"
+                                style={{
+                                    backgroundColor: settings.primaryColor || '#3b82f6'
+                                }}
+                                onClick={() => {
+                                    // Create a color input element and trigger click
+                                    const colorInput = document.createElement('input');
+                                    colorInput.type = 'color';
+                                    colorInput.value = settings.primaryColor || '#3b82f6';
+                                    colorInput.onchange = (e) => {
+                                        const target = e.target as HTMLInputElement;
+                                        updateSettings({ primaryColor: target.value });
+                                    };
+                                    colorInput.click();
+                                }}
+                            >
+                                {!settings.primaryColor && (
+                                    <svg className="absolute inset-0 w-full h-full" viewBox="0 0 48 48">
+                                        <path d="M6 42L42 6" stroke="#ef4444" strokeWidth="2"/>
+                                    </svg>
+                                )}
+                            </div>
+                            {settings.primaryColor && (
+                                <button
+                                    onClick={() => updateSettings({ primaryColor: undefined })}
+                                    className="absolute -top-1 -right-1 w-5 h-5 bg-red-500 hover:bg-red-600 text-white rounded-full flex items-center justify-center text-xs font-bold transition-colors"
+                                    title="Remove primary color"
+                                >
+                                    ×
+                                </button>
+                            )}
+                        </div>
+                    </div>
+
+                    {/* Form Background Color Control */}
+                    <div>
+                        <label className="block text-xs font-semibold text-slate-500 uppercase tracking-wider mb-2">
+                            Form Background
+                        </label>
+                        <div className="relative inline-block">
+                            <div 
+                                className="w-12 h-12 rounded-lg border border-slate-200 relative overflow-hidden cursor-pointer"
+                                style={{
+                                    backgroundColor: settings.formBackground || '#ffffff'
+                                }}
+                                onClick={() => {
+                                    // Create a color input element and trigger click
+                                    const colorInput = document.createElement('input');
+                                    colorInput.type = 'color';
+                                    colorInput.value = settings.formBackground || '#ffffff';
+                                    colorInput.onchange = (e) => {
+                                        const target = e.target as HTMLInputElement;
+                                        updateSettings({ formBackground: target.value });
+                                    };
+                                    colorInput.click();
+                                }}
+                            >
+                                {!settings.formBackground && (
+                                    <svg className="absolute inset-0 w-full h-full" viewBox="0 0 48 48">
+                                        <path d="M6 42L42 6" stroke="#ef4444" strokeWidth="2"/>
+                                    </svg>
+                                )}
+                            </div>
+                            {settings.formBackground && (
+                                <button
+                                    onClick={() => updateSettings({ formBackground: undefined })}
+                                    className="absolute -top-1 -right-1 w-5 h-5 bg-red-500 hover:bg-red-600 text-white rounded-full flex items-center justify-center text-xs font-bold transition-colors"
+                                    title="Remove form background"
+                                >
+                                    ×
+                                </button>
+                            )}
+                        </div>
+                    </div>
+
                         </>
                     )}
 
@@ -1284,7 +1366,7 @@ export default MyForm;`;
                     <label className="block text-xs font-semibold text-slate-500 uppercase tracking-wider mb-2">
                         Background Color
                     </label>
-                    <div className="flex gap-3 items-center">
+                    <div className="relative inline-block">
                         <div 
                             className="w-12 h-12 rounded-lg border border-slate-200 relative overflow-hidden cursor-pointer"
                             style={{
@@ -1308,22 +1390,15 @@ export default MyForm;`;
                                 </svg>
                             )}
                         </div>
-                        <div className="flex-1">
-                            <input
-                                type="text"
-                                value={selectedElement.backgroundColor || '#ffffff'}
-                                onChange={(e) => updateElement(selectedElement.id, { backgroundColor: e.target.value })}
-                                placeholder="#ffffff"
-                                className="w-full p-3 bg-slate-50 border border-slate-200 rounded-lg text-sm text-slate-700 focus:ring-2 focus:ring-brand-500 focus:border-transparent transition-all outline-none font-mono"
-                            />
-                        </div>
-                        <button
-                            onClick={() => updateElement(selectedElement.id, { backgroundColor: undefined })}
-                            className="px-3 py-2 text-xs text-slate-600 hover:text-red-600 hover:bg-red-50 rounded-lg transition-colors"
-                            title="Reset to default"
-                        >
-                            Reset
-                        </button>
+                        {selectedElement.backgroundColor && (
+                            <button
+                                onClick={() => updateElement(selectedElement.id, { backgroundColor: undefined })}
+                                className="absolute -top-1 -right-1 w-5 h-5 bg-red-500 hover:bg-red-600 text-white rounded-full flex items-center justify-center text-xs font-bold transition-colors"
+                                title="Remove background color"
+                            >
+                                ×
+                            </button>
+                        )}
                     </div>
                 </div>
                 

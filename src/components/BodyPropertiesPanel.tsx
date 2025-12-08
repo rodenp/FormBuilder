@@ -27,63 +27,84 @@ export const BodyPropertiesPanel: React.FC = () => {
                     {/* Text Color */}
                     <div className="mb-4">
                         <label className="block text-sm text-gray-700 mb-2">Text Color</label>
-                        <div className="flex items-center gap-2">
-                            <input
-                                type="color"
-                                value={settings.textColor || '#000000'}
-                                onChange={(e) => updateSettings({ textColor: e.target.value })}
-                                className="w-8 h-8 border border-gray-300 rounded cursor-pointer"
-                            />
-                            <button
-                                onClick={() => updateSettings({ textColor: undefined })}
-                                className="p-1.5 bg-gray-100 hover:bg-gray-200 rounded text-gray-500 text-xs"
-                                title="Reset"
+                        <div className="relative inline-block">
+                            <div 
+                                className="w-12 h-12 rounded-lg border border-gray-300 cursor-pointer overflow-hidden relative"
+                                onClick={() => {
+                                    const colorInput = document.createElement('input');
+                                    colorInput.type = 'color';
+                                    colorInput.value = settings.textColor || '#000000';
+                                    colorInput.onchange = (e) => {
+                                        const target = e.target as HTMLInputElement;
+                                        updateSettings({ textColor: target.value });
+                                    };
+                                    colorInput.click();
+                                }}
+                                style={{
+                                    backgroundColor: settings.textColor || 'transparent'
+                                }}
+                                title="Click to change text color"
                             >
-                                ×
-                            </button>
+                                {!settings.textColor && (
+                                    <svg className="absolute inset-0 w-full h-full" viewBox="0 0 48 48">
+                                        <path d="M8 40L40 8" stroke="#ef4444" strokeWidth="2"/>
+                                    </svg>
+                                )}
+                            </div>
+                            {settings.textColor && (
+                                <button
+                                    onClick={(e) => {
+                                        e.stopPropagation();
+                                        updateSettings({ textColor: undefined });
+                                    }}
+                                    className="absolute -top-1 -right-1 w-5 h-5 bg-red-500 hover:bg-red-600 text-white rounded-full flex items-center justify-center text-xs font-bold transition-colors"
+                                    title="Remove text color"
+                                >
+                                    ×
+                                </button>
+                            )}
                         </div>
                     </div>
 
                     {/* Background Color */}
                     <div className="mb-4">
                         <label className="block text-sm text-gray-700 mb-2">Background Color</label>
-                        <div className="flex items-center gap-2">
-                            {settings.formBackground ? (
-                                // Show color picker if background color is set
-                                <input
-                                    type="color"
-                                    value={settings.formBackground}
-                                    onChange={(e) => updateSettings({ formBackground: e.target.value })}
-                                    className="w-8 h-8 border border-gray-300 rounded cursor-pointer"
-                                />
-                            ) : (
-                                // Show transparent icon if no background color is set
-                                <div 
-                                    className="w-8 h-8 bg-white rounded border border-gray-300 relative overflow-hidden cursor-pointer"
-                                    onClick={() => {
-                                        const colorInput = document.createElement('input');
-                                        colorInput.type = 'color';
-                                        colorInput.value = '#ffffff';
-                                        colorInput.onchange = (e) => {
-                                            const target = e.target as HTMLInputElement;
-                                            updateSettings({ formBackground: target.value });
-                                        };
-                                        colorInput.click();
-                                    }}
-                                    title="Set background color"
-                                >
-                                    <svg className="absolute inset-0 w-full h-full" viewBox="0 0 32 32">
-                                        <path d="M4 28L28 4" stroke="#ef4444" strokeWidth="2"/>
-                                    </svg>
-                                </div>
-                            )}
-                            <button
-                                onClick={() => updateSettings({ formBackground: undefined })}
-                                className="p-1.5 bg-gray-100 hover:bg-gray-200 rounded text-gray-500 text-xs"
-                                title="Remove background color"
+                        <div className="relative inline-block">
+                            <div 
+                                className="w-12 h-12 rounded-lg border border-gray-300 cursor-pointer overflow-hidden relative"
+                                onClick={() => {
+                                    const colorInput = document.createElement('input');
+                                    colorInput.type = 'color';
+                                    colorInput.value = settings.formBackground || '#ffffff';
+                                    colorInput.onchange = (e) => {
+                                        const target = e.target as HTMLInputElement;
+                                        updateSettings({ formBackground: target.value });
+                                    };
+                                    colorInput.click();
+                                }}
+                                style={{
+                                    backgroundColor: settings.formBackground || 'transparent'
+                                }}
+                                title="Click to change background color"
                             >
-                                ×
-                            </button>
+                                {!settings.formBackground && (
+                                    <svg className="absolute inset-0 w-full h-full" viewBox="0 0 48 48">
+                                        <path d="M8 40L40 8" stroke="#ef4444" strokeWidth="2"/>
+                                    </svg>
+                                )}
+                            </div>
+                            {settings.formBackground && (
+                                <button
+                                    onClick={(e) => {
+                                        e.stopPropagation();
+                                        updateSettings({ formBackground: undefined });
+                                    }}
+                                    className="absolute -top-1 -right-1 w-5 h-5 bg-red-500 hover:bg-red-600 text-white rounded-full flex items-center justify-center text-xs font-bold transition-colors"
+                                    title="Remove background color"
+                                >
+                                    ×
+                                </button>
+                            )}
                         </div>
                     </div>
 
@@ -93,14 +114,18 @@ export const BodyPropertiesPanel: React.FC = () => {
                         <div className="flex items-center gap-2">
                             <input
                                 type="number"
-                                value={settings.contentWidth || 700}
-                                onChange={(e) => updateSettings({ contentWidth: parseInt(e.target.value) })}
+                                value={settings.contentWidth || ''}
+                                onChange={(e) => {
+                                    const value = e.target.value;
+                                    updateSettings({ 
+                                        contentWidth: value === '' ? undefined : parseInt(value) 
+                                    });
+                                }}
                                 className="flex-1 px-3 py-2 border border-gray-300 rounded-md text-sm"
-                                placeholder="700"
+                                placeholder="Auto (device width)"
+                                min="1"
                             />
                             <span className="text-sm text-gray-500">px</span>
-                            <button className="p-2 border border-gray-300 rounded text-gray-400 hover:text-gray-600">−</button>
-                            <button className="p-2 border border-gray-300 rounded text-gray-400 hover:text-gray-600">+</button>
                         </div>
                     </div>
 
@@ -201,12 +226,38 @@ export const BodyPropertiesPanel: React.FC = () => {
                     {/* Link Color */}
                     <div className="mb-4">
                         <label className="block text-sm text-gray-700 mb-2">Color</label>
-                        <input
-                            type="color"
-                            value={settings.linkColor || '#3B82F6'}
-                            onChange={(e) => updateSettings({ linkColor: e.target.value })}
-                            className="w-8 h-8 border border-gray-300 rounded cursor-pointer"
-                        />
+                        <div className="relative inline-block">
+                            <div 
+                                className="w-12 h-12 rounded-lg border border-gray-300 cursor-pointer overflow-hidden relative"
+                                onClick={() => {
+                                    const colorInput = document.createElement('input');
+                                    colorInput.type = 'color';
+                                    colorInput.value = settings.linkColor || '#3B82F6';
+                                    colorInput.onchange = (e) => {
+                                        const target = e.target as HTMLInputElement;
+                                        updateSettings({ linkColor: target.value });
+                                    };
+                                    colorInput.click();
+                                }}
+                                style={{
+                                    backgroundColor: settings.linkColor || '#3B82F6'
+                                }}
+                                title="Click to change link color"
+                            >
+                            </div>
+                            {settings.linkColor && settings.linkColor !== '#3B82F6' && (
+                                <button
+                                    onClick={(e) => {
+                                        e.stopPropagation();
+                                        updateSettings({ linkColor: '#3B82F6' });
+                                    }}
+                                    className="absolute -top-1 -right-1 w-5 h-5 bg-red-500 hover:bg-red-600 text-white rounded-full flex items-center justify-center text-xs font-bold transition-colors"
+                                    title="Reset to default color"
+                                >
+                                    ×
+                                </button>
+                            )}
+                        </div>
                     </div>
 
                     {/* Link Underline */}

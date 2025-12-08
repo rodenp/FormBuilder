@@ -2,9 +2,10 @@ import React, { useState, useEffect } from 'react';
 import { useDroppable, useDraggable } from '@dnd-kit/core';
 import { useStore } from '../store/useStore';
 import type { FormElement } from '../types';
-import { Trash2, Info, Copy, Star, EyeOff, Plus, ChevronUp, ChevronDown, Menu, GripVertical } from 'lucide-react';
+import { Trash2, Info, Copy, Star, EyeOff, Plus, ChevronUp, ChevronDown, Menu, GripVertical, Bookmark } from 'lucide-react';
 import { clsx } from 'clsx';
 import { RichTextEditor } from './RichTextEditor';
+import { CategoryModal } from './CategoryModal';
 
 const ColumnPlaceholder: React.FC<{ element: FormElement; index: number }> = ({ element, index }) => {
     const { setNodeRef, isOver } = useDroppable({
@@ -132,7 +133,7 @@ const RowCellDropZone: React.FC<{ containerId: string; rowIndex: number }> = ({ 
     );
 };
 
-const RowCellEndDropZone: React.FC<{ containerId: string; rowGap: number }> = ({ containerId, rowGap }) => {
+const RowCellEndDropZone: React.FC<{ containerId: string; gap: number }> = ({ containerId, gap }) => {
     const { setNodeRef, isOver } = useDroppable({
         id: `row-cell-end-${containerId}`,
         data: { type: 'container', containerId }
@@ -147,7 +148,7 @@ const RowCellEndDropZone: React.FC<{ containerId: string; rowGap: number }> = ({
                     ? "bg-blue-100 min-h-[24px]" 
                     : "opacity-0 hover:opacity-100"
             )}
-            style={{ marginTop: `${rowGap * 0.25}rem` }}
+            style={{ marginTop: `${gap * 0.25}rem` }}
         >
             {isOver ? (
                 <div className="bg-blue-500 text-white text-xs px-2 py-1 rounded font-medium shadow-lg">
@@ -288,8 +289,7 @@ const ColumnDropZone: React.FC<ColumnDropZoneProps> = ({ element, index, child, 
                     justifyContent: child && child.type === 'container' ? (child.justifyContent || 'flex-start') : 'flex-start',
                     alignItems: child && child.type === 'container' ? (child.alignItems || 'flex-start') : 'flex-start',
                     alignContent: child && child.type === 'container' ? (child.alignContent || 'flex-start') : 'flex-start',
-                    rowGap: child && child.type === 'container' ? `${(child.rowGap ?? 16) * 0.25}rem` : '1rem',
-                    columnGap: child && child.type === 'container' ? `${(child.columnGap ?? 16) * 0.25}rem` : '1rem',
+                    gap: child && child.type === 'container' ? `${(child.gap ?? 16) * 0.25}rem` : '1rem',
                     gridTemplateColumns: child && child.type === 'container' && child.display === 'grid' ? 
                         `repeat(${child.gridColumns || 3}, auto)` : undefined
                 }}
@@ -453,8 +453,7 @@ const RowDropZone: React.FC<RowDropZoneProps> = ({ element, index, child, cellEd
                     justifyContent: child && child.type === 'container' ? (child.justifyContent || 'flex-start') : 'flex-start',
                     alignItems: child && child.type === 'container' ? (child.alignItems || 'flex-start') : 'flex-start',
                     alignContent: child && child.type === 'container' ? (child.alignContent || 'flex-start') : 'flex-start',
-                    rowGap: child && child.type === 'container' ? `${(element.rowGap ?? element.gap ?? 0) * 0.25}rem` : '0rem',
-                    columnGap: child && child.type === 'container' ? `${(child.columnGap ?? 0) * 0.25}rem` : '0rem',
+                    gap: child && child.type === 'container' ? `${(element.gap ?? 0) * 0.25}rem` : '0rem',
                     gridTemplateColumns: child && child.type === 'container' && child.display === 'grid' ? 
                         `repeat(${child.gridColumns || 3}, auto)` : undefined
                 }}
@@ -470,7 +469,7 @@ const RowDropZone: React.FC<RowDropZoneProps> = ({ element, index, child, cellEd
                                     parentId={child.id} 
                                 />
                             ))}
-                            <RowCellEndDropZone containerId={child.id} rowGap={element.rowGap ?? element.gap ?? 0} />
+                            <RowCellEndDropZone containerId={child.id} gap={element.gap ?? 0} />
                         </>
                     ) : (
                         // Empty row cell container - show drop zone
@@ -573,8 +572,7 @@ const ContainerContent: React.FC<{ element: FormElement }> = ({ element }) => {
                         alignItems: (element.display === 'flex' || element.display === 'grid' || element.type === 'rows' || element.type === 'columns' || element.type === 'menu') ? element.alignItems : undefined,
                         alignContent: (element.type === 'rows' || element.type === 'columns' || element.type === 'menu' || element.display === 'flex') ? (element.alignContent || 'flex-start') : 'start',
                         gridTemplateColumns: (element.display === 'grid' || element.type === 'grid') && element.type !== 'rows' ? `repeat(${element.gridColumns || 3}, auto)` : undefined,
-                        rowGap: (element.display !== 'block' || element.type === 'rows' || element.type === 'grid') ? `${(element.rowGap || element.gap || 0) * 0.25}rem` : undefined,
-                        columnGap: (element.display !== 'block' || element.type === 'grid' || element.type === 'menu') && element.type !== 'columns' ? `${(element.columnGap || element.gap || 0) * 0.25}rem` : undefined,
+                        gap: (element.display !== 'block' || element.type === 'rows' || element.type === 'grid' || element.type === 'menu') && element.type !== 'columns' ? `${(element.gap || 0) * 0.25}rem` : undefined,
                         // Add minimum height only when needed for spacing to work in column direction
                         minHeight: (element.display === 'flex' && element.flexDirection === 'column') || 
                                    element.type === 'rows' ||
@@ -691,10 +689,8 @@ const ColumnsContent: React.FC<{ element: FormElement }> = ({ element }) => {
                         (element.alignContent || 'flex-start') : 'start',
                     gridTemplateColumns: (element.display === 'grid' || element.type === 'grid') && element.type !== 'columns' && element.type !== 'rows' ? 
                         (isMobile ? '1fr' : `repeat(${element.gridColumns || element.columnCount || 3}, 1fr)`) : undefined,
-                    rowGap: (element.display !== 'block' || element.type === 'rows' || element.type === 'grid') ? 
-                        `${(element.rowGap ?? element.gap ?? 0) * 0.25}rem` : undefined,
-                    columnGap: (element.display !== 'block' || element.type === 'grid') && element.type !== 'columns' ? 
-                        `${(element.columnGap ?? element.gap ?? 0) * 0.25}rem` : undefined
+                    gap: (element.display !== 'block' || element.type === 'rows' || element.type === 'grid') && element.type !== 'columns' ? 
+                        `${(element.gap ?? 0) * 0.25}rem` : undefined
                 }}
             >
 {(element.type === 'columns') ? (
@@ -853,8 +849,7 @@ const RowsContent: React.FC<{ element: FormElement }> = ({ element }) => {
                     justifyContent: element.justifyContent || 'flex-start',
                     alignItems: element.alignItems || 'stretch',
                     alignContent: element.alignContent || 'flex-start',
-                    rowGap: `${(element.rowGap ?? element.gap ?? 0) * 0.25}rem`,
-                    columnGap: `${(element.columnGap ?? element.gap ?? 0) * 0.25}rem`
+                    gap: `${(element.gap ?? 0) * 0.25}rem`
                 }}
             >
                 {/* For rows, use individual drop zones for each row */}
@@ -877,7 +872,9 @@ const RowsContent: React.FC<{ element: FormElement }> = ({ element }) => {
 };
 
 const SortableElement: React.FC<SortableElementProps> = ({ element, parentId }) => {
-    const { selectElement, selectedElementId, removeElement, duplicateElement, updateElement, moveElementUp, moveElementDown, elements, currentProject } = useStore();
+    const { selectElement, selectedElementId, removeElement, duplicateElement, updateElement, moveElementUp, moveElementDown, elements, currentProject, saveElementAsBlock, isElementSavedAsBlock } = useStore();
+    
+    const [showCategoryModal, setShowCategoryModal] = useState(false);
     
     // Add hover state for container highlighting
     const [hoveredContainerId, setHoveredContainerId] = React.useState<string | null>(null);
@@ -1004,6 +1001,12 @@ const SortableElement: React.FC<SortableElementProps> = ({ element, parentId }) 
         11: 'col-span-11',
         12: 'col-span-12',
     };
+
+    // Save-as-block logic
+    const hasChildren = element.children && element.children.length > 0;
+    const isContainerType = ['container', 'columns', 'rows', 'grid', 'menu'].includes(element.type);
+    const canSaveAsBlock = isContainerType && hasChildren && !parentId; // Only for root level containers with children
+    const isAlreadySavedAsBlock = canSaveAsBlock && isElementSavedAsBlock(element);
 
     // Use only element.width, no local state
     const [isResizing, setIsResizing] = React.useState(false);
@@ -1134,6 +1137,8 @@ const SortableElement: React.FC<SortableElementProps> = ({ element, parentId }) 
                 isResizing && "z-50 select-none",
                 parentId && "z-20", // Higher z-index for nested elements
                 isDragging && "opacity-50",
+                // Special highlighting for column cells
+                element.type === 'container' && element.name?.startsWith('column_') && "ring-2 ring-purple-200 ring-opacity-50",
                 // Default transparent border to prevent layout shift on hover
                 !isSelected && !isDescendantOfSelected && "border border-transparent",
                 // Show border when element is descendant of selected container
@@ -1227,6 +1232,24 @@ const SortableElement: React.FC<SortableElementProps> = ({ element, parentId }) 
                 >
                     <Copy size={12} />
                 </button>
+                {/* Save as block button - only for containers with children at root level */}
+                {canSaveAsBlock && (
+                    <button
+                        onClick={(e) => {
+                            e.stopPropagation();
+                            setShowCategoryModal(true);
+                        }}
+                        className={clsx(
+                            "p-1 bg-white border border-slate-300 rounded shadow-sm transition-colors",
+                            isAlreadySavedAsBlock 
+                                ? "text-purple-600 bg-purple-50 border-purple-200 hover:bg-purple-100" 
+                                : "text-slate-600 hover:text-purple-600 hover:bg-purple-50"
+                        )}
+                        title={isAlreadySavedAsBlock ? "Component saved as block" : "Save as reusable block"}
+                    >
+                        <Bookmark size={12} />
+                    </button>
+                )}
                 <button
                     onClick={(e) => {
                         e.stopPropagation();
@@ -1337,7 +1360,9 @@ const SortableElement: React.FC<SortableElementProps> = ({ element, parentId }) 
                                     element.labelBold && "font-bold",
                                     element.labelItalic && "italic",
                                     element.labelUnderline && "underline",
-                                    element.labelStrikethrough && "line-through"
+                                    element.labelStrikethrough && "line-through",
+                                    // Special styling for column cells
+                                    element.type === 'container' && element.name?.startsWith('column_') && "text-purple-600"
                                 )}
                                 onClick={(e) => {
                                     e.stopPropagation();
@@ -1345,6 +1370,7 @@ const SortableElement: React.FC<SortableElementProps> = ({ element, parentId }) 
                                 }}
                             >
                                 {element.label}
+                                {element.type === 'container' && element.name?.startsWith('column_') && <span className="ml-1 text-xs opacity-60">(Cell)</span>}
                                 {element.required && <span className="text-red-500 ml-1">*</span>}
                             </label>
                         </div>
@@ -1680,8 +1706,7 @@ const SortableElement: React.FC<SortableElementProps> = ({ element, parentId }) 
                                         justifyContent: element.justifyContent || 'flex-start',
                                         alignItems: element.alignItems || 'center',
                                         alignContent: element.alignContent || 'flex-start',
-                                        rowGap: `${(element.rowGap || element.gap || 0) * 0.25}rem`,
-                                        columnGap: `${(element.columnGap || element.gap || 16) * 0.25}rem`
+                                        gap: `${(element.gap || 16) * 0.25}rem`
                                     }}
                                 >
                                     {element.children && element.children.length > 0 ? (
@@ -1806,6 +1831,16 @@ const SortableElement: React.FC<SortableElementProps> = ({ element, parentId }) 
                     )}
                 </div>
             </div>
+            
+            {/* Category Modal */}
+            <CategoryModal
+                isOpen={showCategoryModal}
+                onClose={() => setShowCategoryModal(false)}
+                onSelectCategory={(category) => {
+                    saveElementAsBlock(element, category);
+                    setShowCategoryModal(false);
+                }}
+            />
         </div >
     );
 };
@@ -1867,7 +1902,14 @@ export const Canvas: React.FC = () => {
             className="form-builder-canvas"
             onClick={() => selectElement(null)}
         >
-            <div className="form-builder-canvas-inner">
+            <div 
+                className="form-builder-canvas-inner"
+                style={{
+                    display: 'flex',
+                    justifyContent: settings.contentAlignment === 'center' ? 'center' : 
+                                   settings.contentAlignment === 'right' ? 'flex-end' : 'flex-start'
+                }}
+            >
                 <div
                     ref={setNodeRef}
                     className={clsx(
@@ -1877,7 +1919,9 @@ export const Canvas: React.FC = () => {
                         elements.length === 0 && "form-builder-canvas-empty flex items-center justify-center"
                     )}
                     style={{
-                        backgroundColor: settings.formBackground || '#ffffff'
+                        backgroundColor: settings.formBackground || '#ffffff',
+                        width: settings.contentWidth ? `${settings.contentWidth}px` : '100%',
+                        maxWidth: settings.contentWidth ? `${settings.contentWidth}px` : 'none'
                     }}
                 >
                     {elements.length === 0 ? (

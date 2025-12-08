@@ -39,7 +39,8 @@ export const FormBuilder: React.FC = () => {
         currentProject,
         saveCurrentProject,
         clearCurrentProject,
-        updateProjectName
+        updateProjectName,
+        addElementFromBlock
     } = useStore();
 
     const [isEditingName, setIsEditingName] = useState(false);
@@ -128,6 +129,12 @@ export const FormBuilder: React.FC = () => {
     const [isPreviewMode, setIsPreviewMode] = useState(false);
     const [previewDevice, setPreviewDevice] = useState<'desktop' | 'tablet' | 'mobile'>('desktop');
     const [showImageGallery, setShowImageGallery] = useState(false);
+    
+    // State to track original position for drag cancellation
+    const [dragStartSnapshot, setDragStartSnapshot] = useState<{
+        elements: FormElement[];
+        draggedElementId: string;
+    } | null>(null);
 
     const sensors = useSensors(
         useSensor(PointerSensor, {
@@ -148,6 +155,15 @@ export const FormBuilder: React.FC = () => {
         
         if (active.data.current?.isSidebar) {
             setActiveDragType(active.data.current.type as FormElementType);
+            setDragStartSnapshot(null); // Clear snapshot for sidebar items
+        } else {
+            // For existing components (any drag that's not from sidebar), capture the current state
+            const currentElements = useStore.getState().elements;
+            setDragStartSnapshot({
+                elements: JSON.parse(JSON.stringify(currentElements)), // Deep copy
+                draggedElementId: active.id as string
+            });
+            console.log('Captured drag start snapshot for element:', active.id);
         }
     };
 
@@ -156,7 +172,16 @@ export const FormBuilder: React.FC = () => {
         setActiveDragType(null);
 
         if (!over) {
-            console.log('No drop target found');
+            console.log('No drop target found - drag operation cancelled');
+            
+            // If we have a drag start snapshot for an existing component, restore it
+            if (dragStartSnapshot) {
+                console.log('Restoring element position from snapshot for element:', dragStartSnapshot.draggedElementId);
+                reorderElements(dragStartSnapshot.elements);
+            }
+            
+            // Clear the snapshot
+            setDragStartSnapshot(null);
             return;
         }
         
@@ -181,6 +206,13 @@ export const FormBuilder: React.FC = () => {
                 // Regular canvas or canvas-end drops
                 addElement(type);
             }
+            return;
+        }
+
+        // Dropping a custom block into the canvas
+        if (active.data.current?.type === 'custom-block' && (over.id === 'canvas' || over.id === 'canvas-end' || over.id === 'canvas-start')) {
+            const block = active.data.current.block as FormElement;
+            addElementFromBlock(block);
             return;
         }
 
@@ -418,6 +450,12 @@ export const FormBuilder: React.FC = () => {
             }
             
             console.log('⚠️ No drop condition matched for existing component');
+            
+            // If we have a snapshot and no condition was matched, restore the original state
+            if (dragStartSnapshot) {
+                console.log('No valid drop target found, restoring original state');
+                reorderElements(dragStartSnapshot.elements);
+            }
         } else {
             console.log('⚠️ Not handling this drag type:', {
                 hasElement: !!active.data.current?.element,
@@ -472,6 +510,9 @@ export const FormBuilder: React.FC = () => {
                 }
             }
         }
+        
+        // Clear the drag start snapshot after successful operations
+        setDragStartSnapshot(null);
     };
 
     const dropAnimation: DropAnimation = {

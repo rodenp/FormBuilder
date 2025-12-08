@@ -1,0 +1,1367 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Nested Container Explorer</title>
+  <style>
+    * {
+      box-sizing: border-box;
+      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+    }
+    
+    body {
+      background: #f0f4f8;
+      margin: 0;
+      padding: 20px;
+      min-height: 100vh;
+    }
+    
+    .app {
+      display: flex;
+      gap: 20px;
+      max-width: 1400px;
+      margin: 0 auto;
+    }
+    
+    /* Panel styles */
+    .panel {
+      background: white;
+      border-radius: 12px;
+      box-shadow: 0 1px 3px rgba(0,0,0,0.1), 0 4px 12px rgba(0,0,0,0.05);
+      overflow: hidden;
+    }
+    
+    .panel-header {
+      padding: 16px;
+      border-bottom: 1px solid #e5e7eb;
+    }
+    
+    .panel-header h1 {
+      font-size: 16px;
+      font-weight: 600;
+      color: #1f2937;
+      margin: 0 0 4px 0;
+    }
+    
+    .panel-header p {
+      font-size: 12px;
+      color: #6b7280;
+      margin: 0;
+    }
+    
+    /* Left panel - Tree */
+    .tree-panel {
+      width: 260px;
+      flex-shrink: 0;
+    }
+    
+    .tree-content {
+      padding: 12px;
+      max-height: calc(100vh - 180px);
+      overflow-y: auto;
+    }
+    
+    .tree-node {
+      margin-bottom: 2px;
+    }
+    
+    .tree-node-header {
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      padding: 8px 10px;
+      border-radius: 6px;
+      cursor: pointer;
+      transition: all 0.15s ease;
+      border: 2px solid transparent;
+    }
+    
+    .tree-node-header:hover {
+      background: #f3f4f6;
+    }
+    
+    .tree-node-header.selected {
+      background: #eff6ff;
+      border-color: #3b82f6;
+    }
+    
+    .tree-node-icon {
+      width: 18px;
+      height: 18px;
+      border-radius: 4px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 10px;
+      font-weight: 600;
+      color: white;
+      flex-shrink: 0;
+    }
+    
+    .tree-node-icon.container { background: #8b5cf6; }
+    .tree-node-icon.item { background: #10b981; }
+    
+    .tree-node-label {
+      font-size: 13px;
+      font-weight: 500;
+      color: #374151;
+      flex: 1;
+    }
+    
+    .tree-node-actions {
+      display: flex;
+      gap: 4px;
+      opacity: 0;
+      transition: opacity 0.15s ease;
+    }
+    
+    .tree-node-header:hover .tree-node-actions {
+      opacity: 1;
+    }
+    
+    .tree-action-btn {
+      width: 22px;
+      height: 22px;
+      border: none;
+      background: #e5e7eb;
+      border-radius: 4px;
+      cursor: pointer;
+      font-size: 14px;
+      color: #6b7280;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
+    
+    .tree-action-btn:hover {
+      background: #d1d5db;
+      color: #374151;
+    }
+    
+    .tree-action-btn.delete:hover {
+      background: #fecaca;
+      color: #dc2626;
+    }
+    
+    .tree-children {
+      margin-left: 20px;
+      border-left: 2px solid #e5e7eb;
+      padding-left: 8px;
+    }
+    
+    .add-buttons {
+      display: flex;
+      gap: 8px;
+      padding: 12px;
+      border-top: 1px solid #e5e7eb;
+    }
+    
+    .add-btn {
+      flex: 1;
+      padding: 10px;
+      border: 1px dashed #d1d5db;
+      background: white;
+      border-radius: 8px;
+      font-size: 12px;
+      font-weight: 500;
+      color: #6b7280;
+      cursor: pointer;
+      transition: all 0.15s ease;
+    }
+    
+    .add-btn:hover {
+      border-color: #3b82f6;
+      color: #3b82f6;
+      background: #eff6ff;
+    }
+    
+    /* Middle panel - Controls */
+    .controls-panel {
+      width: 340px;
+      flex-shrink: 0;
+    }
+    
+    .controls-content {
+      padding: 16px;
+      max-height: calc(100vh - 140px);
+      overflow-y: auto;
+    }
+    
+    .no-selection {
+      text-align: center;
+      padding: 40px 20px;
+      color: #9ca3af;
+      font-size: 13px;
+    }
+    
+    .section {
+      margin-bottom: 20px;
+    }
+    
+    .section-title {
+      font-size: 11px;
+      font-weight: 600;
+      color: #6b7280;
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+      margin-bottom: 12px;
+    }
+    
+    .control-group {
+      margin-bottom: 12px;
+    }
+    
+    .control-label {
+      font-size: 12px;
+      font-weight: 500;
+      color: #374151;
+      margin-bottom: 6px;
+      display: block;
+    }
+    
+    .toggle-group {
+      display: flex;
+      gap: 4px;
+    }
+    
+    .toggle-btn {
+      flex: 1;
+      padding: 8px 6px;
+      border: 1px solid #e5e7eb;
+      background: white;
+      border-radius: 6px;
+      font-size: 11px;
+      font-weight: 500;
+      color: #6b7280;
+      cursor: pointer;
+      transition: all 0.15s ease;
+    }
+    
+    .toggle-btn:hover {
+      border-color: #d1d5db;
+    }
+    
+    .toggle-btn.active {
+      background: #3b82f6;
+      border-color: #3b82f6;
+      color: white;
+    }
+    
+    .slider-row {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+    }
+    
+    .slider {
+      flex: 1;
+      -webkit-appearance: none;
+      height: 4px;
+      background: #e5e7eb;
+      border-radius: 2px;
+      outline: none;
+    }
+    
+    .slider::-webkit-slider-thumb {
+      -webkit-appearance: none;
+      width: 16px;
+      height: 16px;
+      background: #3b82f6;
+      border-radius: 50%;
+      cursor: pointer;
+    }
+    
+    .slider-value {
+      width: 50px;
+      height: 28px;
+      border: 1px solid #e5e7eb;
+      border-radius: 6px;
+      text-align: center;
+      font-size: 12px;
+      -moz-appearance: textfield;
+    }
+    
+    .slider-value::-webkit-outer-spin-button,
+    .slider-value::-webkit-inner-spin-button {
+      -webkit-appearance: none;
+      margin: 0;
+    }
+    
+    .slider-value:focus {
+      outline: none;
+      border-color: #3b82f6;
+    }
+    
+    .text-input {
+      width: 100%;
+      padding: 8px 10px;
+      border: 1px solid #e5e7eb;
+      border-radius: 6px;
+      font-size: 13px;
+    }
+    
+    .text-input:focus {
+      outline: none;
+      border-color: #3b82f6;
+    }
+    
+    .color-row {
+      display: flex;
+      gap: 6px;
+    }
+    
+    .color-btn {
+      width: 28px;
+      height: 28px;
+      border: 2px solid transparent;
+      border-radius: 6px;
+      cursor: pointer;
+      transition: all 0.15s ease;
+    }
+    
+    .color-btn:hover {
+      transform: scale(1.1);
+    }
+    
+    .color-btn.active {
+      border-color: #1f2937;
+    }
+    
+    .color-btn.red { background: linear-gradient(135deg, #f87171, #ef4444); }
+    .color-btn.green { background: linear-gradient(135deg, #34d399, #10b981); }
+    .color-btn.blue { background: linear-gradient(135deg, #60a5fa, #3b82f6); }
+    .color-btn.purple { background: linear-gradient(135deg, #a78bfa, #8b5cf6); }
+    .color-btn.yellow { background: linear-gradient(135deg, #fbbf24, #f59e0b); }
+    .color-btn.pink { background: linear-gradient(135deg, #f472b6, #ec4899); }
+    
+    .tip {
+      background: #fef3c7;
+      border: 1px solid #fcd34d;
+      border-radius: 6px;
+      padding: 8px 10px;
+      font-size: 11px;
+      color: #92400e;
+      margin-top: 8px;
+      line-height: 1.4;
+    }
+    
+    .tip strong {
+      font-weight: 600;
+    }
+    
+    /* Visual Box Model */
+    .box-model-visual {
+      margin: 12px 0;
+      padding: 0 20px;
+    }
+    
+    .box-model-outer {
+      position: relative;
+      border: 2px dashed #60a5fa;
+      border-radius: 12px;
+      background: linear-gradient(135deg, rgba(59, 130, 246, 0.04) 0%, rgba(59, 130, 246, 0.01) 100%);
+      padding: 30px 26px;
+    }
+    
+    .box-model-inner {
+      position: relative;
+      border: 2px dashed #34d399;
+      border-radius: 10px;
+      background: linear-gradient(135deg, rgba(16, 185, 129, 0.06) 0%, rgba(16, 185, 129, 0.01) 100%);
+      padding: 30px 26px;
+    }
+    
+    .box-model-content {
+      background: linear-gradient(135deg, #f8fafc 0%, #f1f5f9 100%);
+      border: 1px solid #e2e8f0;
+      border-radius: 8px;
+      padding: 14px 10px;
+      text-align: center;
+      font-size: 13px;
+      font-weight: 500;
+      color: #64748b;
+    }
+    
+    .box-label {
+      position: absolute;
+      font-size: 10px;
+      font-weight: 600;
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+      top: 6px;
+      left: 10px;
+    }
+    
+    .box-label.margin-label { color: #3b82f6; }
+    .box-label.padding-label { color: #10b981; }
+    
+    .box-input {
+      position: absolute;
+      width: 40px;
+      height: 26px;
+      border: 1px solid #e5e7eb;
+      border-radius: 6px;
+      text-align: center;
+      font-size: 12px;
+      font-weight: 500;
+      color: #374151;
+      background: white;
+      box-shadow: 0 1px 4px rgba(0,0,0,0.08);
+      outline: none;
+      -moz-appearance: textfield;
+    }
+    
+    .box-input::-webkit-outer-spin-button,
+    .box-input::-webkit-inner-spin-button {
+      -webkit-appearance: none;
+      margin: 0;
+    }
+    
+    .box-input:focus {
+      border-color: #3b82f6;
+      box-shadow: 0 0 0 2px rgba(59, 130, 246, 0.15);
+      z-index: 10;
+    }
+    
+    .box-input.auto-value {
+      color: #3b82f6;
+      font-size: 10px;
+    }
+    
+    /* Margin input positions */
+    .margin-top { top: -13px; left: 50%; transform: translateX(-50%); }
+    .margin-right { right: -21px; top: 50%; transform: translateY(-50%); }
+    .margin-bottom { bottom: -13px; left: 50%; transform: translateX(-50%); }
+    .margin-left { left: -21px; top: 50%; transform: translateY(-50%); }
+    
+    /* Padding input positions */
+    .padding-top { top: -13px; left: 50%; transform: translateX(-50%); }
+    .padding-right { right: -21px; top: 50%; transform: translateY(-50%); }
+    .padding-bottom { bottom: -13px; left: 50%; transform: translateX(-50%); }
+    .padding-left { left: -21px; top: 50%; transform: translateY(-50%); }
+    
+    /* Toggle group wrap for many options */
+    .toggle-group.wrap {
+      flex-wrap: wrap;
+    }
+    
+    .toggle-group.wrap .toggle-btn {
+      flex: 0 0 auto;
+      padding: 6px 10px;
+    }
+
+    /* Right panel - Preview */
+    .preview-panel {
+      flex: 1;
+      min-width: 400px;
+    }
+    
+    .preview-content {
+      padding: 16px;
+    }
+    
+    .preview-container {
+      border: 2px dashed #e2e8f0;
+      border-radius: 12px;
+      min-height: 400px;
+      background: #fafbfc;
+      padding: 16px;
+    }
+    
+    /* Rendered elements */
+    .rendered-container {
+      border: 2px dashed #a78bfa;
+      border-radius: 8px;
+      background: rgba(139, 92, 246, 0.05);
+      position: relative;
+    }
+    
+    .rendered-container.selected {
+      border-color: #3b82f6;
+      box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.2);
+    }
+    
+    .rendered-container-label {
+      position: absolute;
+      top: -10px;
+      left: 8px;
+      background: #8b5cf6;
+      color: white;
+      font-size: 9px;
+      font-weight: 600;
+      padding: 2px 6px;
+      border-radius: 4px;
+      text-transform: uppercase;
+    }
+    
+    .rendered-item {
+      border-radius: 8px;
+      font-weight: 600;
+      font-size: 13px;
+      color: white;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      cursor: pointer;
+      transition: all 0.15s ease;
+    }
+    
+    .rendered-item.selected {
+      box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.4);
+    }
+    
+    .rendered-item:hover {
+      opacity: 0.9;
+    }
+    
+    /* CSS Output */
+    .css-output {
+      margin-top: 16px;
+      background: #1e293b;
+      border-radius: 8px;
+      padding: 16px;
+      max-height: 300px;
+      overflow: auto;
+    }
+    
+    .css-output pre {
+      margin: 0;
+      font-family: 'SF Mono', 'Fira Code', monospace;
+      font-size: 11px;
+      line-height: 1.6;
+      color: #e2e8f0;
+      white-space: pre-wrap;
+    }
+    
+    .css-output .selector { color: #fcd34d; }
+    .css-output .prop { color: #7dd3fc; }
+    .css-output .val { color: #86efac; }
+    .css-output .comment { color: #64748b; }
+    
+    /* Empty state */
+    .empty-container {
+      padding: 20px;
+      text-align: center;
+      color: #9ca3af;
+      font-size: 12px;
+      border: 2px dashed #e5e7eb;
+      border-radius: 8px;
+      margin: 8px;
+    }
+  </style>
+</head>
+<body>
+  <div class="app">
+    <!-- Tree Panel -->
+    <div class="panel tree-panel">
+      <div class="panel-header">
+        <h1>Structure</h1>
+        <p>Click to select, buttons to add/remove</p>
+      </div>
+      <div class="tree-content" id="tree"></div>
+      <div class="add-buttons">
+        <button class="add-btn" onclick="addToSelected('container')">+ Container</button>
+        <button class="add-btn" onclick="addToSelected('item')">+ Item</button>
+      </div>
+    </div>
+    
+    <!-- Controls Panel -->
+    <div class="panel controls-panel">
+      <div class="panel-header">
+        <h1>Properties</h1>
+        <p id="selected-label">Select an element</p>
+      </div>
+      <div class="controls-content" id="controls">
+        <div class="no-selection">
+          Select a container or item<br>from the tree to edit its properties
+        </div>
+      </div>
+    </div>
+    
+    <!-- Preview Panel -->
+    <div class="panel preview-panel">
+      <div class="panel-header">
+        <h1>Live Preview</h1>
+        <p>Click elements to select them</p>
+      </div>
+      <div class="preview-content">
+        <div class="preview-container" id="preview"></div>
+        <div class="css-output">
+          <pre id="css-output"></pre>
+        </div>
+      </div>
+    </div>
+  </div>
+  
+  <script>
+    // State
+    let idCounter = 1;
+    let selectedId = 'root';
+    
+    const elements = {
+      root: {
+        id: 'root',
+        type: 'container',
+        name: 'Root',
+        parent: null,
+        children: [],
+        layout: 'flex',
+        direction: 'row',
+        justify: 'flex-start',
+        align: 'stretch',
+        gap: 16,
+        wrap: false,
+        width: 'auto',
+        height: 'auto',
+        minHeight: 300,
+        paddingTop: 16,
+        paddingRight: 16,
+        paddingBottom: 16,
+        paddingLeft: 16
+      }
+    };
+    
+    function createContainer(parentId) {
+      const id = 'container-' + idCounter++;
+      return {
+        id,
+        type: 'container',
+        name: 'Container ' + (idCounter - 1),
+        parent: parentId,
+        children: [],
+        layout: 'flex',
+        direction: 'column',
+        justify: 'flex-start',
+        align: 'flex-start',
+        gap: 8,
+        wrap: false,
+        width: 'auto',
+        height: 'auto',
+        minHeight: 0,
+        alignSelf: 'auto',
+        paddingTop: 8,
+        paddingRight: 8,
+        paddingBottom: 8,
+        paddingLeft: 8
+      };
+    }
+    
+    function createItem(parentId) {
+      const id = 'item-' + idCounter++;
+      const colors = ['red', 'green', 'blue', 'purple', 'yellow', 'pink'];
+      return {
+        id,
+        type: 'item',
+        name: 'Item ' + (idCounter - 1),
+        parent: parentId,
+        color: colors[(idCounter - 2) % colors.length],
+        width: 80,
+        height: 60,
+        flexGrow: 0,
+        flexShrink: 1,
+        alignSelf: 'auto',
+        justifySelf: 'auto',
+        marginTop: 0,
+        marginRight: 0,
+        marginBottom: 0,
+        marginLeft: 0,
+        paddingTop: 0,
+        paddingRight: 0,
+        paddingBottom: 0,
+        paddingLeft: 0
+      };
+    }
+    
+    function addChild(parentId, type) {
+      const parent = elements[parentId];
+      if (!parent || parent.type !== 'container') return;
+      
+      const child = type === 'container' ? createContainer(parentId) : createItem(parentId);
+      elements[child.id] = child;
+      parent.children.push(child.id);
+      
+      render();
+      selectElement(child.id);
+    }
+    
+    function addToSelected(type) {
+      const selected = elements[selectedId];
+      if (!selected) return;
+      
+      if (selected.type === 'container') {
+        addChild(selectedId, type);
+      } else {
+        // Add to parent
+        addChild(selected.parent, type);
+      }
+    }
+    
+    function removeElement(id) {
+      if (id === 'root') return;
+      
+      const el = elements[id];
+      if (!el) return;
+      
+      // Remove from parent
+      const parent = elements[el.parent];
+      if (parent) {
+        parent.children = parent.children.filter(cid => cid !== id);
+      }
+      
+      // Remove children recursively
+      function removeRecursive(elemId) {
+        const elem = elements[elemId];
+        if (elem && elem.children) {
+          elem.children.forEach(removeRecursive);
+        }
+        delete elements[elemId];
+      }
+      removeRecursive(id);
+      
+      // Select parent
+      if (selectedId === id) {
+        selectElement(el.parent || 'root');
+      } else {
+        render();
+      }
+    }
+    
+    function selectElement(id) {
+      selectedId = id;
+      render();
+    }
+    
+    function updateElement(id, prop, value) {
+      const el = elements[id];
+      if (!el) return;
+      
+      el[prop] = value;
+      render();
+    }
+    
+    function updateMarginValue(id, prop, value) {
+      const el = elements[id];
+      if (!el) return;
+      
+      if (value === 'auto' || value === 'Auto' || value === 'AUTO') {
+        el[prop] = 'auto';
+      } else {
+        el[prop] = parseInt(value) || 0;
+      }
+      render();
+    }
+    
+    // Render tree
+    function renderTree() {
+      const treeEl = document.getElementById('tree');
+      
+      function renderNode(id, depth = 0) {
+        const el = elements[id];
+        if (!el) return '';
+        
+        const isSelected = id === selectedId;
+        const icon = el.type === 'container' ? '▢' : '■';
+        const iconClass = el.type;
+        
+        let childrenHTML = '';
+        if (el.children && el.children.length > 0) {
+          childrenHTML = `<div class="tree-children">${el.children.map(cid => renderNode(cid, depth + 1)).join('')}</div>`;
+        }
+        
+        return `
+          <div class="tree-node">
+            <div class="tree-node-header ${isSelected ? 'selected' : ''}" onclick="selectElement('${id}')">
+              <div class="tree-node-icon ${iconClass}">${icon}</div>
+              <span class="tree-node-label">${el.name}</span>
+              <div class="tree-node-actions">
+                ${el.type === 'container' ? `<button class="tree-action-btn" onclick="event.stopPropagation(); addChild('${id}', 'item')" title="Add item">+</button>` : ''}
+                ${id !== 'root' ? `<button class="tree-action-btn delete" onclick="event.stopPropagation(); removeElement('${id}')" title="Delete">×</button>` : ''}
+              </div>
+            </div>
+            ${childrenHTML}
+          </div>
+        `;
+      }
+      
+      treeEl.innerHTML = renderNode('root');
+    }
+    
+    // Render controls
+    function renderControls() {
+      const controlsEl = document.getElementById('controls');
+      const labelEl = document.getElementById('selected-label');
+      const el = elements[selectedId];
+      
+      if (!el) {
+        controlsEl.innerHTML = '<div class="no-selection">Select an element</div>';
+        labelEl.textContent = 'Select an element';
+        return;
+      }
+      
+      labelEl.textContent = el.name + ' (' + el.type + ')';
+      
+      if (el.type === 'container') {
+        controlsEl.innerHTML = `
+          <div class="section">
+            <div class="section-title">Container Info</div>
+            <div class="control-group">
+              <label class="control-label">Name</label>
+              <input type="text" class="text-input" value="${el.name}" onchange="updateElement('${el.id}', 'name', this.value)">
+            </div>
+          </div>
+          
+          <div class="section">
+            <div class="section-title">Layout</div>
+            <div class="control-group">
+              <label class="control-label">Display</label>
+              <div class="toggle-group">
+                <button class="toggle-btn ${el.layout === 'flex' ? 'active' : ''}" onclick="updateElement('${el.id}', 'layout', 'flex')">Flex</button>
+                <button class="toggle-btn ${el.layout === 'grid' ? 'active' : ''}" onclick="updateElement('${el.id}', 'layout', 'grid')">Grid</button>
+              </div>
+            </div>
+            
+            <div class="control-group">
+              <label class="control-label">Direction</label>
+              <div class="toggle-group">
+                <button class="toggle-btn ${el.direction === 'row' ? 'active' : ''}" onclick="updateElement('${el.id}', 'direction', 'row')">Row</button>
+                <button class="toggle-btn ${el.direction === 'column' ? 'active' : ''}" onclick="updateElement('${el.id}', 'direction', 'column')">Column</button>
+              </div>
+            </div>
+            
+            <div class="control-group">
+              <label class="control-label">Justify Content</label>
+              <div class="toggle-group wrap">
+                <button class="toggle-btn ${el.justify === 'flex-start' ? 'active' : ''}" onclick="updateElement('${el.id}', 'justify', 'flex-start')">Start</button>
+                <button class="toggle-btn ${el.justify === 'center' ? 'active' : ''}" onclick="updateElement('${el.id}', 'justify', 'center')">Center</button>
+                <button class="toggle-btn ${el.justify === 'flex-end' ? 'active' : ''}" onclick="updateElement('${el.id}', 'justify', 'flex-end')">End</button>
+                <button class="toggle-btn ${el.justify === 'space-between' ? 'active' : ''}" onclick="updateElement('${el.id}', 'justify', 'space-between')">Between</button>
+                <button class="toggle-btn ${el.justify === 'space-around' ? 'active' : ''}" onclick="updateElement('${el.id}', 'justify', 'space-around')">Around</button>
+                <button class="toggle-btn ${el.justify === 'space-evenly' ? 'active' : ''}" onclick="updateElement('${el.id}', 'justify', 'space-evenly')">Evenly</button>
+              </div>
+            </div>
+            
+            <div class="control-group">
+              <label class="control-label">Align Items</label>
+              <div class="toggle-group wrap">
+                <button class="toggle-btn ${el.align === 'flex-start' ? 'active' : ''}" onclick="updateElement('${el.id}', 'align', 'flex-start')">Start</button>
+                <button class="toggle-btn ${el.align === 'center' ? 'active' : ''}" onclick="updateElement('${el.id}', 'align', 'center')">Center</button>
+                <button class="toggle-btn ${el.align === 'flex-end' ? 'active' : ''}" onclick="updateElement('${el.id}', 'align', 'flex-end')">End</button>
+                <button class="toggle-btn ${el.align === 'stretch' ? 'active' : ''}" onclick="updateElement('${el.id}', 'align', 'stretch')">Stretch</button>
+                <button class="toggle-btn ${el.align === 'baseline' ? 'active' : ''}" onclick="updateElement('${el.id}', 'align', 'baseline')">Baseline</button>
+              </div>
+            </div>
+            
+            <div class="control-group">
+              <label class="control-label">Gap: ${el.gap}px</label>
+              <div class="slider-row">
+                <input type="range" class="slider" min="0" max="40" value="${el.gap}" oninput="updateElement('${el.id}', 'gap', parseInt(this.value))">
+                <input type="number" class="slider-value" value="${el.gap}" onchange="updateElement('${el.id}', 'gap', parseInt(this.value))">
+              </div>
+            </div>
+            
+            <div class="control-group">
+              <label class="control-label">Flex Wrap</label>
+              <div class="toggle-group">
+                <button class="toggle-btn ${!el.wrap ? 'active' : ''}" onclick="updateElement('${el.id}', 'wrap', false)">No Wrap</button>
+                <button class="toggle-btn ${el.wrap ? 'active' : ''}" onclick="updateElement('${el.id}', 'wrap', true)">Wrap</button>
+              </div>
+            </div>
+          </div>
+          
+          <div class="section">
+            <div class="section-title">Size</div>
+            <div class="control-group">
+              <label class="control-label">Width</label>
+              <div class="toggle-group">
+                <button class="toggle-btn ${el.width === 'auto' ? 'active' : ''}" onclick="updateElement('${el.id}', 'width', 'auto')">Auto</button>
+                <button class="toggle-btn ${el.width === '100%' ? 'active' : ''}" onclick="updateElement('${el.id}', 'width', '100%')">100%</button>
+                <button class="toggle-btn ${el.width === '50%' ? 'active' : ''}" onclick="updateElement('${el.id}', 'width', '50%')">50%</button>
+                <button class="toggle-btn ${el.width === '200px' ? 'active' : ''}" onclick="updateElement('${el.id}', 'width', '200px')">200px</button>
+              </div>
+            </div>
+            
+            <div class="control-group">
+              <label class="control-label">Min Height: ${el.minHeight}px</label>
+              <div class="slider-row">
+                <input type="range" class="slider" min="0" max="400" value="${el.minHeight}" oninput="updateElement('${el.id}', 'minHeight', parseInt(this.value))">
+                <input type="number" class="slider-value" value="${el.minHeight}" onchange="updateElement('${el.id}', 'minHeight', parseInt(this.value))">
+              </div>
+            </div>
+          </div>
+          
+          <div class="section">
+            <div class="section-title">Padding</div>
+            <div class="box-model-visual" style="padding: 0 10px;">
+              <div class="box-model-inner" style="padding: 24px 22px;">
+                <span class="box-label padding-label">Padding</span>
+                <input type="number" class="box-input padding-top" value="${el.paddingTop || 0}" onchange="updateElement('${el.id}', 'paddingTop', parseInt(this.value) || 0)">
+                <input type="number" class="box-input padding-right" value="${el.paddingRight || 0}" onchange="updateElement('${el.id}', 'paddingRight', parseInt(this.value) || 0)">
+                <input type="number" class="box-input padding-bottom" value="${el.paddingBottom || 0}" onchange="updateElement('${el.id}', 'paddingBottom', parseInt(this.value) || 0)">
+                <input type="number" class="box-input padding-left" value="${el.paddingLeft || 0}" onchange="updateElement('${el.id}', 'paddingLeft', parseInt(this.value) || 0)">
+                
+                <div class="box-model-content">Children</div>
+              </div>
+            </div>
+          </div>
+          
+          ${el.id !== 'root' ? `
+          <div class="section">
+            <div class="section-title">Self Positioning</div>
+            <div class="tip">
+              <strong>align-self</strong> overrides the parent's align-items for this container.
+            </div>
+            <div class="control-group">
+              <label class="control-label">Align Self</label>
+              <div class="toggle-group">
+                <button class="toggle-btn ${el.alignSelf === 'auto' ? 'active' : ''}" onclick="updateElement('${el.id}', 'alignSelf', 'auto')">Auto</button>
+                <button class="toggle-btn ${el.alignSelf === 'flex-start' ? 'active' : ''}" onclick="updateElement('${el.id}', 'alignSelf', 'flex-start')">Start</button>
+                <button class="toggle-btn ${el.alignSelf === 'center' ? 'active' : ''}" onclick="updateElement('${el.id}', 'alignSelf', 'center')">Center</button>
+                <button class="toggle-btn ${el.alignSelf === 'flex-end' ? 'active' : ''}" onclick="updateElement('${el.id}', 'alignSelf', 'flex-end')">End</button>
+                <button class="toggle-btn ${el.alignSelf === 'stretch' ? 'active' : ''}" onclick="updateElement('${el.id}', 'alignSelf', 'stretch')">Stretch</button>
+              </div>
+            </div>
+          </div>
+          ` : ''}
+        `;
+      } else {
+        // Item controls
+        const parent = elements[el.parent];
+        const parentLayout = parent ? parent.layout : 'flex';
+        
+        controlsEl.innerHTML = `
+          <div class="section">
+            <div class="section-title">Item Info</div>
+            <div class="control-group">
+              <label class="control-label">Name</label>
+              <input type="text" class="text-input" value="${el.name}" onchange="updateElement('${el.id}', 'name', this.value)">
+            </div>
+            
+            <div class="control-group">
+              <label class="control-label">Color</label>
+              <div class="color-row">
+                <button class="color-btn red ${el.color === 'red' ? 'active' : ''}" onclick="updateElement('${el.id}', 'color', 'red')"></button>
+                <button class="color-btn green ${el.color === 'green' ? 'active' : ''}" onclick="updateElement('${el.id}', 'color', 'green')"></button>
+                <button class="color-btn blue ${el.color === 'blue' ? 'active' : ''}" onclick="updateElement('${el.id}', 'color', 'blue')"></button>
+                <button class="color-btn purple ${el.color === 'purple' ? 'active' : ''}" onclick="updateElement('${el.id}', 'color', 'purple')"></button>
+                <button class="color-btn yellow ${el.color === 'yellow' ? 'active' : ''}" onclick="updateElement('${el.id}', 'color', 'yellow')"></button>
+                <button class="color-btn pink ${el.color === 'pink' ? 'active' : ''}" onclick="updateElement('${el.id}', 'color', 'pink')"></button>
+              </div>
+            </div>
+          </div>
+          
+          <div class="section">
+            <div class="section-title">Size</div>
+            <div class="control-group">
+              <label class="control-label">Width: ${el.width}px</label>
+              <div class="slider-row">
+                <input type="range" class="slider" min="30" max="200" value="${el.width}" oninput="updateElement('${el.id}', 'width', parseInt(this.value))">
+                <input type="number" class="slider-value" value="${el.width}" onchange="updateElement('${el.id}', 'width', parseInt(this.value))">
+              </div>
+            </div>
+            
+            <div class="control-group">
+              <label class="control-label">Height: ${el.height}px</label>
+              <div class="slider-row">
+                <input type="range" class="slider" min="30" max="200" value="${el.height}" oninput="updateElement('${el.id}', 'height', parseInt(this.value))">
+                <input type="number" class="slider-value" value="${el.height}" onchange="updateElement('${el.id}', 'height', parseInt(this.value))">
+              </div>
+            </div>
+          </div>
+          
+          <div class="section">
+            <div class="section-title">Self Alignment</div>
+            <div class="tip">
+              <strong>align-self</strong> overrides the container's align-items for this specific item. <strong>justify-self</strong> works only in Grid.
+            </div>
+            <div class="control-group">
+              <label class="control-label">Align Self (cross-axis)</label>
+              <div class="toggle-group">
+                <button class="toggle-btn ${el.alignSelf === 'auto' ? 'active' : ''}" onclick="updateElement('${el.id}', 'alignSelf', 'auto')">Auto</button>
+                <button class="toggle-btn ${el.alignSelf === 'flex-start' ? 'active' : ''}" onclick="updateElement('${el.id}', 'alignSelf', 'flex-start')">Start</button>
+                <button class="toggle-btn ${el.alignSelf === 'center' ? 'active' : ''}" onclick="updateElement('${el.id}', 'alignSelf', 'center')">Center</button>
+                <button class="toggle-btn ${el.alignSelf === 'flex-end' ? 'active' : ''}" onclick="updateElement('${el.id}', 'alignSelf', 'flex-end')">End</button>
+                <button class="toggle-btn ${el.alignSelf === 'stretch' ? 'active' : ''}" onclick="updateElement('${el.id}', 'alignSelf', 'stretch')">Stretch</button>
+              </div>
+            </div>
+            
+            ${parentLayout === 'grid' ? `
+            <div class="control-group">
+              <label class="control-label">Justify Self (main-axis, Grid only)</label>
+              <div class="toggle-group">
+                <button class="toggle-btn ${el.justifySelf === 'auto' ? 'active' : ''}" onclick="updateElement('${el.id}', 'justifySelf', 'auto')">Auto</button>
+                <button class="toggle-btn ${el.justifySelf === 'start' ? 'active' : ''}" onclick="updateElement('${el.id}', 'justifySelf', 'start')">Start</button>
+                <button class="toggle-btn ${el.justifySelf === 'center' ? 'active' : ''}" onclick="updateElement('${el.id}', 'justifySelf', 'center')">Center</button>
+                <button class="toggle-btn ${el.justifySelf === 'end' ? 'active' : ''}" onclick="updateElement('${el.id}', 'justifySelf', 'end')">End</button>
+                <button class="toggle-btn ${el.justifySelf === 'stretch' ? 'active' : ''}" onclick="updateElement('${el.id}', 'justifySelf', 'stretch')">Stretch</button>
+              </div>
+            </div>
+            ` : ''}
+          </div>
+          
+          <div class="section">
+            <div class="section-title">Spacing</div>
+            <div class="tip">
+              <strong>Tip:</strong> Use <strong>margin: auto</strong> to center items in flexbox. Type "auto" in margin inputs for centering.
+            </div>
+            <div class="box-model-visual">
+              <div class="box-model-outer">
+                <span class="box-label margin-label">Margin</span>
+                <input type="text" class="box-input margin-top" value="${el.marginTop === 'auto' ? 'auto' : el.marginTop}" onchange="updateMarginValue('${el.id}', 'marginTop', this.value)">
+                <input type="text" class="box-input margin-right" value="${el.marginRight === 'auto' ? 'auto' : el.marginRight}" onchange="updateMarginValue('${el.id}', 'marginRight', this.value)">
+                <input type="text" class="box-input margin-bottom" value="${el.marginBottom === 'auto' ? 'auto' : el.marginBottom}" onchange="updateMarginValue('${el.id}', 'marginBottom', this.value)">
+                <input type="text" class="box-input margin-left" value="${el.marginLeft === 'auto' ? 'auto' : el.marginLeft}" onchange="updateMarginValue('${el.id}', 'marginLeft', this.value)">
+                
+                <div class="box-model-inner">
+                  <span class="box-label padding-label">Padding</span>
+                  <input type="number" class="box-input padding-top" value="${el.paddingTop || 0}" onchange="updateElement('${el.id}', 'paddingTop', parseInt(this.value) || 0)">
+                  <input type="number" class="box-input padding-right" value="${el.paddingRight || 0}" onchange="updateElement('${el.id}', 'paddingRight', parseInt(this.value) || 0)">
+                  <input type="number" class="box-input padding-bottom" value="${el.paddingBottom || 0}" onchange="updateElement('${el.id}', 'paddingBottom', parseInt(this.value) || 0)">
+                  <input type="number" class="box-input padding-left" value="${el.paddingLeft || 0}" onchange="updateElement('${el.id}', 'paddingLeft', parseInt(this.value) || 0)">
+                  
+                  <div class="box-model-content">Content</div>
+                </div>
+              </div>
+            </div>
+          </div>
+          
+          <div class="section">
+            <div class="section-title">Flex Properties</div>
+            <div class="control-group">
+              <label class="control-label">Flex Grow: ${el.flexGrow}</label>
+              <div class="slider-row">
+                <input type="range" class="slider" min="0" max="3" value="${el.flexGrow}" oninput="updateElement('${el.id}', 'flexGrow', parseInt(this.value))">
+                <input type="number" class="slider-value" value="${el.flexGrow}" onchange="updateElement('${el.id}', 'flexGrow', parseInt(this.value))">
+              </div>
+            </div>
+          </div>
+        `;
+      }
+    }
+    
+    // Render preview
+    function renderPreview() {
+      const previewEl = document.getElementById('preview');
+      
+      function renderElement(id) {
+        const el = elements[id];
+        if (!el) return '';
+        
+        const isSelected = id === selectedId;
+        
+        if (el.type === 'container') {
+          const justify = el.layout === 'grid' ? 
+            (el.justify === 'flex-start' ? 'start' : el.justify === 'flex-end' ? 'end' : el.justify) : el.justify;
+          const align = el.layout === 'grid' ?
+            (el.align === 'flex-start' ? 'start' : el.align === 'flex-end' ? 'end' : el.align) : el.align;
+          
+          let style = '';
+          if (el.layout === 'flex') {
+            style = `display: flex; flex-direction: ${el.direction}; justify-content: ${justify}; align-items: ${align}; align-content: flex-start; gap: ${el.gap}px; ${el.wrap ? 'flex-wrap: wrap;' : ''}`;
+          } else {
+            style = `display: grid; justify-content: ${justify}; align-items: ${align}; align-content: start; gap: ${el.gap}px;`;
+          }
+          
+          // Add padding
+          const pt = el.paddingTop || 0;
+          const pr = el.paddingRight || 0;
+          const pb = el.paddingBottom || 0;
+          const pl = el.paddingLeft || 0;
+          if (pt || pr || pb || pl) {
+            style += ` padding: ${pt}px ${pr}px ${pb}px ${pl}px;`;
+          }
+          
+          if (el.width !== 'auto') style += ` width: ${el.width}; flex: none;`;
+          if (el.minHeight > 0) style += ` min-height: ${el.minHeight}px;`;
+          if (id !== 'root') {
+            if (el.width === 'auto') style += ' flex: 1;';
+            // Apply alignSelf if set
+            if (el.alignSelf && el.alignSelf !== 'auto') {
+              const parent = elements[el.parent];
+              const parentLayout = parent ? parent.layout : 'flex';
+              const alignVal = parentLayout === 'grid' ? 
+                (el.alignSelf === 'flex-start' ? 'start' : el.alignSelf === 'flex-end' ? 'end' : el.alignSelf) :
+                el.alignSelf;
+              style += ` align-self: ${alignVal};`;
+            }
+          }
+          
+          const childrenHTML = el.children.length > 0 
+            ? el.children.map(cid => renderElement(cid)).join('')
+            : '<div class="empty-container">Empty - add items</div>';
+          
+          if (id === 'root') {
+            return `<div style="${style}">${childrenHTML}</div>`;
+          }
+          
+          return `
+            <div class="rendered-container ${isSelected ? 'selected' : ''}" style="${style}" onclick="event.stopPropagation(); selectElement('${id}')">
+              <span class="rendered-container-label">${el.name}</span>
+              ${childrenHTML}
+            </div>
+          `;
+        } else {
+          // Item
+          const parent = elements[el.parent];
+          const parentAlign = parent ? parent.align : 'flex-start';
+          const parentDirection = parent ? parent.direction : 'row';
+          const parentLayout = parent ? parent.layout : 'flex';
+          
+          // Stretch only applies if parent has align: stretch AND item doesn't override with alignSelf
+          const isStretch = parentAlign === 'stretch' && el.alignSelf === 'auto';
+          
+          // In row direction, stretch affects height. In column direction, stretch affects width.
+          const stretchAffectsHeight = parentDirection === 'row';
+          const stretchAffectsWidth = parentDirection === 'column';
+          
+          const colors = {
+            red: 'linear-gradient(135deg, #f87171, #ef4444)',
+            green: 'linear-gradient(135deg, #34d399, #10b981)',
+            blue: 'linear-gradient(135deg, #60a5fa, #3b82f6)',
+            purple: 'linear-gradient(135deg, #a78bfa, #8b5cf6)',
+            yellow: 'linear-gradient(135deg, #fbbf24, #f59e0b)',
+            pink: 'linear-gradient(135deg, #f472b6, #ec4899)'
+          };
+          
+          // Handle width - use min-width if stretch affects width
+          const widthStyle = (isStretch && stretchAffectsWidth) ? `min-width: ${el.width}px` : `width: ${el.width}px`;
+          
+          // Handle height - use min-height if stretch affects height
+          const heightStyle = (isStretch && stretchAffectsHeight) ? `min-height: ${el.height}px` : `height: ${el.height}px`;
+          
+          // Build margin string
+          const mt = el.marginTop === 'auto' ? 'auto' : el.marginTop + 'px';
+          const mr = el.marginRight === 'auto' ? 'auto' : el.marginRight + 'px';
+          const mb = el.marginBottom === 'auto' ? 'auto' : el.marginBottom + 'px';
+          const ml = el.marginLeft === 'auto' ? 'auto' : el.marginLeft + 'px';
+          const marginStyle = `margin: ${mt} ${mr} ${mb} ${ml};`;
+          
+          // Build padding string
+          const pt = el.paddingTop || 0;
+          const pr = el.paddingRight || 0;
+          const pb = el.paddingBottom || 0;
+          const pl = el.paddingLeft || 0;
+          const paddingStyle = (pt || pr || pb || pl) ? `padding: ${pt}px ${pr}px ${pb}px ${pl}px;` : '';
+          
+          // Build align-self and justify-self
+          let selfStyles = '';
+          if (el.alignSelf !== 'auto') {
+            const alignVal = parentLayout === 'grid' ? 
+              (el.alignSelf === 'flex-start' ? 'start' : el.alignSelf === 'flex-end' ? 'end' : el.alignSelf) :
+              el.alignSelf;
+            selfStyles += `align-self: ${alignVal};`;
+          }
+          if (parentLayout === 'grid' && el.justifySelf !== 'auto') {
+            selfStyles += `justify-self: ${el.justifySelf};`;
+          }
+          
+          const style = `background: ${colors[el.color]}; ${widthStyle}; ${heightStyle}; flex-grow: ${el.flexGrow}; flex-shrink: ${el.flexShrink}; ${marginStyle} ${paddingStyle} ${selfStyles}`;
+          
+          return `
+            <div class="rendered-item ${isSelected ? 'selected' : ''}" style="${style}" onclick="event.stopPropagation(); selectElement('${id}')">
+              ${el.name}
+            </div>
+          `;
+        }
+      }
+      
+      previewEl.innerHTML = renderElement('root');
+    }
+    
+    // Render CSS
+    function renderCSS() {
+      const cssEl = document.getElementById('css-output');
+      let output = '';
+      
+      function generateCSS(id, selector) {
+        const el = elements[id];
+        if (!el) return;
+        
+        if (el.type === 'container') {
+          const justify = el.layout === 'grid' ? 
+            (el.justify === 'flex-start' ? 'start' : el.justify === 'flex-end' ? 'end' : el.justify) : el.justify;
+          const align = el.layout === 'grid' ?
+            (el.align === 'flex-start' ? 'start' : el.align === 'flex-end' ? 'end' : el.align) : el.align;
+          
+          output += `<span class="selector">${selector}</span> {
+  <span class="prop">display</span>: <span class="val">${el.layout}</span>;`;
+          
+          if (el.layout === 'flex') {
+            output += `
+  <span class="prop">flex-direction</span>: <span class="val">${el.direction}</span>;`;
+            if (el.wrap) {
+              output += `
+  <span class="prop">flex-wrap</span>: <span class="val">wrap</span>;`;
+            }
+          }
+          
+          output += `
+  <span class="prop">justify-content</span>: <span class="val">${justify}</span>;
+  <span class="prop">align-items</span>: <span class="val">${align}</span>;
+  <span class="prop">gap</span>: <span class="val">${el.gap}px</span>;`;
+          
+          // Add padding
+          const hasPadding = (el.paddingTop || 0) !== 0 || (el.paddingRight || 0) !== 0 || (el.paddingBottom || 0) !== 0 || (el.paddingLeft || 0) !== 0;
+          if (hasPadding) {
+            output += `
+  <span class="prop">padding</span>: <span class="val">${el.paddingTop || 0}px ${el.paddingRight || 0}px ${el.paddingBottom || 0}px ${el.paddingLeft || 0}px</span>;`;
+          }
+          
+          if (el.width !== 'auto') {
+            output += `
+  <span class="prop">width</span>: <span class="val">${el.width}</span>;`;
+          }
+          if (el.minHeight > 0) {
+            output += `
+  <span class="prop">min-height</span>: <span class="val">${el.minHeight}px</span>;`;
+          }
+          if (id !== 'root' && el.alignSelf && el.alignSelf !== 'auto') {
+            const parent = elements[el.parent];
+            const parentLayout = parent ? parent.layout : 'flex';
+            const alignVal = parentLayout === 'grid' ? 
+              (el.alignSelf === 'flex-start' ? 'start' : el.alignSelf === 'flex-end' ? 'end' : el.alignSelf) :
+              el.alignSelf;
+            output += `
+  <span class="prop">align-self</span>: <span class="val">${alignVal}</span>;`;
+          }
+          
+          output += `
+}
+
+`;
+          
+          // Generate CSS for children
+          el.children.forEach((cid, i) => {
+            const child = elements[cid];
+            if (child) {
+              const childSelector = `${selector} > .${child.id}`;
+              generateCSS(cid, childSelector);
+            }
+          });
+        } else {
+          // Item
+          const parent = elements[el.parent];
+          const parentAlign = parent ? parent.align : 'flex-start';
+          const parentDirection = parent ? parent.direction : 'row';
+          const parentLayout = parent ? parent.layout : 'flex';
+          
+          const isStretch = parentAlign === 'stretch' && el.alignSelf === 'auto';
+          const stretchAffectsHeight = parentDirection === 'row';
+          const stretchAffectsWidth = parentDirection === 'column';
+          
+          const widthProp = (isStretch && stretchAffectsWidth) ? 'min-width' : 'width';
+          const heightProp = (isStretch && stretchAffectsHeight) ? 'min-height' : 'height';
+          
+          output += `<span class="selector">${selector}</span> {
+  <span class="prop">${widthProp}</span>: <span class="val">${el.width}px</span>;
+  <span class="prop">${heightProp}</span>: <span class="val">${el.height}px</span>;`;
+          
+          if (el.flexGrow > 0) {
+            output += `
+  <span class="prop">flex-grow</span>: <span class="val">${el.flexGrow}</span>;`;
+          }
+          
+          // Self alignment
+          if (el.alignSelf !== 'auto') {
+            const alignVal = parentLayout === 'grid' ? 
+              (el.alignSelf === 'flex-start' ? 'start' : el.alignSelf === 'flex-end' ? 'end' : el.alignSelf) :
+              el.alignSelf;
+            output += `
+  <span class="prop">align-self</span>: <span class="val">${alignVal}</span>;`;
+          }
+          
+          if (parentLayout === 'grid' && el.justifySelf !== 'auto') {
+            output += `
+  <span class="prop">justify-self</span>: <span class="val">${el.justifySelf}</span>;`;
+          }
+          
+          // Margins
+          const hasMargin = el.marginTop !== 0 || el.marginRight !== 0 || el.marginBottom !== 0 || el.marginLeft !== 0;
+          if (hasMargin) {
+            const mt = el.marginTop === 'auto' ? 'auto' : el.marginTop + 'px';
+            const mr = el.marginRight === 'auto' ? 'auto' : el.marginRight + 'px';
+            const mb = el.marginBottom === 'auto' ? 'auto' : el.marginBottom + 'px';
+            const ml = el.marginLeft === 'auto' ? 'auto' : el.marginLeft + 'px';
+            output += `
+  <span class="prop">margin</span>: <span class="val">${mt} ${mr} ${mb} ${ml}</span>;`;
+          }
+          
+          // Padding
+          const hasPadding = (el.paddingTop || 0) !== 0 || (el.paddingRight || 0) !== 0 || (el.paddingBottom || 0) !== 0 || (el.paddingLeft || 0) !== 0;
+          if (hasPadding) {
+            output += `
+  <span class="prop">padding</span>: <span class="val">${el.paddingTop || 0}px ${el.paddingRight || 0}px ${el.paddingBottom || 0}px ${el.paddingLeft || 0}px</span>;`;
+          }
+          
+          output += `
+}
+
+`;
+        }
+      }
+      
+      generateCSS('root', '.root');
+      cssEl.innerHTML = output;
+    }
+    
+    function render() {
+      renderTree();
+      renderControls();
+      renderPreview();
+      renderCSS();
+    }
+    
+    // Initialize with the B stretched / C centered example
+    function init() {
+      // Set root to flex row with stretch
+      elements.root.direction = 'row';
+      elements.root.align = 'stretch';
+      elements.root.minHeight = 300;
+      
+      // Add Container B (full height, left side)
+      const b = createContainer('root');
+      b.name = 'B';
+      b.width = '200px';
+      b.minHeight = 0;
+      b.justify = 'center';
+      b.align = 'center';
+      b.alignSelf = 'auto';  // Will inherit stretch from parent
+      elements[b.id] = b;
+      elements.root.children.push(b.id);
+      
+      // Add an item inside B
+      const bItem = createItem(b.id);
+      bItem.name = 'B content';
+      bItem.color = 'blue';
+      bItem.width = 80;
+      bItem.height = 60;
+      elements[bItem.id] = bItem;
+      b.children.push(bItem.id);
+      
+      // Add Container C (centered vertically, takes remaining width)
+      const c = createContainer('root');
+      c.name = 'C';
+      c.width = 'auto';  // flex: 1, takes remaining space
+      c.minHeight = 100;
+      c.justify = 'center';
+      c.align = 'center';
+      c.alignSelf = 'center';  // This is the key - centers vertically!
+      elements[c.id] = c;
+      elements.root.children.push(c.id);
+      
+      // Add an item inside C
+      const cItem = createItem(c.id);
+      cItem.name = 'C content';
+      cItem.color = 'purple';
+      cItem.width = 100;
+      cItem.height = 50;
+      elements[cItem.id] = cItem;
+      c.children.push(cItem.id);
+      
+      selectElement(c.id);  // Select C to show the align-self setting
+    }
+    
+    init();
+  </script>
+</body>
+</html>

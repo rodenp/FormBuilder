@@ -674,7 +674,9 @@ export const FormRenderer: React.FC<FormRendererProps> = ({
                 elements.length === 0 && "flex items-center justify-center"
             )}
             style={{
-                backgroundColor: settings.formBackground || '#ffffff'
+                backgroundColor: settings.formBackground || '#ffffff',
+                width: settings.contentWidth ? `${settings.contentWidth}px` : '100%',
+                maxWidth: settings.contentWidth ? `${settings.contentWidth}px` : 'none'
             }}
         >
             {elements.length === 0 ? (
@@ -732,7 +734,14 @@ export const FormRenderer: React.FC<FormRendererProps> = ({
     // Use exact Canvas structure and CSS classes
     return (
         <div className="form-builder-canvas">
-            <div className="form-builder-canvas-inner">
+            <div 
+                className="form-builder-canvas-inner"
+                style={{
+                    display: 'flex',
+                    justifyContent: settings.contentAlignment === 'center' ? 'center' : 
+                                   settings.contentAlignment === 'right' ? 'flex-end' : 'flex-start'
+                }}
+            >
                 {content}
             </div>
         </div>

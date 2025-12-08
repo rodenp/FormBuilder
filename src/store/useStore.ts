@@ -49,6 +49,14 @@ interface FormStore {
     removeImageFromGallery: (imageId: string) => void;
     updateGalleryImage: (imageId: string, updates: Partial<GalleryImage>) => void;
     clearImageGallery: () => void;
+    
+    // Custom blocks management
+    customBlocks: FormElement[];
+    saveElementAsBlock: (element: FormElement, category?: string) => void;
+    updateBlockCategory: (blockId: string, category: string) => void;
+    removeCustomBlock: (blockId: string) => void;
+    isElementSavedAsBlock: (element: FormElement) => boolean;
+    addElementFromBlock: (block: FormElement, parentId?: string) => void;
 }
 
 export const useStore = create<FormStore>()(
@@ -71,6 +79,9 @@ export const useStore = create<FormStore>()(
             
             // Image gallery state
             imageGallery: [],
+            
+            // Custom blocks state
+            customBlocks: [],
 
     addElement: (type, parentId) => set((state) => {
         const label = type === 'rich-text' ? '' : `New ${type.charAt(0).toUpperCase() + type.slice(1)}`;
@@ -2044,7 +2055,104 @@ export const useStore = create<FormStore>()(
         )
     })),
 
-    clearImageGallery: () => set({ imageGallery: [] })
+    clearImageGallery: () => set({ imageGallery: [] }),
+
+    // Custom blocks management functions
+    saveElementAsBlock: (element, category) => {
+        // Deep clone the element to avoid reference issues
+        const blockElement: FormElement = JSON.parse(JSON.stringify(element));
+        
+        // Generate new ID for the block and clean it up
+        blockElement.id = uuidv4();
+        blockElement.name = `${element.label || element.type}_block_${Date.now()}`;
+        
+        // Add category if provided
+        if (category) {
+            blockElement.category = category;
+        }
+        
+        set((state) => ({
+            customBlocks: [...state.customBlocks, blockElement]
+        }));
+    },
+    
+    updateBlockCategory: (blockId, category) => set((state) => ({
+        customBlocks: state.customBlocks.map(block => 
+            block.id === blockId 
+                ? { ...block, category } 
+                : block
+        )
+    })),
+
+    removeCustomBlock: (blockId) => set((state) => ({
+        customBlocks: state.customBlocks.filter(block => block.id !== blockId)
+    })),
+
+    isElementSavedAsBlock: (element) => {
+        const state = get();
+        // Check if element structure (without IDs) matches any saved block
+        const elementCopy = JSON.parse(JSON.stringify(element));
+        delete elementCopy.id;
+        delete elementCopy.name;
+        
+        return state.customBlocks.some(block => {
+            const blockCopy = JSON.parse(JSON.stringify(block));
+            delete blockCopy.id;
+            delete blockCopy.name;
+            return JSON.stringify(elementCopy) === JSON.stringify(blockCopy);
+        });
+    },
+
+    addElementFromBlock: (block, parentId) => {
+        // Deep clone the block and generate new IDs for all elements
+        const cloneElementWithNewIds = (element: FormElement): FormElement => {
+            const newElement = { ...element };
+            newElement.id = uuidv4();
+            newElement.name = `${element.name || element.type}_${Date.now()}`;
+            
+            if (newElement.children) {
+                newElement.children = newElement.children.map(child => 
+                    child ? cloneElementWithNewIds(child) : null
+                );
+            }
+            
+            return newElement;
+        };
+
+        const newElement = cloneElementWithNewIds(block);
+
+        set((state) => {
+            if (parentId) {
+                // Add to specific container
+                const updateElementsRecursively = (elements: FormElement[]): FormElement[] => {
+                    return elements.map(element => {
+                        if (element.id === parentId) {
+                            return {
+                                ...element,
+                                children: [...(element.children || []), newElement]
+                            };
+                        }
+                        if (element.children) {
+                            return {
+                                ...element,
+                                children: updateElementsRecursively(element.children)
+                            };
+                        }
+                        return element;
+                    });
+                };
+
+                return {
+                    elements: updateElementsRecursively(state.elements)
+                };
+            } else {
+                // Add to root level
+                return {
+                    elements: [...state.elements, newElement]
+                };
+            }
+        });
+    }
 
 }), 
 {

@@ -55,15 +55,29 @@ export const LayoutPanel: React.FC<LayoutPanelProps> = ({ selectedElement, updat
     
     const isColumnCellContainer = isColumnCell();
     
-    // Set defaults for column cells
+    // Debug: temporarily log what we're detecting
+    console.log('Column Cell Detection:', {
+        type: selectedElement.type,
+        name: selectedElement.name,
+        label: selectedElement.label,
+        isColumnCellContainer,
+        display: selectedElement.display,
+        flexDirection: selectedElement.flexDirection
+    });
+    
+    // Set defaults for column cells and fix any existing cells that don't have proper flex properties
     React.useEffect(() => {
-        if (isColumnCellContainer && selectedElement.display !== 'flex') {
-            updateElement(selectedElement.id, { 
-                display: 'flex',
-                flexDirection: 'column'
-            });
+        if (isColumnCellContainer) {
+            // Always ensure column cells have proper flex properties
+            const needsUpdate = selectedElement.display !== 'flex' || !selectedElement.flexDirection;
+            if (needsUpdate) {
+                    updateElement(selectedElement.id, { 
+                    display: 'flex',
+                    flexDirection: selectedElement.flexDirection || 'column'
+                });
+            }
         }
-    }, [isColumnCellContainer, selectedElement.display, selectedElement.id]);
+    }, [isColumnCellContainer, selectedElement.display, selectedElement.flexDirection, selectedElement.id]);
     
     const generatePreviewStyle = () => {
         const p = {
@@ -98,8 +112,7 @@ export const LayoutPanel: React.FC<LayoutPanelProps> = ({ selectedElement, updat
                     justifyContent: selectedElement.justifyContent ?? 'flex-start',
                     alignItems: selectedElement.alignItems ?? 'flex-start',
                     alignContent: selectedElement.alignContent ?? 'flex-start',
-                    rowGap: `${selectedElement.rowGap ?? 0}px`,
-                    columnGap: `${selectedElement.columnGap ?? 0}px`,
+                    gap: `${selectedElement.gap ?? 0}px`,
                     padding: `${p.top}px ${p.right}px ${p.bottom}px ${p.left}px`,
                     minHeight: '200px'
                 };
@@ -110,8 +123,7 @@ export const LayoutPanel: React.FC<LayoutPanelProps> = ({ selectedElement, updat
                     justifyContent: selectedElement.justifyContent ?? 'flex-start',
                     alignItems: selectedElement.alignItems ?? 'flex-start',
                     alignContent: 'start',
-                    rowGap: `${selectedElement.rowGap ?? 0}px`,
-                    columnGap: `${selectedElement.columnGap ?? 0}px`,
+                    gap: `${selectedElement.gap ?? 0}px`,
                     padding: `${p.top}px ${p.right}px ${p.bottom}px ${p.left}px`,
                     minHeight: '200px'
                 };
@@ -187,15 +199,15 @@ export const LayoutPanel: React.FC<LayoutPanelProps> = ({ selectedElement, updat
             </style>
             <div className="flex justify-between items-center mb-4">
                 <label className="block text-xs font-semibold text-slate-500 uppercase tracking-wider">
-                    Layout
+                    Layout {isColumnCellContainer && <span className="text-purple-600">(Column Cell)</span>}
                 </label>
                 {/* Playground button hidden */}
             </div>
             
             {isContainer && (
                 <>
-                    {/* Display Mode - hidden for columns, rows, grid, menu, and column cells */}
-                    {!['columns', 'rows', 'grid', 'menu'].includes(selectedElement.type) && !isColumnCellContainer && (
+                    {/* Display Mode - hidden for columns, rows, grid, menu */}
+                    {!['columns', 'rows', 'grid', 'menu'].includes(selectedElement.type) && (
                         <div className="mb-4">
                             <div className="flex gap-1 p-1 bg-slate-100 rounded-lg">
                                 <button
@@ -222,9 +234,9 @@ export const LayoutPanel: React.FC<LayoutPanelProps> = ({ selectedElement, updat
                         </div>
                     )}
                     
-                    {(selectedElement.display ?? 'flex') === 'flex' && !['columns', 'rows', 'grid'].includes(selectedElement.type) && !isColumnCellContainer && (
+                    {(selectedElement.display ?? 'flex') === 'flex' && !['columns', 'rows', 'grid'].includes(selectedElement.type) && (
                         <>
-                            {/* Direction - hidden for columns, rows, and column cells */}
+                            {/* Direction - hidden for columns, rows */}
                             <div className="mb-4">
                                 <label className="block text-xs font-medium text-gray-600 mb-2">Direction</label>
                                 <div className="flex gap-2">
@@ -351,57 +363,31 @@ export const LayoutPanel: React.FC<LayoutPanelProps> = ({ selectedElement, updat
                         </div>
                     )}
                     
-                    {/* Row Gap - for flex and grid (not columns or menu) */}
-                    {(selectedElement.display ?? 'flex') !== 'block' && !['columns', 'menu'].includes(selectedElement.type) && (
+                    {/* Gap - for flex and grid (direction-aware, replaces rowGap/columnGap) */}
+                    {(selectedElement.display ?? 'flex') !== 'block' && !['columns', 'rows'].includes(selectedElement.type) && (
                         <div className="mb-4">
                             <label className="block text-xs font-medium text-gray-600 mb-2">
-                                Row Gap: <span className="font-semibold">{selectedElement.rowGap ?? 0}px</span>
+                                Gap: <span className="font-semibold">{selectedElement.gap ?? 0}px</span>
                             </label>
                             <div className="flex items-center gap-2">
                                 <input
                                     type="range"
                                     min="0"
                                     max="40"
-                                    value={selectedElement.rowGap ?? 0}
-                                    onChange={(e) => updateElement(selectedElement.id, { rowGap: parseInt(e.target.value) })}
+                                    value={selectedElement.gap ?? 0}
+                                    onChange={(e) => updateElement(selectedElement.id, { gap: parseInt(e.target.value) })}
                                     className="flex-1 h-1 bg-gray-200 rounded-lg appearance-none cursor-pointer"
                                 />
                                 <input
                                     type="number"
                                     min="0"
                                     max="40"
-                                    value={selectedElement.rowGap ?? 0}
-                                    onChange={(e) => updateElement(selectedElement.id, { rowGap: parseInt(e.target.value) || 0 })}
+                                    value={selectedElement.gap ?? 0}
+                                    onChange={(e) => updateElement(selectedElement.id, { gap: parseInt(e.target.value) || 0 })}
                                     className="w-12 px-2 py-1 text-xs border border-gray-300 rounded"
                                 />
                             </div>
-                        </div>
-                    )}
-                    
-                    {/* Column Gap - for flex and grid (not rows, columns, or column cells) */}
-                    {(selectedElement.display ?? 'flex') !== 'block' && selectedElement.type !== 'rows' && selectedElement.type !== 'columns' && !isColumnCellContainer && (
-                        <div className="mb-4">
-                            <label className="block text-xs font-medium text-gray-600 mb-2">
-                                Column Gap: <span className="font-semibold">{selectedElement.columnGap ?? 0}px</span>
-                            </label>
-                            <div className="flex items-center gap-2">
-                                <input
-                                    type="range"
-                                    min="0"
-                                    max="40"
-                                    value={selectedElement.columnGap ?? 0}
-                                    onChange={(e) => updateElement(selectedElement.id, { columnGap: parseInt(e.target.value) })}
-                                    className="flex-1 h-1 bg-gray-200 rounded-lg appearance-none cursor-pointer"
-                                />
-                                <input
-                                    type="number"
-                                    min="0"
-                                    max="40"
-                                    value={selectedElement.columnGap ?? 0}
-                                    onChange={(e) => updateElement(selectedElement.id, { columnGap: parseInt(e.target.value) || 0 })}
-                                    className="w-12 px-2 py-1 text-xs border border-gray-300 rounded"
-                                />
-                            </div>
+                            <p className="text-xs text-gray-500 mt-1">Direction-aware spacing between items</p>
                         </div>
                     )}
                     

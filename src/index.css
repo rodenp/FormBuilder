@@ -23,8 +23,7 @@
 }
 
 .form-builder-canvas-inner {
-  @apply mx-auto;
-  max-width: 1200px;
+  /* Layout and width handled by inline styles for dynamic content settings */
 }
 
 .form-builder-canvas-empty-content {
