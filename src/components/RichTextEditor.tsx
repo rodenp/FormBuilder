@@ -1,18 +1,39 @@
 import React, { useState, useRef, useEffect } from 'react';
 import { createPortal } from 'react-dom';
-import { Bold, Italic, Underline, Code, Link, FileX, Image, AlignLeft, AlignCenter, AlignRight, AlignJustify } from 'lucide-react';
+import { Bold, Italic, Underline, Link, FileX, Image, AlignLeft, AlignCenter, AlignRight } from 'lucide-react';
 import { ImageGallery } from './ImageGallery';
 import type { FormElement, GalleryImage } from '../types';
+
+export interface RichTextEditorRef {
+    focus: () => void;
+}
 
 interface RichTextEditorProps {
     selectedElement: FormElement;
     onContentChange: (content: string) => void;
+    onEditingStart?: () => void;
+    onEditingEnd?: () => void;
 }
 
-export const RichTextEditor: React.FC<RichTextEditorProps> = ({ selectedElement, onContentChange }) => {
+export const RichTextEditor = React.forwardRef<RichTextEditorRef, RichTextEditorProps>(({
+    selectedElement,
+    onContentChange,
+    onEditingStart,
+    onEditingEnd
+}, ref) => {
     const editorRef = useRef<HTMLDivElement>(null);
     const [lastElementId, setLastElementId] = useState<string>('');
     const [showToolbar, setShowToolbar] = useState(false);
+
+    // Expose focus method to parent
+    React.useImperativeHandle(ref, () => ({
+        focus: () => {
+            if (editorRef.current) {
+                editorRef.current.focus();
+            }
+        }
+    }));
+
     const [linkModal, setLinkModal] = useState<{
         isOpen: boolean;
         linkElement: HTMLAnchorElement | null;
@@ -29,6 +50,28 @@ export const RichTextEditor: React.FC<RichTextEditorProps> = ({ selectedElement,
         savedRange: null
     });
 
+    // ... (rest of the state and logic)
+
+    // Helper method to handle focus
+    const handleFocus = () => {
+        setShowToolbar(true);
+        if (onEditingStart) onEditingStart();
+    };
+
+    // Helper method to handle blur
+    const handleBlur = (e: React.FocusEvent) => {
+        console.log('Editor blurred, linkModal.isOpen:', linkModal.isOpen, 'imageGallery.isOpen:', imageGallery.isOpen);
+        // Only hide toolbar if focus moves completely away from editor area and no modal is open
+        if (!linkModal.isOpen && !imageGallery.isOpen && !e.currentTarget.contains(e.relatedTarget as Node)) {
+            console.log('Hiding toolbar');
+            setShowToolbar(false);
+            if (onEditingEnd) onEditingEnd();
+        } else {
+            console.log('Not hiding toolbar - modal is open or focus still in editor');
+        }
+    };
+
+
     const [imageGallery, setImageGallery] = useState<{
         isOpen: boolean;
         savedRange: Range | null;
@@ -44,7 +87,7 @@ export const RichTextEditor: React.FC<RichTextEditorProps> = ({ selectedElement,
 
     const styleLinks = (container: HTMLElement) => {
         const links = container.querySelectorAll('a');
-        links.forEach((link, index) => {
+        links.forEach((link) => {
             const linkEl = link as HTMLElement;
             linkEl.style.setProperty('color', '#2563eb', 'important');
             linkEl.style.setProperty('text-decoration', 'underline', 'important');
@@ -52,7 +95,7 @@ export const RichTextEditor: React.FC<RichTextEditorProps> = ({ selectedElement,
             linkEl.style.setProperty('background-color', 'rgba(37, 99, 235, 0.1)', 'important');
             linkEl.style.setProperty('padding', '1px 2px', 'important');
             linkEl.style.setProperty('border-radius', '2px', 'important');
-            
+
             // Remove existing click handlers to avoid duplicates
             const newLink = linkEl.cloneNode(true) as HTMLElement;
             newLink.addEventListener('click', handleLinkClick);
@@ -79,7 +122,7 @@ export const RichTextEditor: React.FC<RichTextEditorProps> = ({ selectedElement,
         if (editorRef.current && (selectedElement.type === 'rich-text' || selectedElement.type === 'text-block') && selectedElement.id !== lastElementId) {
             editorRef.current.innerHTML = selectedElement.content || '';
             setLastElementId(selectedElement.id);
-            
+
             // Style all existing links
             styleLinks(editorRef.current);
 
@@ -102,7 +145,7 @@ export const RichTextEditor: React.FC<RichTextEditorProps> = ({ selectedElement,
             // Create a mutation observer to watch for new links being added
             const observer = new MutationObserver((mutations) => {
                 mutations.forEach((mutation) => {
-                    if (mutation.type === 'childList' || mutation.type === 'subtree') {
+                    if (mutation.type === 'childList') {
                         // Re-style all links whenever the DOM changes
                         if (editorRef.current) {
                             styleLinks(editorRef.current);
@@ -117,7 +160,7 @@ export const RichTextEditor: React.FC<RichTextEditorProps> = ({ selectedElement,
                 subtree: true,
                 characterData: true
             });
-            
+
             // Focus the editor after a brief delay
             setTimeout(() => {
                 if (editorRef.current) {
@@ -143,7 +186,7 @@ export const RichTextEditor: React.FC<RichTextEditorProps> = ({ selectedElement,
             const singleLineContent = content.replace(/<br\s*\/?>/gi, '').replace(/\n/g, '');
             editorRef.current.innerHTML = singleLineContent;
             setLastElementId(selectedElement.id);
-            
+
             // Focus the editor after a brief delay
             setTimeout(() => {
                 if (editorRef.current) {
@@ -163,10 +206,10 @@ export const RichTextEditor: React.FC<RichTextEditorProps> = ({ selectedElement,
 
     const saveLinkModal = () => {
         const { linkElement, text, url, isEdit, savedRange } = linkModal;
-        
+
         if (text.trim() && url.trim()) {
             const finalUrl = url.startsWith('http://') || url.startsWith('https://') || url.startsWith('mailto:') ? url : 'https://' + url;
-            
+
             if (isEdit && linkElement) {
                 // Update existing link
                 linkElement.textContent = text;
@@ -176,9 +219,9 @@ export const RichTextEditor: React.FC<RichTextEditorProps> = ({ selectedElement,
                 const editor = editorRef.current;
                 if (editor) {
                     editor.focus();
-                    
+
                     const linkHtml = `<a href="${finalUrl}" style="color: #2563eb !important; text-decoration: underline !important; cursor: pointer !important; background-color: rgba(37, 99, 235, 0.1) !important; padding: 1px 2px !important; border-radius: 2px !important;">${text}</a>`;
-                    
+
                     if (savedRange) {
                         // Restore the saved selection and replace it
                         const selection = window.getSelection();
@@ -192,7 +235,7 @@ export const RichTextEditor: React.FC<RichTextEditorProps> = ({ selectedElement,
                 }
             }
             updateContent();
-            
+
             // Re-style all links after a short delay
             setTimeout(() => {
                 if (editorRef.current) {
@@ -200,7 +243,7 @@ export const RichTextEditor: React.FC<RichTextEditorProps> = ({ selectedElement,
                 }
             }, 100);
         }
-        
+
         setLinkModal({ isOpen: false, linkElement: null, text: '', url: '', isEdit: false, savedRange: null });
     };
 
@@ -218,24 +261,24 @@ export const RichTextEditor: React.FC<RichTextEditorProps> = ({ selectedElement,
     const handleImageSelect = (image: GalleryImage) => {
         const { savedRange } = imageGallery;
         const editor = editorRef.current;
-        
+
         if (editor) {
             // First focus the editor to ensure it's active
             editor.focus();
-            
+
             const imageHtml = `<img src="${image.url}" alt="${image.name || 'Inserted image'}" style="max-width: 100%; height: auto; margin: 8px 0; border-radius: 4px; display: inline-block;" draggable="false" />`;
-            
+
             if (savedRange) {
                 try {
                     // Restore the saved selection and insert at that exact position
                     const selection = window.getSelection();
                     if (selection) {
                         selection.removeAllRanges();
-                        
+
                         // Ensure the range is still valid and within the editor
                         if (editor.contains(savedRange.startContainer)) {
                             selection.addRange(savedRange);
-                            
+
                             // Use insertHTML to insert at the exact cursor position
                             if (document.execCommand('insertHTML', false, imageHtml)) {
                                 console.log('Image inserted successfully at saved position');
@@ -250,7 +293,7 @@ export const RichTextEditor: React.FC<RichTextEditorProps> = ({ selectedElement,
                                 img.style.borderRadius = '4px';
                                 img.style.display = 'inline-block';
                                 img.draggable = false;
-                                
+
                                 savedRange.insertNode(img);
                                 savedRange.setStartAfter(img);
                                 savedRange.collapse(true);
@@ -283,30 +326,20 @@ export const RichTextEditor: React.FC<RichTextEditorProps> = ({ selectedElement,
                 console.log('No saved range, inserting at current cursor position');
                 document.execCommand('insertHTML', false, imageHtml);
             }
-            
+
             updateContent();
         }
-        
+
         setImageGallery({ isOpen: false, savedRange: null });
     };
 
 
-    const renderPortalToolbar = () => {
+    const renderToolbar = () => {
         if (!showToolbar || !editorRef.current) return null;
-        
-        const rect = editorRef.current.getBoundingClientRect();
-        const toolbarStyle = {
-            position: 'fixed' as const,
-            top: rect.top - 50,
-            right: window.innerWidth - rect.right,
-            zIndex: 99999,
-            pointerEvents: 'all' as const
-        };
-        
+
         return (
-            <div 
-                style={toolbarStyle}
-                className="flex items-center gap-1 bg-white border border-gray-200 rounded-lg shadow-lg p-1"
+            <div
+                className="absolute bottom-full right-0 mb-0 opacity-100 z-[9999] flex gap-1 bg-white rounded-md shadow-lg p-1 border border-slate-200"
                 onMouseDown={(e) => {
                     e.preventDefault();
                     e.stopPropagation();
@@ -333,12 +366,12 @@ export const RichTextEditor: React.FC<RichTextEditorProps> = ({ selectedElement,
                             e.preventDefault();
                             e.stopPropagation();
                         }}
-                        className="w-8 h-8 flex items-center justify-center text-gray-600 hover:text-gray-900 hover:bg-gray-100 rounded transition-colors"
+                        className="p-1 bg-white border border-slate-300 rounded shadow-sm text-slate-600 hover:text-white hover:bg-blue-600 transition-colors"
                         title="Bold"
                     >
-                        <Bold size={16} />
+                        <Bold size={14} />
                     </button>
-                    
+
                     <button
                         type="button"
                         onClick={(e) => {
@@ -354,12 +387,12 @@ export const RichTextEditor: React.FC<RichTextEditorProps> = ({ selectedElement,
                             e.preventDefault();
                             e.stopPropagation();
                         }}
-                        className="w-8 h-8 flex items-center justify-center text-gray-600 hover:text-gray-900 hover:bg-gray-100 rounded transition-colors"
+                        className="p-1 bg-white border border-slate-300 rounded shadow-sm text-slate-600 hover:text-white hover:bg-blue-600 transition-colors"
                         title="Italic"
                     >
-                        <Italic size={16} />
+                        <Italic size={14} />
                     </button>
-                    
+
                     <button
                         type="button"
                         onClick={(e) => {
@@ -375,18 +408,15 @@ export const RichTextEditor: React.FC<RichTextEditorProps> = ({ selectedElement,
                             e.preventDefault();
                             e.stopPropagation();
                         }}
-                        className="w-8 h-8 flex items-center justify-center text-gray-600 hover:text-gray-900 hover:bg-gray-100 rounded transition-colors"
+                        className="p-1 bg-white border border-slate-300 rounded shadow-sm text-slate-600 hover:text-white hover:bg-blue-600 transition-colors"
                         title="Underline"
                     >
-                        <Underline size={16} />
+                        <Underline size={14} />
                     </button>
                 </div>
-                
-                {/* Separator */}
-                <div className="w-px h-6 bg-gray-300"></div>
-                
+
                 {/* Alignment Group */}
-                <div className="flex items-center">
+                <div className="flex items-center gap-1">
                     <button
                         type="button"
                         onClick={(e) => {
@@ -402,12 +432,12 @@ export const RichTextEditor: React.FC<RichTextEditorProps> = ({ selectedElement,
                             e.preventDefault();
                             e.stopPropagation();
                         }}
-                        className="w-8 h-8 flex items-center justify-center rounded transition-colors text-gray-600 hover:text-gray-900 hover:bg-gray-100"
+                        className="p-1 bg-white border border-slate-300 rounded shadow-sm text-slate-600 hover:text-white hover:bg-blue-600 transition-colors"
                         title="Align Left"
                     >
-                        <AlignLeft size={16} />
+                        <AlignLeft size={14} />
                     </button>
-                    
+
                     <button
                         type="button"
                         onClick={(e) => {
@@ -423,12 +453,12 @@ export const RichTextEditor: React.FC<RichTextEditorProps> = ({ selectedElement,
                             e.preventDefault();
                             e.stopPropagation();
                         }}
-                        className="w-8 h-8 flex items-center justify-center rounded transition-colors text-gray-600 hover:text-gray-900 hover:bg-gray-100"
+                        className="p-1 bg-white border border-slate-300 rounded shadow-sm text-slate-600 hover:text-white hover:bg-blue-600 transition-colors"
                         title="Align Center"
                     >
-                        <AlignCenter size={16} />
+                        <AlignCenter size={14} />
                     </button>
-                    
+
                     <button
                         type="button"
                         onClick={(e) => {
@@ -444,21 +474,18 @@ export const RichTextEditor: React.FC<RichTextEditorProps> = ({ selectedElement,
                             e.preventDefault();
                             e.stopPropagation();
                         }}
-                        className="w-8 h-8 flex items-center justify-center rounded transition-colors text-gray-600 hover:text-gray-900 hover:bg-gray-100"
+                        className="p-1 bg-white border border-slate-300 rounded shadow-sm text-slate-600 hover:text-white hover:bg-blue-600 transition-colors"
                         title="Align Right"
                     >
-                        <AlignRight size={16} />
+                        <AlignRight size={14} />
                     </button>
                 </div>
-                
+
                 {/* Advanced Tools - Only for rich-text and text-block */}
                 {selectedElement.type !== 'heading' && (
                     <>
-                        {/* Separator */}
-                        <div className="w-px h-6 bg-gray-300"></div>
-                        
                         {/* Text Format Dropdown */}
-                        <div className="flex items-center">
+                        <div className="flex items-center gap-1">
                             <select
                                 onChange={(e) => {
                                     e.preventDefault();
@@ -474,23 +501,17 @@ export const RichTextEditor: React.FC<RichTextEditorProps> = ({ selectedElement,
                                     e.preventDefault();
                                     e.stopPropagation();
                                 }}
-                                className="text-xs px-2 py-1 bg-white border border-gray-300 rounded hover:bg-gray-50 focus:outline-none focus:ring-1 focus:ring-blue-500"
+                                className="p-1 bg-white border border-slate-300 rounded shadow-sm text-slate-600 hover:text-white hover:bg-blue-600 transition-colors"
                                 defaultValue="p"
                             >
-                                <option value="p">Paragraph</option>
-                                <option value="h1">Heading 1</option>
-                                <option value="h2">Heading 2</option>
-                                <option value="h3">Heading 3</option>
-                                <option value="h4">Heading 4</option>
-                                <option value="h5">Heading 5</option>
-                                <option value="h6">Heading 6</option>
+                                <option value="p">¶</option>
+                                <option value="h1">H1</option>
+                                <option value="h2">H2</option>
+                                <option value="h3">H3</option>
                             </select>
                         </div>
-                        
-                        {/* Separator */}
-                        <div className="w-px h-6 bg-gray-300"></div>
-                        
-                        <div className="flex items-center">
+
+                        <div className="flex items-center gap-1">
                             <button
                                 type="button"
                                 onClick={(e) => {
@@ -504,16 +525,16 @@ export const RichTextEditor: React.FC<RichTextEditorProps> = ({ selectedElement,
                                         const selection = window.getSelection();
                                         const selectedText = selection?.toString().trim() || '';
                                         let savedRange: Range | null = null;
-                                        
+
                                         // Save the current selection range
                                         if (selection && selection.rangeCount > 0) {
                                             savedRange = selection.getRangeAt(0).cloneRange();
                                             console.log('Saved range:', savedRange);
                                         }
-                                        
+
                                         console.log('Selected text:', selectedText);
                                         console.log('Dispatching custom event...');
-                                        
+
                                         // Direct modal opening instead of custom event for debugging
                                         setLinkModal({
                                             isOpen: true,
@@ -532,12 +553,12 @@ export const RichTextEditor: React.FC<RichTextEditorProps> = ({ selectedElement,
                                     e.preventDefault();
                                     e.stopPropagation();
                                 }}
-                                className="w-8 h-8 flex items-center justify-center text-gray-600 hover:text-gray-900 hover:bg-gray-100 rounded transition-colors"
+                                className="p-1 bg-white border border-slate-300 rounded shadow-sm text-slate-600 hover:text-white hover:bg-blue-600 transition-colors"
                                 title="Add Link"
                             >
-                                <Link size={16} />
+                                <Link size={14} />
                             </button>
-                            
+
                             <button
                                 type="button"
                                 onClick={(e) => {
@@ -550,13 +571,13 @@ export const RichTextEditor: React.FC<RichTextEditorProps> = ({ selectedElement,
                                         editor.focus();
                                         const selection = window.getSelection();
                                         let savedRange: Range | null = null;
-                                        
+
                                         // Save the current selection range
                                         if (selection && selection.rangeCount > 0) {
                                             savedRange = selection.getRangeAt(0).cloneRange();
                                             console.log('Saved range:', savedRange);
                                         }
-                                        
+
                                         setImageGallery({
                                             isOpen: true,
                                             savedRange: savedRange
@@ -570,12 +591,12 @@ export const RichTextEditor: React.FC<RichTextEditorProps> = ({ selectedElement,
                                     e.preventDefault();
                                     e.stopPropagation();
                                 }}
-                                className="w-8 h-8 flex items-center justify-center text-gray-600 hover:text-gray-900 hover:bg-gray-100 rounded transition-colors"
+                                className="p-1 bg-white border border-slate-300 rounded shadow-sm text-slate-600 hover:text-white hover:bg-blue-600 transition-colors"
                                 title="Add Image"
                             >
-                                <Image size={16} />
+                                <Image size={14} />
                             </button>
-                            
+
                             <button
                                 type="button"
                                 onClick={(e) => {
@@ -591,10 +612,10 @@ export const RichTextEditor: React.FC<RichTextEditorProps> = ({ selectedElement,
                                     e.preventDefault();
                                     e.stopPropagation();
                                 }}
-                                className="w-8 h-8 flex items-center justify-center text-gray-600 hover:text-gray-900 hover:bg-gray-100 rounded transition-colors"
+                                className="p-1 bg-white border border-slate-300 rounded shadow-sm text-slate-600 hover:text-white hover:bg-blue-600 transition-colors"
                                 title="Clear Formatting"
                             >
-                                <FileX size={16} />
+                                <FileX size={14} />
                             </button>
                         </div>
                     </>
@@ -637,12 +658,12 @@ export const RichTextEditor: React.FC<RichTextEditorProps> = ({ selectedElement,
                 `
             }} />
 
-            {/* Render portaled toolbar */}
-            {showToolbar && typeof document !== 'undefined' && document.body && createPortal(renderPortalToolbar(), document.body)}
-            
+            {/* Toolbar - Positioned outside top-right */}
+            {renderToolbar()}
+
             {/* Link Modal */}
             {linkModal.isOpen && typeof document !== 'undefined' && document.body && createPortal(
-                <div 
+                <div
                     className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-[10000]"
                     onClick={(e) => {
                         console.log('Backdrop clicked');
@@ -671,7 +692,7 @@ export const RichTextEditor: React.FC<RichTextEditorProps> = ({ selectedElement,
                     }}
                     style={{ pointerEvents: 'auto' }}
                 >
-                    <div 
+                    <div
                         className="bg-white rounded-lg p-6 w-96 mx-4"
                         onClick={(e) => {
                             console.log('Modal content clicked - stopping propagation');
@@ -700,7 +721,7 @@ export const RichTextEditor: React.FC<RichTextEditorProps> = ({ selectedElement,
                         <h3 className="text-lg font-semibold mb-4">
                             {linkModal.isEdit ? 'Edit Link' : 'Add Link'}
                         </h3>
-                        
+
                         <div className="space-y-4">
                             <div>
                                 <label className="block text-sm font-medium text-gray-700 mb-1">
@@ -726,7 +747,7 @@ export const RichTextEditor: React.FC<RichTextEditorProps> = ({ selectedElement,
                                     placeholder="Enter link text"
                                 />
                             </div>
-                            
+
                             <div>
                                 <label className="block text-sm font-medium text-gray-700 mb-1">
                                     URL
@@ -760,7 +781,7 @@ export const RichTextEditor: React.FC<RichTextEditorProps> = ({ selectedElement,
                                 />
                             </div>
                         </div>
-                        
+
                         <div className="flex justify-between mt-6">
                             <div>
                                 {linkModal.isEdit && (
@@ -776,7 +797,7 @@ export const RichTextEditor: React.FC<RichTextEditorProps> = ({ selectedElement,
                                     </button>
                                 )}
                             </div>
-                            
+
                             <div className="space-x-3">
                                 <button
                                     onClick={(e) => {
@@ -804,7 +825,7 @@ export const RichTextEditor: React.FC<RichTextEditorProps> = ({ selectedElement,
                     </div>
                 </div>, document.body
             )}
-            
+
             {/* Image Gallery Modal */}
             {imageGallery.isOpen && (
                 <ImageGallery
@@ -814,17 +835,17 @@ export const RichTextEditor: React.FC<RichTextEditorProps> = ({ selectedElement,
                     mode="picker"
                 />
             )}
-            
+
             {/* Editor */}
             <div
                 ref={editorRef}
                 id={`rich-editor-${selectedElement.id}`}
                 contentEditable="true"
                 suppressContentEditableWarning={true}
-                className={selectedElement.type === 'heading' ? 
-                    "p-4 text-sm focus:outline-none rounded-lg border-none" : 
+                className={selectedElement.type === 'heading' ?
+                    "p-4 text-sm focus:outline-none rounded-lg border-none" :
                     "p-4 text-sm focus:outline-none rounded-lg border-none"}
-                style={{ 
+                style={{
                     lineHeight: selectedElement.lineHeight ? `${selectedElement.lineHeight}%` : '1.5',
                     outline: '0',
                     border: '0',
@@ -864,12 +885,12 @@ export const RichTextEditor: React.FC<RichTextEditorProps> = ({ selectedElement,
                         const selection = window.getSelection();
                         if (selection && selection.rangeCount > 0) {
                             const range = selection.getRangeAt(0);
-                            
+
                             if (e.key === 'Backspace' && range.collapsed) {
                                 // For backspace, check if there's an image before the cursor
                                 const container = range.startContainer;
                                 const offset = range.startOffset;
-                                
+
                                 if (container.nodeType === Node.TEXT_NODE && offset === 0) {
                                     // At beginning of text node, check previous sibling
                                     const prevSibling = container.previousSibling;
@@ -893,7 +914,7 @@ export const RichTextEditor: React.FC<RichTextEditorProps> = ({ selectedElement,
                                 // For delete key, check if there's an image after the cursor
                                 const container = range.startContainer;
                                 const offset = range.startOffset;
-                                
+
                                 if (container.nodeType === Node.TEXT_NODE && offset === container.textContent?.length) {
                                     // At end of text node, check next sibling
                                     const nextSibling = container.nextSibling;
@@ -914,7 +935,7 @@ export const RichTextEditor: React.FC<RichTextEditorProps> = ({ selectedElement,
                                     }
                                 }
                             }
-                            
+
                             // Check if selection contains any images
                             if (!range.collapsed) {
                                 const fragment = range.cloneContents();
@@ -927,25 +948,17 @@ export const RichTextEditor: React.FC<RichTextEditorProps> = ({ selectedElement,
                         }
                     }
                 }}
-                onFocus={() => setShowToolbar(true)}
-                onBlur={(e) => {
-                    console.log('Editor blurred, linkModal.isOpen:', linkModal.isOpen, 'imageGallery.isOpen:', imageGallery.isOpen);
-                    // Only hide toolbar if focus moves completely away from editor area and no modal is open
-                    if (!linkModal.isOpen && !imageGallery.isOpen && !e.currentTarget.contains(e.relatedTarget as Node)) {
-                        console.log('Hiding toolbar');
-                        setShowToolbar(false);
-                    } else {
-                        console.log('Not hiding toolbar - modal is open or focus still in editor');
-                    }
-                }}
+                onFocus={handleFocus}
+                onBlur={handleBlur}
                 onPaste={(e) => {
                     e.preventDefault();
                     const text = e.clipboardData?.getData('text/plain') || '';
                     document.execCommand('insertText', false, text);
                 }}
-                placeholder={!selectedElement.content ? 
+                data-placeholder={!selectedElement.content ?
                     (selectedElement.type === 'heading' ? "Click to edit heading..." : "Click to edit text...") : undefined}
             />
         </div>
     );
-};
+});
+RichTextEditor.displayName = 'RichTextEditor';

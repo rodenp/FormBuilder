@@ -1,15 +1,16 @@
-import React, { useState, useEffect } from 'react';
+
+import React, { useState, useEffect, useRef } from 'react';
 import { useDroppable, useDraggable } from '@dnd-kit/core';
 import { useStore } from '../store/useStore';
 import type { FormElement } from '../types';
-import { Trash2, Info, Copy, Star, EyeOff, Plus, GripVertical, Bookmark, Sun, Moon } from 'lucide-react';
+import { Trash2, Info, Copy, Star, EyeOff, Plus, GripVertical, Bookmark, Sun, Moon, Type } from 'lucide-react';
 import { clsx } from 'clsx';
-import { RichTextEditor } from './RichTextEditor';
+import { RichTextEditor, type RichTextEditorRef } from './RichTextEditor';
 import { CategoryModal } from './CategoryModal';
 
 const ColumnPlaceholder: React.FC<{ element: FormElement; index: number }> = ({ element, index }) => {
     const { setNodeRef, isOver } = useDroppable({
-        id: `column-cell-${element.id}-${index}`,
+        id: `column - cell - ${element.id} -${index}`,
         data: { type: 'columns', containerId: element.id, columnIndex: index }
     });
 
@@ -77,7 +78,7 @@ const ColumnPlaceholder: React.FC<{ element: FormElement; index: number }> = ({ 
 
 const ColumnCellDropZone: React.FC<{ containerId: string; columnIndex: number }> = ({ containerId, columnIndex }) => {
     const { setNodeRef, isOver } = useDroppable({
-        id: `column-cell-add-${containerId}`,
+        id: `column - cell - add - ${containerId}`,
         data: { type: 'container', containerId }
     });
     const { settings } = useStore();
@@ -110,7 +111,7 @@ const ColumnCellDropZone: React.FC<{ containerId: string; columnIndex: number }>
 
 const RowCellDropZone: React.FC<{ containerId: string }> = ({ containerId }) => {
     const { setNodeRef, isOver } = useDroppable({
-        id: `row-cell-add-${containerId}`,
+        id: `row - cell - add - ${containerId}`,
         data: { type: 'container', containerId }
     });
     const { settings } = useStore();
@@ -143,7 +144,7 @@ const RowCellDropZone: React.FC<{ containerId: string }> = ({ containerId }) => 
 
 const RowCellEndDropZone: React.FC<{ containerId: string; gap: number }> = ({ containerId, gap }) => {
     const { setNodeRef, isOver } = useDroppable({
-        id: `row-cell-end-${containerId}`,
+        id: `row - cell - end - ${containerId}`,
         data: { type: 'container', containerId }
     });
     const { settings } = useStore();
@@ -190,7 +191,7 @@ interface RowDropZoneProps {
 
 const ColumnDropZone: React.FC<ColumnDropZoneProps> = ({ element, index, child, cellEditMode, handleCellClick }) => {
     const { setNodeRef, isOver } = useDroppable({
-        id: `column-cell-${element.id}-${index}`,
+        id: `column - cell - ${element.id} -${index}`,
         data: {
             type: 'columns',
             containerId: element.id,
@@ -355,7 +356,7 @@ const ColumnDropZone: React.FC<ColumnDropZoneProps> = ({ element, index, child, 
 
 const RowDropZone: React.FC<RowDropZoneProps> = ({ element, index, child, cellEditMode, handleCellClick }) => {
     const { setNodeRef, isOver } = useDroppable({
-        id: `row-cell-${element.id}-${index}`,
+        id: `row - cell - ${element.id} -${index}`,
         data: {
             type: child && child.type === 'container' ? 'container' : 'rows',
             containerId: child && child.type === 'container' ? child.id : element.id,
@@ -526,7 +527,7 @@ interface SortableElementProps {
 
 const ContainerContent: React.FC<{ element: FormElement }> = ({ element }) => {
     const { setNodeRef } = useDroppable({
-        id: `container-${element.id}`,
+        id: `container - ${element.id}`,
         data: { type: element.type, containerId: element.id }
     });
     const { currentProject, settings } = useStore();
@@ -551,7 +552,7 @@ const ContainerContent: React.FC<{ element: FormElement }> = ({ element }) => {
                     <div className="flex gap-4 w-full">
                         {Array.from({ length: element.columnCount || 2 }).map((_, index) => (
                             <ColumnPlaceholder
-                                key={`placeholder-${index}`}
+                                key={`placeholder - ${index}`}
                                 element={element}
                                 index={index}
                             />
@@ -598,11 +599,11 @@ const ContainerContent: React.FC<{ element: FormElement }> = ({ element }) => {
                         if (!child) {
                             // Return droppable placeholder for removed elements in columns
                             if (element.type === 'columns') {
-                                return <ColumnPlaceholder key={`empty-${index}`} element={element} index={index} />;
+                                return <ColumnPlaceholder key={`empty - ${index}`} element={element} index={index} />;
                             } else {
                                 // For non-column containers, just maintain structure
                                 return (
-                                    <div key={`empty-${index}`} className="flex-1 min-h-[32px]">
+                                    <div key={`empty - ${index}`} className="flex-1 min-h-[32px]">
                                         {/* Empty slot to maintain structure */}
                                     </div>
                                 );
@@ -620,7 +621,7 @@ const ColumnsContent: React.FC<{ element: FormElement }> = ({ element }) => {
     const [isMobile, setIsMobile] = useState(false);
     const [cellEditMode, setCellEditMode] = useState(false);
     const { setNodeRef } = useDroppable({
-        id: `columns-${element.id}`,
+        id: `columns - ${element.id}`,
         data: { type: 'columns', containerId: element.id }
     });
     const { selectElement, updateElement, currentProject } = useStore();
@@ -726,7 +727,7 @@ const ColumnsContent: React.FC<{ element: FormElement }> = ({ element }) => {
                     // For flex layout (rows/grid) or dedicated grid, render all children directly
                     element.children?.map((child: any, index) => {
                         if (!child) {
-                            return <div key={`empty-${index}`} className="flex-1 min-h-[32px]" />;
+                            return <div key={`empty - ${index}`} className="flex-1 min-h-[32px]" />;
                         }
                         return <SortableElement key={child.id} element={child} parentId={element.id} />;
                     })
@@ -736,10 +737,10 @@ const ColumnsContent: React.FC<{ element: FormElement }> = ({ element }) => {
                         const child = element.children?.[index];
                         // If no child, create a mock placeholder element
                         const displayChild = child || {
-                            id: `placeholder-${element.id}-${index}`,
+                            id: `placeholder - ${element.id} -${index}`,
                             type: 'text' as const,
                             label: '',
-                            name: `placeholder-${index}`,
+                            name: `placeholder - ${index}`,
                             placeholder: 'Drop element here',
                             required: false,
                             width: 12,
@@ -756,7 +757,7 @@ const ColumnsContent: React.FC<{ element: FormElement }> = ({ element }) => {
                                 style={{
                                     backgroundColor: element.columnBackgrounds?.[index] || element.backgroundColor || 'transparent'
                                 }}
-                                data-debug-legacy-cell={`index-${index}-bg-${element.columnBackgrounds?.[index] || 'none'}`}
+                                data-debug-legacy-cell={`index - ${index} -bg - ${element.columnBackgrounds?.[index] || 'none'}`}
                             >
                                 {cellEditMode && (
                                     <div className="absolute top-1 right-1 bg-orange-600 text-white text-xs px-2 py-1 rounded font-medium z-40">
@@ -798,7 +799,7 @@ const ColumnsContent: React.FC<{ element: FormElement }> = ({ element }) => {
 const RowsContent: React.FC<{ element: FormElement }> = ({ element }) => {
     const [cellEditMode, setCellEditMode] = useState(false);
     const { setNodeRef } = useDroppable({
-        id: `rows-${element.id}`,
+        id: `rows - ${element.id}`,
         data: { type: 'rows', containerId: element.id }
     });
     const { selectElement, updateElement, currentProject } = useStore();
@@ -888,6 +889,9 @@ const SortableElement: React.FC<SortableElementProps> = ({ element, parentId }) 
     const { selectElement, selectedElementId, removeElement, duplicateElement, updateElement, elements, currentProject, saveElementAsBlock, isElementSavedAsBlock } = useStore();
 
     const [showCategoryModal, setShowCategoryModal] = useState(false);
+    const [isEditingText, setIsEditingText] = useState(false);
+    const editorRef = useRef<RichTextEditorRef>(null);
+    const isTextElement = ['text-block', 'rich-text', 'heading'].includes(element.type);
 
     // Add draggable functionality
     const { attributes, listeners, setNodeRef: setDragNodeRef, isDragging } = useDraggable({
@@ -901,7 +905,7 @@ const SortableElement: React.FC<SortableElementProps> = ({ element, parentId }) 
 
     // Add droppable functionality for "insert before" drop zones
     const { setNodeRef: setDropBeforeNodeRef, isOver: isOverBefore } = useDroppable({
-        id: `drop-before-${element.id}`,
+        id: `drop - before - ${element.id}`,
         data: {
             type: element.type,
             element: element,
@@ -912,7 +916,7 @@ const SortableElement: React.FC<SortableElementProps> = ({ element, parentId }) 
 
     // Add droppable functionality for "insert after" drop zones  
     const { setNodeRef: setDropAfterNodeRef, isOver: isOverAfter } = useDroppable({
-        id: `drop-after-${element.id}`,
+        id: `drop - after - ${element.id}`,
         data: {
             type: element.type,
             element: element,
@@ -1100,7 +1104,7 @@ const SortableElement: React.FC<SortableElementProps> = ({ element, parentId }) 
 
         // Prevent text selection
         document.body.style.userSelect = 'none';
-        document.body.style.cursor = `${direction}-resize`;
+        document.body.style.cursor = `${direction} -resize`;
     };
 
 
@@ -1124,7 +1128,7 @@ const SortableElement: React.FC<SortableElementProps> = ({ element, parentId }) 
                 !isSelected || !['rich-text', 'text-block', 'heading'].includes(element.type) ? "cursor-pointer" : "cursor-auto",
                 isNested && !['columns', 'menu'].includes(parentInfo?.parent?.type || '') && "w-full", // Full width inside any container but not columns or menu
                 "opacity-100",
-                isSelected && "z-10",
+                isSelected && "z-[999]",
                 isResizing && "z-50 select-none",
                 parentId && "z-20", // Higher z-index for nested elements
                 isDragging && "opacity-50",
@@ -1201,24 +1205,41 @@ const SortableElement: React.FC<SortableElementProps> = ({ element, parentId }) 
             </div>
 
 
-            {/* Selected Element Toolbar - Only show for selected element */}
-            {isSelected && (
+            {/* Selected Element Toolbar - Only show for selected element when NOT editing text */}
+            {isSelected && !isEditingText && (
                 <div
-                    className="absolute top-1 left-1 opacity-100 z-[9999] flex gap-1 bg-white rounded-md shadow-lg p-1 border border-slate-200"
+                    className="absolute bottom-full left-0 mb-0 opacity-100 z-[9999] flex gap-1 bg-white rounded-md shadow-lg p-1 border border-slate-200"
                     style={{ pointerEvents: 'auto' }}
                 >
                     <div
-                        className="p-1 bg-white border border-slate-300 rounded shadow-sm text-slate-600 hover:text-blue-600 hover:bg-blue-50 cursor-grab active:cursor-grabbing"
+                        className="p-1 bg-white border border-slate-300 rounded shadow-sm text-slate-600 hover:text-white hover:bg-blue-600 cursor-grab active:cursor-grabbing"
                         title="Drag to move"
                     >
                         <GripVertical size={12} />
                     </div>
+
+                    {/* Text Edit Trigger */}
+                    {isTextElement && (
+                        <button
+                            onClick={(e) => {
+                                e.stopPropagation();
+                                if (editorRef.current) {
+                                    editorRef.current.focus();
+                                    setIsEditingText(true);
+                                }
+                            }}
+                            className="p-1 bg-white border border-slate-300 rounded shadow-sm text-slate-600 hover:text-white hover:bg-blue-600"
+                            title="Edit Text"
+                        >
+                            <Type size={12} />
+                        </button>
+                    )}
                     <button
                         onClick={(e) => {
                             e.stopPropagation();
                             duplicateElement(element.id);
                         }}
-                        className="p-1 bg-white border border-slate-300 rounded shadow-sm text-slate-600 hover:text-green-600 hover:bg-green-50"
+                        className="p-1 bg-white border border-slate-300 rounded shadow-sm text-slate-600 hover:text-white hover:bg-green-600"
                         title="Duplicate"
                     >
                         <Copy size={12} />
@@ -1233,8 +1254,8 @@ const SortableElement: React.FC<SortableElementProps> = ({ element, parentId }) 
                             className={clsx(
                                 "p-1 bg-white border border-slate-300 rounded shadow-sm transition-colors",
                                 isAlreadySavedAsBlock
-                                    ? "text-purple-600 bg-purple-50 border-purple-200 hover:bg-purple-100"
-                                    : "text-slate-600 hover:text-purple-600 hover:bg-purple-50"
+                                    ? "text-white bg-purple-600 border-purple-600 hover:bg-purple-700"
+                                    : "text-slate-600 hover:text-white hover:bg-purple-600"
                             )}
                             title={isAlreadySavedAsBlock ? "Component saved as block" : "Save as reusable block"}
                         >
@@ -1246,7 +1267,7 @@ const SortableElement: React.FC<SortableElementProps> = ({ element, parentId }) 
                             e.stopPropagation();
                             removeElement(element.id);
                         }}
-                        className="p-1 bg-white border border-slate-300 rounded shadow-sm text-slate-600 hover:text-red-600 hover:bg-red-50"
+                        className="p-1 bg-white border border-slate-300 rounded shadow-sm text-slate-600 hover:text-white hover:bg-red-600"
                         title="Delete"
                     >
                         <Trash2 size={12} />
@@ -1453,7 +1474,7 @@ const SortableElement: React.FC<SortableElementProps> = ({ element, parentId }) 
                         }}>
                             {(element.options || [{ label: 'Option 1', value: 'option1' }, { label: 'Option 2', value: 'option2' }]).map((opt, idx) => (
                                 <div key={idx} className="flex items-center">
-                                    <input type="radio" name={`radio-${element.id}`} className="h-4 w-4 text-brand-600 border-slate-300 focus:ring-brand-500" disabled />
+                                    <input type="radio" name={`radio - ${element.id}`} className="h-4 w-4 text-brand-600 border-slate-300 focus:ring-brand-500" disabled />
                                     <span className="ml-3 text-sm text-slate-600">{opt.label}</span>
                                 </div>
                             ))}
@@ -1588,8 +1609,11 @@ const SortableElement: React.FC<SortableElementProps> = ({ element, parentId }) 
                                 backgroundColor: element.backgroundColor || 'transparent'
                             }}>
                                 <RichTextEditor
+                                    ref={editorRef}
                                     selectedElement={element}
                                     onContentChange={(content) => updateElement(element.id, { content })}
+                                    onEditingStart={() => setIsEditingText(true)}
+                                    onEditingEnd={() => setIsEditingText(false)}
                                 />
                             </div>
                         ) : (
@@ -1635,8 +1659,11 @@ const SortableElement: React.FC<SortableElementProps> = ({ element, parentId }) 
                                 paddingLeft: element.paddingLeft !== undefined ? `${element.paddingLeft * 0.25}rem` : '0'
                             }}>
                                 <RichTextEditor
+                                    ref={editorRef}
                                     selectedElement={element}
                                     onContentChange={(content) => updateElement(element.id, { content })}
+                                    onEditingStart={() => setIsEditingText(true)}
+                                    onEditingEnd={() => setIsEditingText(false)}
                                 />
                             </div>
                         ) : (
@@ -1682,7 +1709,7 @@ const SortableElement: React.FC<SortableElementProps> = ({ element, parentId }) 
                     ) : element.type === 'menu' ? (
                         (() => {
                             const { setNodeRef } = useDroppable({
-                                id: `menu-${element.id}`,
+                                id: `menu - ${element.id}`,
                                 data: { type: 'menu', containerId: element.id }
                             });
 
