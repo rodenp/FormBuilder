@@ -133,7 +133,7 @@ export interface FormElement {
     cardImage?: string;
     cardLink?: string;
     // For Menu
-    menuItems?: { label: string; href: string; target?: '_blank' | '_self' }[];
+    menuItems?: { id: string; label: string; href: string; target?: '_blank' | '_self' }[];
     menuLayout?: 'horizontal' | 'vertical';
     // For Social
     socialLinks?: { platform: string; url: string; icon?: string }[];

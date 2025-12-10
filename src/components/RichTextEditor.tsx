@@ -13,13 +13,15 @@ interface RichTextEditorProps {
     onContentChange: (content: string) => void;
     onEditingStart?: () => void;
     onEditingEnd?: () => void;
+    className?: string;
 }
 
 export const RichTextEditor = React.forwardRef<RichTextEditorRef, RichTextEditorProps>(({
     selectedElement,
     onContentChange,
     onEditingStart,
-    onEditingEnd
+    onEditingEnd,
+    className
 }, ref) => {
     const editorRef = useRef<HTMLDivElement>(null);
     const [lastElementId, setLastElementId] = useState<string>('');
@@ -842,11 +844,11 @@ export const RichTextEditor = React.forwardRef<RichTextEditorRef, RichTextEditor
                 id={`rich-editor-${selectedElement.id}`}
                 contentEditable="true"
                 suppressContentEditableWarning={true}
-                className={selectedElement.type === 'heading' ?
-                    "p-4 text-sm focus:outline-none rounded-lg border-none" :
-                    "p-4 text-sm focus:outline-none rounded-lg border-none"}
+                className={(selectedElement.type === 'heading' ?
+                    "focus:outline-none border-none " :
+                    "focus:outline-none border-none ") + (className || "")}
                 style={{
-                    lineHeight: selectedElement.lineHeight ? `${selectedElement.lineHeight}%` : '1.5',
+                    lineHeight: selectedElement.lineHeight ? `${selectedElement.lineHeight}%` : undefined,
                     outline: '0',
                     border: '0',
                     textAlign: selectedElement.textAlign || 'left',
@@ -855,7 +857,6 @@ export const RichTextEditor = React.forwardRef<RichTextEditorRef, RichTextEditor
                     fontWeight: selectedElement.fontWeight || undefined,
                     color: selectedElement.textColor || undefined,
                     letterSpacing: selectedElement.letterSpacing ? `${selectedElement.letterSpacing}px` : undefined,
-                    backgroundColor: selectedElement.backgroundColor || 'transparent',
                     WebkitUserSelect: 'text',
                     MozUserSelect: 'text',
                     msUserSelect: 'text',

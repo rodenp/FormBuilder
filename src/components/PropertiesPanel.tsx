@@ -2007,7 +2007,7 @@ export default MyForm;`;
                             ))}
                             <button
                                 onClick={() => {
-                                    const newItems = [...(selectedElement.menuItems || []), { label: 'New Menu Item', href: '#' }];
+                                    const newItems = [...(selectedElement.menuItems || []), { id: uuidv4(), label: 'New Menu Item', href: '#' }];
                                     updateElement(selectedElement.id, { menuItems: newItems });
                                 }}
                                 className="w-full flex items-center justify-center gap-2 p-2 mt-2 text-sm font-medium text-brand-600 bg-brand-50 hover:bg-brand-100 rounded-lg transition-colors border border-brand-200"

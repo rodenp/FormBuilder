@@ -154,13 +154,13 @@ const RowCellEndDropZone: React.FC<{ containerId: string; gap: number }> = ({ co
         <div
             ref={setNodeRef}
             className={clsx(
-                "w-full min-h-[8px] flex items-center justify-center text-xs transition-all",
+                "w-full flex items-center justify-center text-xs transition-all",
                 isDark ? "text-gray-500" : "text-slate-400",
                 isOver
                     ? "bg-blue-100 min-h-[24px]"
-                    : "opacity-0 hover:opacity-100"
+                    : "h-0 overflow-hidden opacity-0 hover:opacity-100 hover:h-2"
             )}
-            style={{ marginTop: `${gap * 0.25}rem` }}
+            style={{ marginTop: isOver ? `${gap * 0.25}rem` : 0 }}
         >
             {isOver ? (
                 <div className="bg-blue-500 text-white text-xs px-2 py-1 rounded font-medium shadow-lg">
@@ -259,7 +259,8 @@ const ColumnDropZone: React.FC<ColumnDropZoneProps> = ({ element, index, child, 
             ref={setNodeRef}
             key={index}
             className={clsx(
-                "relative flex-1 min-h-[120px] transition-all duration-200",
+                "relative flex-1 transition-all duration-200",
+                (!child || !child.children || child.children.length === 0) && "min-h-[50px]",
                 cellEditMode && "border-orange-400 bg-orange-50 hover:border-orange-600 hover:bg-orange-100 cursor-pointer border-2 border-dashed",
                 isOver && !cellEditMode && (isFormProject ? "border-4 border-solid border-blue-500 bg-blue-100 rounded-lg shadow-lg transform scale-105" : "bg-blue-100 rounded-lg shadow-lg transform scale-105"),
                 !cellEditMode && !isOver && isDescendantOfSelected && "border-2 border-blue-400 border-dashed rounded-lg hover:border-blue-500",
@@ -278,18 +279,20 @@ const ColumnDropZone: React.FC<ColumnDropZoneProps> = ({ element, index, child, 
             )}
 
             {/* Drop indicator */}
-            {isOver && !cellEditMode && (
-                <div className="absolute inset-0 flex items-center justify-center bg-blue-500/20 backdrop-blur-sm">
-                    <div className="bg-blue-500 text-white text-lg px-4 py-2 rounded-lg font-bold shadow-lg border-2 border-blue-300 animate-pulse">
-                        Drop into Column {index + 1}
+            {
+                isOver && !cellEditMode && (
+                    <div className="absolute inset-0 flex items-center justify-center bg-blue-500/20 backdrop-blur-sm">
+                        <div className="bg-blue-500 text-white text-lg px-4 py-2 rounded-lg font-bold shadow-lg border-2 border-blue-300 animate-pulse">
+                            Drop into Column {index + 1}
+                        </div>
                     </div>
-                </div>
-            )}
+                )
+            }
 
             {/* Content area */}
             <div
                 className={clsx(
-                    "relative w-full h-full p-2 transition-all duration-200",
+                    "relative w-full transition-all duration-200",
                     child && child.type === 'container' && isDescendantOfSelected && "border border-blue-400 border-dashed rounded-lg"
                 )}
                 style={{
@@ -301,9 +304,13 @@ const ColumnDropZone: React.FC<ColumnDropZoneProps> = ({ element, index, child, 
                     justifyContent: child && child.type === 'container' ? (child.justifyContent || 'flex-start') : 'flex-start',
                     alignItems: child && child.type === 'container' ? (child.alignItems || 'flex-start') : 'flex-start',
                     alignContent: child && child.type === 'container' ? (child.alignContent || 'flex-start') : 'flex-start',
-                    gap: child && child.type === 'container' ? `${(child.gap ?? 16) * 0.25}rem` : '1rem',
+                    gap: child && child.type === 'container' ? `${(child.gap ?? 0) * 0.25}rem` : '0rem',
                     gridTemplateColumns: child && child.type === 'container' && child.display === 'grid' ?
-                        `repeat(${child.gridColumns || 3}, auto)` : undefined
+                        `repeat(${child.gridColumns || 3}, auto)` : undefined,
+                    paddingTop: child?.paddingTop !== undefined ? `${child.paddingTop * 0.25}rem` : undefined,
+                    paddingRight: child?.paddingRight !== undefined ? `${child.paddingRight * 0.25}rem` : undefined,
+                    paddingBottom: child?.paddingBottom !== undefined ? `${child.paddingBottom * 0.25}rem` : undefined,
+                    paddingLeft: child?.paddingLeft !== undefined ? `${child.paddingLeft * 0.25}rem` : undefined
                 }}
             >
                 {child && child.type === 'container' ? (
@@ -350,7 +357,7 @@ const ColumnDropZone: React.FC<ColumnDropZoneProps> = ({ element, index, child, 
                     />
                 )}
             </div>
-        </div>
+        </div >
     );
 };
 
@@ -423,7 +430,8 @@ const RowDropZone: React.FC<RowDropZoneProps> = ({ element, index, child, cellEd
             ref={setNodeRef}
             key={index}
             className={clsx(
-                "relative min-h-[120px] w-full transition-all duration-200",
+                "relative w-full transition-all duration-200",
+                (!child || !child.children || child.children.length === 0) && "min-h-[50px]",
                 cellEditMode && "border-orange-400 hover:border-orange-600 cursor-pointer border-2 border-dashed",
                 cellEditMode && !element.rowBackgrounds?.[index] && "bg-orange-50 hover:bg-orange-100",
                 isOver && !cellEditMode && (isFormProject ? "border-4 border-solid border-blue-500 rounded-lg shadow-lg transform scale-105" : "rounded-lg shadow-lg transform scale-105"),
@@ -454,7 +462,7 @@ const RowDropZone: React.FC<RowDropZoneProps> = ({ element, index, child, cellEd
             {/* Content area */}
             <div
                 className={clsx(
-                    "relative w-full h-full p-2 transition-all duration-200",
+                    "relative w-full transition-all duration-200",
                     child && child.type === 'container' && isDescendantOfSelected && "border border-blue-400 border-dashed bg-blue-50/20 rounded-lg"
                 )}
                 style={{
@@ -465,9 +473,13 @@ const RowDropZone: React.FC<RowDropZoneProps> = ({ element, index, child, cellEd
                     justifyContent: child && child.type === 'container' ? (child.justifyContent || 'flex-start') : 'flex-start',
                     alignItems: child && child.type === 'container' ? (child.alignItems || 'flex-start') : 'flex-start',
                     alignContent: child && child.type === 'container' ? (child.alignContent || 'flex-start') : 'flex-start',
-                    gap: child && child.type === 'container' ? `${(element.gap ?? 0) * 0.25}rem` : '0rem',
+                    gap: child && child.type === 'container' ? `${(child.gap ?? 0) * 0.25}rem` : '0rem',
                     gridTemplateColumns: child && child.type === 'container' && child.display === 'grid' ?
-                        `repeat(${child.gridColumns || 3}, auto)` : undefined
+                        `repeat(${child.gridColumns || 3}, auto)` : undefined,
+                    paddingTop: child?.paddingTop !== undefined ? `${child.paddingTop * 0.25}rem` : undefined,
+                    paddingRight: child?.paddingRight !== undefined ? `${child.paddingRight * 0.25}rem` : undefined,
+                    paddingBottom: child?.paddingBottom !== undefined ? `${child.paddingBottom * 0.25}rem` : undefined,
+                    paddingLeft: child?.paddingLeft !== undefined ? `${child.paddingLeft * 0.25}rem` : undefined
                 }}
             >
                 {child && child.type === 'container' ? (
@@ -592,7 +604,7 @@ const ContainerContent: React.FC<{ element: FormElement }> = ({ element }) => {
                         minHeight: (element.display === 'flex' && element.flexDirection === 'column') ||
                             element.type === 'rows' ||
                             (element.display === 'flex' && !element.flexDirection && element.type !== 'menu' && element.type !== 'columns') ?
-                            '120px' : undefined
+                            undefined : undefined
                     }}
                 >
                     {element.children.map((child, index) => {
@@ -846,7 +858,15 @@ const RowsContent: React.FC<{ element: FormElement }> = ({ element }) => {
                 isFormProject && "border border-slate-200"
             )}
             style={{
-                backgroundColor: element.backgroundColor || 'transparent'
+                backgroundColor: element.backgroundColor || 'transparent',
+                paddingTop: element.paddingTop !== undefined ? `${element.paddingTop * 0.25}rem` : undefined,
+                paddingRight: element.paddingRight !== undefined ? `${element.paddingRight * 0.25}rem` : undefined,
+                paddingBottom: element.paddingBottom !== undefined ? `${element.paddingBottom * 0.25}rem` : undefined,
+                paddingLeft: element.paddingLeft !== undefined ? `${element.paddingLeft * 0.25}rem` : undefined,
+                marginTop: element.marginTop !== undefined ? `${element.marginTop * 0.25}rem` : undefined,
+                marginRight: element.marginRight !== undefined ? `${element.marginRight * 0.25}rem` : undefined,
+                marginBottom: element.marginBottom !== undefined ? `${element.marginBottom * 0.25}rem` : undefined,
+                marginLeft: element.marginLeft !== undefined ? `${element.marginLeft * 0.25}rem` : undefined
             }}
         >
             {cellEditMode && (
@@ -1134,8 +1154,8 @@ const SortableElement: React.FC<SortableElementProps> = ({ element, parentId }) 
                 isDragging && "opacity-50",
                 // Special highlighting for column cells
                 element.type === 'container' && element.name?.startsWith('column_') && "ring-2 ring-purple-200 ring-opacity-50",
-                // Default transparent border to prevent layout shift on hover
-                !isSelected && !isDescendantOfSelected && "border border-transparent",
+                // Default transparent border to prevent layout shift on hover (maintained when selected to prevent jump)
+                !isDescendantOfSelected && "border border-transparent",
                 // Show border when element is descendant of selected container
                 isDescendantOfSelected && !isSelected && "border border-blue-400 border-dashed rounded-lg",
                 // Hover highlighting - dashed for nested components
@@ -1397,15 +1417,15 @@ const SortableElement: React.FC<SortableElementProps> = ({ element, parentId }) 
                     )}
                     style={{
                         // Apply padding to regular form elements (not containers/columns/buttons) only if padding values are set
-                        paddingTop: (!['container', 'columns', 'rows', 'button', 'textarea', 'select', 'checkbox', 'radio'].includes(element.type)) ? `${(element.paddingTop ?? 0) * 0.25}rem` : undefined,
-                        paddingRight: (!['container', 'columns', 'rows', 'button', 'textarea', 'select', 'checkbox', 'radio'].includes(element.type)) ? `${(element.paddingRight ?? 0) * 0.25}rem` : undefined,
-                        paddingBottom: (!['container', 'columns', 'rows', 'button', 'textarea', 'select', 'checkbox', 'radio'].includes(element.type)) ? `${(element.paddingBottom ?? 0) * 0.25}rem` : undefined,
-                        paddingLeft: (!['container', 'columns', 'rows', 'button', 'textarea', 'select', 'checkbox', 'radio'].includes(element.type)) ? `${(element.paddingLeft ?? 0) * 0.25}rem` : undefined
+                        paddingTop: (!['container', 'columns', 'rows', 'button', 'textarea', 'select', 'checkbox', 'radio', 'text-block', 'heading', 'rich-text'].includes(element.type)) ? `${(element.paddingTop ?? 0)}px` : undefined,
+                        paddingRight: (!['container', 'columns', 'rows', 'button', 'textarea', 'select', 'checkbox', 'radio', 'text-block', 'heading', 'rich-text'].includes(element.type)) ? `${(element.paddingRight ?? 0)}px` : undefined,
+                        paddingBottom: (!['container', 'columns', 'rows', 'button', 'textarea', 'select', 'checkbox', 'radio', 'text-block', 'heading', 'rich-text'].includes(element.type)) ? `${(element.paddingBottom ?? 0)}px` : undefined,
+                        paddingLeft: (!['container', 'columns', 'rows', 'button', 'textarea', 'select', 'checkbox', 'radio', 'text-block', 'heading', 'rich-text'].includes(element.type)) ? `${(element.paddingLeft ?? 0)}px` : undefined
                     }}
                     data-padding-debug={JSON.stringify({
                         type: element.type,
                         paddingTop: element.paddingTop,
-                        appliedPaddingTop: (!['container', 'columns', 'rows', 'button'].includes(element.type)) ? `${(element.paddingTop ?? 0) * 0.25}rem` : 'excluded'
+                        appliedPaddingTop: (!['container', 'columns', 'rows', 'button'].includes(element.type)) ? `${(element.paddingTop ?? 0)}px` : 'excluded'
                     })}
                 >
                     {element.type === 'textarea' ? (
@@ -1416,10 +1436,10 @@ const SortableElement: React.FC<SortableElementProps> = ({ element, parentId }) 
                             )}
                             style={{
                                 backgroundColor: element.backgroundColor,
-                                paddingTop: `${(element.paddingTop ?? 3) * 0.25}rem`,
-                                paddingRight: `${(element.paddingRight ?? 3) * 0.25}rem`,
-                                paddingBottom: `${(element.paddingBottom ?? 3) * 0.25}rem`,
-                                paddingLeft: `${(element.paddingLeft ?? 3) * 0.25}rem`
+                                paddingTop: `${(element.paddingTop ?? 12)}px`,
+                                paddingRight: `${(element.paddingRight ?? 12)}px`,
+                                paddingBottom: `${(element.paddingBottom ?? 12)}px`,
+                                paddingLeft: `${(element.paddingLeft ?? 12)}px`
                             }}
                             placeholder={element.placeholder}
                             rows={3}
@@ -1432,10 +1452,10 @@ const SortableElement: React.FC<SortableElementProps> = ({ element, parentId }) 
                                 isFormProject && "border border-slate-200"
                             )} style={{
                                 backgroundColor: element.backgroundColor,
-                                paddingTop: element.paddingTop !== undefined ? `${element.paddingTop * 0.25}rem` : '0.75rem',
-                                paddingRight: element.paddingRight !== undefined ? `${element.paddingRight * 0.25}rem` : '0.75rem',
-                                paddingBottom: element.paddingBottom !== undefined ? `${element.paddingBottom * 0.25}rem` : '0.75rem',
-                                paddingLeft: element.paddingLeft !== undefined ? `${element.paddingLeft * 0.25}rem` : '0.75rem'
+                                paddingTop: element.paddingTop !== undefined ? `${element.paddingTop}px` : '12px',
+                                paddingRight: element.paddingRight !== undefined ? `${element.paddingRight}px` : '12px',
+                                paddingBottom: element.paddingBottom !== undefined ? `${element.paddingBottom}px` : '12px',
+                                paddingLeft: element.paddingLeft !== undefined ? `${element.paddingLeft}px` : '12px'
                             }} disabled>
                                 {element.options?.map((opt, idx) => (
                                     <option key={idx}>{opt.label}</option>
@@ -1452,11 +1472,11 @@ const SortableElement: React.FC<SortableElementProps> = ({ element, parentId }) 
                             "flex items-center rounded-lg",
                             isFormProject && "border border-slate-200"
                         )} style={{
-                            backgroundColor: element.backgroundColor || '#f8fafc',
-                            paddingTop: element.paddingTop !== undefined ? `${element.paddingTop * 0.25}rem` : '0.75rem',
-                            paddingRight: element.paddingRight !== undefined ? `${element.paddingRight * 0.25}rem` : '0.75rem',
-                            paddingBottom: element.paddingBottom !== undefined ? `${element.paddingBottom * 0.25}rem` : '0.75rem',
-                            paddingLeft: element.paddingLeft !== undefined ? `${element.paddingLeft * 0.25}rem` : '0.75rem'
+                            backgroundColor: element.backgroundColor, // Remove default #f8fafc to allow transparent/dark mode
+                            paddingTop: element.paddingTop !== undefined ? `${element.paddingTop}px` : undefined,
+                            paddingRight: element.paddingRight !== undefined ? `${element.paddingRight}px` : undefined,
+                            paddingBottom: element.paddingBottom !== undefined ? `${element.paddingBottom}px` : undefined,
+                            paddingLeft: element.paddingLeft !== undefined ? `${element.paddingLeft}px` : undefined
                         }}>
                             <input type="checkbox" className="h-4 w-4 text-brand-600 rounded border-slate-300" disabled />
                             <span className="ml-3 text-sm text-slate-600">{element.placeholder || 'Checkbox option'}</span>
@@ -1466,11 +1486,11 @@ const SortableElement: React.FC<SortableElementProps> = ({ element, parentId }) 
                             "space-y-2 rounded-lg",
                             isFormProject && "border border-slate-200"
                         )} style={{
-                            backgroundColor: element.backgroundColor || '#f8fafc',
-                            paddingTop: element.paddingTop !== undefined ? `${element.paddingTop * 0.25}rem` : '0.75rem',
-                            paddingRight: element.paddingRight !== undefined ? `${element.paddingRight * 0.25}rem` : '0.75rem',
-                            paddingBottom: element.paddingBottom !== undefined ? `${element.paddingBottom * 0.25}rem` : '0.75rem',
-                            paddingLeft: element.paddingLeft !== undefined ? `${element.paddingLeft * 0.25}rem` : '0.75rem'
+                            backgroundColor: element.backgroundColor,
+                            paddingTop: element.paddingTop !== undefined ? `${element.paddingTop}px` : undefined,
+                            paddingRight: element.paddingRight !== undefined ? `${element.paddingRight}px` : undefined,
+                            paddingBottom: element.paddingBottom !== undefined ? `${element.paddingBottom}px` : undefined,
+                            paddingLeft: element.paddingLeft !== undefined ? `${element.paddingLeft}px` : undefined
                         }}>
                             {(element.options || [{ label: 'Option 1', value: 'option1' }, { label: 'Option 2', value: 'option2' }]).map((opt, idx) => (
                                 <div key={idx} className="flex items-center">
@@ -1498,10 +1518,10 @@ const SortableElement: React.FC<SortableElementProps> = ({ element, parentId }) 
                             "flex items-center bg-slate-100 rounded-lg opacity-60",
                             isFormProject && "border border-slate-300"
                         )} style={{
-                            paddingTop: element.paddingTop !== undefined ? `${element.paddingTop * 0.25}rem` : '0.75rem',
-                            paddingRight: element.paddingRight !== undefined ? `${element.paddingRight * 0.25}rem` : '0.75rem',
-                            paddingBottom: element.paddingBottom !== undefined ? `${element.paddingBottom * 0.25}rem` : '0.75rem',
-                            paddingLeft: element.paddingLeft !== undefined ? `${element.paddingLeft * 0.25}rem` : '0.75rem'
+                            paddingTop: element.paddingTop !== undefined ? `${element.paddingTop}px` : '12px',
+                            paddingRight: element.paddingRight !== undefined ? `${element.paddingRight}px` : '12px',
+                            paddingBottom: element.paddingBottom !== undefined ? `${element.paddingBottom}px` : '12px',
+                            paddingLeft: element.paddingLeft !== undefined ? `${element.paddingLeft}px` : '12px'
                         }}>
                             <div className="flex items-center gap-2 text-slate-500">
                                 <EyeOff size={16} />
@@ -1509,36 +1529,36 @@ const SortableElement: React.FC<SortableElementProps> = ({ element, parentId }) 
                             </div>
                         </div>
                     ) : element.type === 'rich-text' ? (
-                        isSelected ? (
-                            <div className={clsx(
-                                "relative rounded-lg",
-                                isFormProject && "border border-blue-500 shadow-lg"
-                            )} style={{
+                        <div
+                            className={clsx(
+                                "rounded-lg",
+                                isFormProject && "border border-slate-200"
+                            )}
+                            style={{
                                 backgroundColor: element.backgroundColor || 'transparent',
-                                paddingTop: element.paddingTop !== undefined ? `${element.paddingTop * 0.25}rem` : '0',
-                                paddingRight: element.paddingRight !== undefined ? `${element.paddingRight * 0.25}rem` : '0',
-                                paddingBottom: element.paddingBottom !== undefined ? `${element.paddingBottom * 0.25}rem` : '0',
-                                paddingLeft: element.paddingLeft !== undefined ? `${element.paddingLeft * 0.25}rem` : '0'
-                            }}>
+                                paddingTop: element.paddingTop !== undefined ? `${element.paddingTop}px` : '0',
+                                paddingRight: element.paddingRight !== undefined ? `${element.paddingRight}px` : '0',
+                                paddingBottom: element.paddingBottom !== undefined ? `${element.paddingBottom}px` : '0',
+                                paddingLeft: element.paddingLeft !== undefined ? `${element.paddingLeft}px` : '0'
+                            }}
+                        >
+                            {isSelected ? (
                                 <RichTextEditor
                                     selectedElement={element}
                                     onContentChange={(content) => updateElement(element.id, { content })}
+                                    className={clsx(
+                                        "p-0 m-0 border-none", // No internal padding/margin/border
+                                        !element.textColor && "text-slate-600",
+                                        element.textAlign === 'left' && "text-left",
+                                        element.textAlign === 'center' && "text-center",
+                                        element.textAlign === 'right' && "text-right",
+                                        element.textAlign === 'justify' && "text-justify",
+                                        !element.textAlign && "text-left"
+                                    )}
                                 />
-                            </div>
-                        ) : (
-                            <div className={clsx(
-                                "rounded-lg cursor-pointer",
-                                isFormProject && "border border-slate-200 hover:border-slate-300"
-                            )} style={{
-                                backgroundColor: element.backgroundColor || 'transparent',
-                                paddingTop: element.paddingTop !== undefined ? `${element.paddingTop * 0.25}rem` : '0',
-                                paddingRight: element.paddingRight !== undefined ? `${element.paddingRight * 0.25}rem` : '0',
-                                paddingBottom: element.paddingBottom !== undefined ? `${element.paddingBottom * 0.25}rem` : '0',
-                                paddingLeft: element.paddingLeft !== undefined ? `${element.paddingLeft * 0.25}rem` : '0'
-                            }}>
+                            ) : (
                                 <div
                                     className={clsx(
-                                        "prose prose-sm max-w-none",
                                         !element.textColor && "text-slate-600",
                                         element.textAlign === 'left' && "text-left",
                                         element.textAlign === 'center' && "text-center",
@@ -1552,12 +1572,13 @@ const SortableElement: React.FC<SortableElementProps> = ({ element, parentId }) 
                                         fontWeight: element.fontWeight || undefined,
                                         color: element.textColor || undefined,
                                         lineHeight: element.lineHeight ? `${element.lineHeight}%` : undefined,
-                                        letterSpacing: element.letterSpacing ? `${element.letterSpacing}px` : undefined
+                                        letterSpacing: element.letterSpacing ? `${element.letterSpacing}px` : undefined,
+                                        margin: 0 // Ensure no margins
                                     }}
                                     dangerouslySetInnerHTML={{ __html: element.content || '<p>Click to edit rich text...</p>' }}
                                 />
-                            </div>
-                        )
+                            )}
+                        </div>
                     ) : element.type === 'button' ? (
                         <div className="relative">
                             <button
@@ -1577,14 +1598,14 @@ const SortableElement: React.FC<SortableElementProps> = ({ element, parentId }) 
                                 style={{
                                     backgroundColor: element.backgroundColor && element.buttonStyle !== 'text' && element.buttonStyle !== 'outline' && element.buttonStyle !== 'link' ?
                                         element.backgroundColor : undefined,
-                                    paddingTop: element.paddingTop !== undefined ? `${element.paddingTop * 0.25}rem` : undefined,
-                                    paddingRight: element.paddingRight !== undefined ? `${element.paddingRight * 0.25}rem` : undefined,
-                                    paddingBottom: element.paddingBottom !== undefined ? `${element.paddingBottom * 0.25}rem` : undefined,
-                                    paddingLeft: element.paddingLeft !== undefined ? `${element.paddingLeft * 0.25}rem` : undefined,
-                                    marginTop: element.marginTop !== undefined ? `${element.marginTop * 0.25}rem` : undefined,
-                                    marginRight: element.marginRight !== undefined ? `${element.marginRight * 0.25}rem` : undefined,
-                                    marginBottom: element.marginBottom !== undefined ? `${element.marginBottom * 0.25}rem` : undefined,
-                                    marginLeft: element.marginLeft !== undefined ? `${element.marginLeft * 0.25}rem` : undefined,
+                                    paddingTop: element.paddingTop !== undefined ? `${element.paddingTop}px` : undefined,
+                                    paddingRight: element.paddingRight !== undefined ? `${element.paddingRight}px` : undefined,
+                                    paddingBottom: element.paddingBottom !== undefined ? `${element.paddingBottom}px` : undefined,
+                                    paddingLeft: element.paddingLeft !== undefined ? `${element.paddingLeft}px` : undefined,
+                                    marginTop: element.marginTop !== undefined ? `${element.marginTop}px` : undefined,
+                                    marginRight: element.marginRight !== undefined ? `${element.marginRight}px` : undefined,
+                                    marginBottom: element.marginBottom !== undefined ? `${element.marginBottom}px` : undefined,
+                                    marginLeft: element.marginLeft !== undefined ? `${element.marginLeft}px` : undefined,
                                     boxSizing: 'border-box',
                                     lineHeight: 'normal',
                                     minHeight: 'unset',
@@ -1601,32 +1622,39 @@ const SortableElement: React.FC<SortableElementProps> = ({ element, parentId }) 
                             )}
                         </div>
                     ) : element.type === 'text-block' ? (
-                        isSelected ? (
-                            <div className={clsx(
-                                "relative rounded-lg",
-                                isFormProject && "border border-blue-500 shadow-lg"
-                            )} style={{
-                                backgroundColor: element.backgroundColor || 'transparent'
-                            }}>
+                        <div
+                            className={clsx(
+                                "rounded-lg",
+                                isFormProject && "border border-slate-200"
+                            )}
+                            style={{
+                                backgroundColor: element.backgroundColor || 'transparent',
+                                paddingTop: element.paddingTop !== undefined ? `${element.paddingTop}px` : undefined,
+                                paddingRight: element.paddingRight !== undefined ? `${element.paddingRight}px` : undefined,
+                                paddingBottom: element.paddingBottom !== undefined ? `${element.paddingBottom}px` : undefined,
+                                paddingLeft: element.paddingLeft !== undefined ? `${element.paddingLeft}px` : undefined
+                            }}
+                        >
+                            {isSelected ? (
                                 <RichTextEditor
                                     ref={editorRef}
                                     selectedElement={element}
                                     onContentChange={(content) => updateElement(element.id, { content })}
                                     onEditingStart={() => setIsEditingText(true)}
                                     onEditingEnd={() => setIsEditingText(false)}
+                                    className={clsx(
+                                        "p-0 m-0 border-none", // No internal padding/margin/border
+                                        !element.textColor && "text-slate-600",
+                                        element.textAlign === 'left' && "text-left",
+                                        element.textAlign === 'center' && "text-center",
+                                        element.textAlign === 'right' && "text-right",
+                                        element.textAlign === 'justify' && "text-justify",
+                                        !element.textAlign && "text-left"
+                                    )}
                                 />
-                            </div>
-                        ) : (
-                            <div className="rounded-lg cursor-pointer" style={{
-                                backgroundColor: element.backgroundColor,
-                                paddingTop: element.paddingTop !== undefined ? `${element.paddingTop * 0.25}rem` : undefined,
-                                paddingRight: element.paddingRight !== undefined ? `${element.paddingRight * 0.25}rem` : undefined,
-                                paddingBottom: element.paddingBottom !== undefined ? `${element.paddingBottom * 0.25}rem` : undefined,
-                                paddingLeft: element.paddingLeft !== undefined ? `${element.paddingLeft * 0.25}rem` : undefined
-                            }}>
+                            ) : (
                                 <div
                                     className={clsx(
-                                        "prose prose-sm max-w-none",
                                         !element.textColor && "text-slate-600",
                                         element.textAlign === 'left' && "text-left",
                                         element.textAlign === 'center' && "text-center",
@@ -1640,72 +1668,86 @@ const SortableElement: React.FC<SortableElementProps> = ({ element, parentId }) 
                                         fontWeight: element.fontWeight || undefined,
                                         color: element.textColor || undefined,
                                         lineHeight: element.lineHeight ? `${element.lineHeight}%` : undefined,
-                                        letterSpacing: element.letterSpacing ? `${element.letterSpacing}px` : undefined
+                                        letterSpacing: element.letterSpacing ? `${element.letterSpacing}px` : undefined,
+                                        margin: 0
                                     }}
                                     dangerouslySetInnerHTML={{ __html: element.content || '<p>Click to edit this text block</p>' }}
                                 />
-                            </div>
-                        )
+                            )}
+                        </div>
                     ) : element.type === 'heading' ? (
-                        isSelected ? (
-                            <div className={clsx(
-                                "relative rounded-lg",
-                                isFormProject && "border border-blue-500 shadow-lg"
-                            )} style={{
+                        <div
+                            className={clsx(
+                                "rounded-lg",
+                                isFormProject && "border border-slate-200"
+                            )}
+                            style={{
                                 backgroundColor: element.backgroundColor || 'transparent',
-                                paddingTop: element.paddingTop !== undefined ? `${element.paddingTop * 0.25}rem` : '0',
-                                paddingRight: element.paddingRight !== undefined ? `${element.paddingRight * 0.25}rem` : '0',
-                                paddingBottom: element.paddingBottom !== undefined ? `${element.paddingBottom * 0.25}rem` : '0',
-                                paddingLeft: element.paddingLeft !== undefined ? `${element.paddingLeft * 0.25}rem` : '0'
-                            }}>
+                                paddingTop: element.paddingTop !== undefined ? `${element.paddingTop}px` : undefined,
+                                paddingRight: element.paddingRight !== undefined ? `${element.paddingRight}px` : undefined,
+                                paddingBottom: element.paddingBottom !== undefined ? `${element.paddingBottom}px` : undefined,
+                                paddingLeft: element.paddingLeft !== undefined ? `${element.paddingLeft}px` : undefined
+                            }}
+                        >
+                            {isSelected ? (
                                 <RichTextEditor
                                     ref={editorRef}
                                     selectedElement={element}
                                     onContentChange={(content) => updateElement(element.id, { content })}
                                     onEditingStart={() => setIsEditingText(true)}
                                     onEditingEnd={() => setIsEditingText(false)}
+                                    className={clsx(
+                                        "p-0 m-0 border-none", // No internal padding/margin/border
+                                        !element.textColor && "text-slate-600",
+                                        !element.fontWeight && "font-bold",
+                                        !element.fontSize && element.headingLevel === 1 && "text-4xl",
+                                        !element.fontSize && element.headingLevel === 2 && "text-3xl",
+                                        !element.fontSize && element.headingLevel === 3 && "text-2xl",
+                                        !element.fontSize && element.headingLevel === 4 && "text-xl",
+                                        !element.fontSize && element.headingLevel === 5 && "text-lg",
+                                        !element.fontSize && element.headingLevel === 6 && "text-base",
+                                        !element.fontSize && !element.headingLevel && "text-4xl",
+                                        element.textAlign === 'left' && "text-left",
+                                        element.textAlign === 'center' && "text-center",
+                                        element.textAlign === 'right' && "text-right",
+                                        element.textAlign === 'justify' && "text-justify",
+                                        !element.textAlign && "text-left"
+                                    )}
                                 />
-                            </div>
-                        ) : (
-                            <div className="rounded-lg cursor-pointer" style={{
-                                backgroundColor: element.backgroundColor,
-                                paddingTop: element.paddingTop !== undefined ? `${element.paddingTop * 0.25}rem` : undefined,
-                                paddingRight: element.paddingRight !== undefined ? `${element.paddingRight * 0.25}rem` : undefined,
-                                paddingBottom: element.paddingBottom !== undefined ? `${element.paddingBottom * 0.25}rem` : undefined,
-                                paddingLeft: element.paddingLeft !== undefined ? `${element.paddingLeft * 0.25}rem` : undefined
-                            }}>
-                                {React.createElement(
-                                    `h${element.headingLevel || 1}`,
-                                    {
-                                        className: clsx(
-                                            !element.textColor && "text-gray-800",
-                                            !element.fontWeight && "font-bold",
-                                            !element.fontSize && element.headingLevel === 1 && "text-4xl",
-                                            !element.fontSize && element.headingLevel === 2 && "text-3xl",
-                                            !element.fontSize && element.headingLevel === 3 && "text-2xl",
-                                            !element.fontSize && element.headingLevel === 4 && "text-xl",
-                                            !element.fontSize && element.headingLevel === 5 && "text-lg",
-                                            !element.fontSize && element.headingLevel === 6 && "text-base",
-                                            !element.fontSize && !element.headingLevel && "text-4xl",
-                                            element.textAlign === 'left' && "text-left",
-                                            element.textAlign === 'center' && "text-center",
-                                            element.textAlign === 'right' && "text-right",
-                                            element.textAlign === 'justify' && "text-justify",
-                                            !element.textAlign && "text-left"
-                                        ),
-                                        style: {
-                                            fontFamily: element.fontFamily || undefined,
-                                            fontSize: element.fontSize ? `${element.fontSize}px` : undefined,
-                                            fontWeight: element.fontWeight || undefined,
-                                            color: element.textColor || undefined,
-                                            lineHeight: element.lineHeight ? `${element.lineHeight}%` : undefined,
-                                            letterSpacing: element.letterSpacing ? `${element.letterSpacing}px` : undefined
-                                        },
-                                        dangerouslySetInnerHTML: { __html: element.content || 'Click to edit heading...' }
-                                    }
-                                )}
-                            </div>
-                        )
+                            ) : (
+                                <div
+                                    role="heading"
+                                    aria-level={element.headingLevel || 1}
+                                    className={clsx(
+                                        "p-0 m-0 border-none w-full", // Matches RichTextEditor's internal styles exactly
+                                        !element.textColor && "text-slate-600",
+                                        !element.fontWeight && "font-bold",
+                                        !element.fontSize && element.headingLevel === 1 && "text-4xl",
+                                        !element.fontSize && element.headingLevel === 2 && "text-3xl",
+                                        !element.fontSize && element.headingLevel === 3 && "text-2xl",
+                                        !element.fontSize && element.headingLevel === 4 && "text-xl",
+                                        !element.fontSize && element.headingLevel === 5 && "text-lg",
+                                        !element.fontSize && element.headingLevel === 6 && "text-base",
+                                        !element.fontSize && !element.headingLevel && "text-4xl",
+                                        element.textAlign === 'left' && "text-left",
+                                        element.textAlign === 'center' && "text-center",
+                                        element.textAlign === 'right' && "text-right",
+                                        element.textAlign === 'justify' && "text-justify",
+                                        !element.textAlign && "text-left"
+                                    )}
+                                    style={{
+                                        fontFamily: element.fontFamily || undefined,
+                                        fontSize: element.fontSize ? `${element.fontSize}px` : undefined,
+                                        fontWeight: element.fontWeight || undefined,
+                                        color: element.textColor || undefined,
+                                        lineHeight: element.lineHeight ? `${element.lineHeight}%` : undefined,
+                                        letterSpacing: element.letterSpacing ? `${element.letterSpacing}px` : undefined,
+                                        margin: 0
+                                    }}
+                                    dangerouslySetInnerHTML={{ __html: element.content || 'Heading' }}
+                                />
+                            )}
+                        </div>
                     ) : element.type === 'menu' ? (
                         (() => {
                             const { setNodeRef } = useDroppable({
@@ -1724,7 +1766,7 @@ const SortableElement: React.FC<SortableElementProps> = ({ element, parentId }) 
                                         justifyContent: element.justifyContent || 'flex-start',
                                         alignItems: element.alignItems || 'center',
                                         alignContent: element.alignContent || 'flex-start',
-                                        gap: `${(element.gap || 16) * 0.25}rem`
+                                        gap: `${(element.gap || 0) * 0.25}rem`
                                     }}
                                 >
                                     {element.children && element.children.length > 0 ? (
@@ -1749,10 +1791,10 @@ const SortableElement: React.FC<SortableElementProps> = ({ element, parentId }) 
                             isFormProject && "border border-slate-200"
                         )} style={{
                             backgroundColor: element.backgroundColor,
-                            paddingTop: element.paddingTop !== undefined ? `${element.paddingTop * 0.25}rem` : '1rem',
-                            paddingRight: element.paddingRight !== undefined ? `${element.paddingRight * 0.25}rem` : '1rem',
-                            paddingBottom: element.paddingBottom !== undefined ? `${element.paddingBottom * 0.25}rem` : '1rem',
-                            paddingLeft: element.paddingLeft !== undefined ? `${element.paddingLeft * 0.25}rem` : '1rem'
+                            paddingTop: element.paddingTop !== undefined ? `${element.paddingTop * 0.25}rem` : undefined,
+                            paddingRight: element.paddingRight !== undefined ? `${element.paddingRight * 0.25}rem` : undefined,
+                            paddingBottom: element.paddingBottom !== undefined ? `${element.paddingBottom * 0.25}rem` : undefined,
+                            paddingLeft: element.paddingLeft !== undefined ? `${element.paddingLeft * 0.25}rem` : undefined
                         }}>
                             <div className={clsx(
                                 "flex gap-3",
@@ -1838,20 +1880,20 @@ const SortableElement: React.FC<SortableElementProps> = ({ element, parentId }) 
                             )}
                             style={{
                                 backgroundColor: element.backgroundColor,
-                                paddingTop: element.paddingTop !== undefined ? `${element.paddingTop * 0.25}rem` : '0.75rem',
-                                paddingRight: element.paddingRight !== undefined ? `${element.paddingRight * 0.25}rem` : '0.75rem',
-                                paddingBottom: element.paddingBottom !== undefined ? `${element.paddingBottom * 0.25}rem` : '0.75rem',
-                                paddingLeft: element.paddingLeft !== undefined ? `${element.paddingLeft * 0.25}rem` : '0.75rem'
+                                paddingTop: element.paddingTop !== undefined ? `${element.paddingTop * 0.25}rem` : undefined,
+                                paddingRight: element.paddingRight !== undefined ? `${element.paddingRight * 0.25}rem` : undefined,
+                                paddingBottom: element.paddingBottom !== undefined ? `${element.paddingBottom * 0.25}rem` : undefined,
+                                paddingLeft: element.paddingLeft !== undefined ? `${element.paddingLeft * 0.25}rem` : undefined
                             }}
                             placeholder={element.placeholder}
                             readOnly
                         />
                     )}
                 </div>
-            </div>
+            </div >
 
             {/* Category Modal */}
-            <CategoryModal
+            < CategoryModal
                 isOpen={showCategoryModal}
                 onClose={() => setShowCategoryModal(false)}
                 onSelectCategory={(category) => {
@@ -1960,7 +2002,7 @@ export const Canvas: React.FC = () => {
                         // Empty state alignment
                         elements.length === 0 && "form-builder-canvas-empty flex items-center justify-center",
                         // Apply canvas theme locally - independent of Main App Theme
-                        settings.canvasTheme === 'dark' ? "bg-gray-900 text-gray-100" : "bg-white text-gray-900"
+                        settings.canvasTheme === 'dark' ? "bg-gray-900 text-gray-100 dark" : "bg-white text-gray-900"
                     )}
                     style={{
                         backgroundColor: settings.formBackground || (

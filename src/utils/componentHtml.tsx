@@ -12,15 +12,15 @@ interface HtmlOptions {
 
 export const getComponentHtml = (element: FormElement, options: HtmlOptions = {}): React.ReactElement | null => {
     const { isFormProject = false, isSelected = false, parentId, showInteractiveElements = false } = options;
-    
+
     if (!element) return null;
 
     // Calculate if nested (has parentId)
     const isNested = !!parentId;
-    
+
     // Apply percentage width calculation exactly like Canvas
-    const widthStyle = !isNested ? 
-        { width: `${(element.width || (element.type === 'image' ? 2 : 12)) / 12 * 100}%` } : 
+    const widthStyle = !isNested ?
+        { width: `${(element.width || (element.type === 'image' ? 2 : 12)) / 12 * 100}%` } :
         {};
 
     return (
@@ -30,19 +30,19 @@ export const getComponentHtml = (element: FormElement, options: HtmlOptions = {}
             style={{
                 ...widthStyle,
                 // Apply margins exactly like Canvas
-                marginTop: `${(element.marginTop ?? 0) * 0.25}rem`,
-                marginRight: `${(element.marginRight ?? 0) * 0.25}rem`,
-                marginBottom: `${(element.marginBottom ?? 0) * 0.25}rem`,
-                marginLeft: `${(element.marginLeft ?? 0) * 0.25}rem`,
+                marginTop: `${(element.marginTop ?? 0)}px`,
+                marginRight: `${(element.marginRight ?? 0)}px`,
+                marginBottom: `${(element.marginBottom ?? 0)}px`,
+                marginLeft: `${(element.marginLeft ?? 0)}px`,
                 // Apply horizontal alignment for non-containers exactly like Canvas
-                ...(element.horizontalAlign === 'center' && !['container', 'columns', 'rows', 'grid'].includes(element.type) ? 
+                ...(element.horizontalAlign === 'center' && !['container', 'columns', 'rows', 'grid'].includes(element.type) ?
                     { marginLeft: 'auto', marginRight: 'auto' } : {}),
-                ...(element.horizontalAlign === 'right' && !['container', 'columns', 'rows', 'grid'].includes(element.type) ? 
+                ...(element.horizontalAlign === 'right' && !['container', 'columns', 'rows', 'grid'].includes(element.type) ?
                     { marginLeft: 'auto' } : {})
             }}
         >
             {/* Visual wrapper around label and component - exactly like Canvas */}
-            <div 
+            <div
                 className={clsx(
                     "relative rounded-lg flex-1",
                     isSelected && showInteractiveElements && "ring-2 ring-brand-400 ring-opacity-50"
@@ -51,17 +51,17 @@ export const getComponentHtml = (element: FormElement, options: HtmlOptions = {}
                     // Apply background color to all elements - exactly like Canvas line 1300
                     backgroundColor: element.backgroundColor || undefined,
                     // Padding only for container types - exactly like Canvas
-                    paddingTop: ['container', 'columns', 'rows', 'grid', 'menu'].includes(element.type) ? `${(element.paddingTop ?? 0) * 0.25}rem` : undefined,
-                    paddingRight: ['container', 'columns', 'rows', 'grid', 'menu'].includes(element.type) ? `${(element.paddingRight ?? 0) * 0.25}rem` : undefined,
-                    paddingBottom: ['container', 'columns', 'rows', 'grid', 'menu'].includes(element.type) ? `${(element.paddingBottom ?? 0) * 0.25}rem` : undefined,
-                    paddingLeft: ['container', 'columns', 'rows', 'grid', 'menu'].includes(element.type) ? `${(element.paddingLeft ?? 0) * 0.25}rem` : undefined
+                    paddingTop: ['container', 'columns', 'rows', 'grid', 'menu'].includes(element.type) ? `${(element.paddingTop ?? 0)}px` : undefined,
+                    paddingRight: ['container', 'columns', 'rows', 'grid', 'menu'].includes(element.type) ? `${(element.paddingRight ?? 0)}px` : undefined,
+                    paddingBottom: ['container', 'columns', 'rows', 'grid', 'menu'].includes(element.type) ? `${(element.paddingBottom ?? 0)}px` : undefined,
+                    paddingLeft: ['container', 'columns', 'rows', 'grid', 'menu'].includes(element.type) ? `${(element.paddingLeft ?? 0)}px` : undefined
                 }}
             >
                 {/* Labels for regular form elements - exactly like Canvas */}
                 {isFormProject && !['hidden', 'rich-text', 'container', 'columns', 'rows', 'grid', 'menu'].includes(element.type) && element.label && element.label.trim() && (
-                    <div 
+                    <div
                         className="flex justify-between items-start"
-                        style={{ marginBottom: element.labelGap !== undefined ? `${element.labelGap * 0.25}rem` : '0.75rem' }}
+                        style={{ marginBottom: element.labelGap !== undefined ? `${element.labelGap}px` : '3px' }}
                     >
                         <div>
                             <label className={clsx(
@@ -73,7 +73,7 @@ export const getComponentHtml = (element: FormElement, options: HtmlOptions = {}
                                 !element.labelSize && "text-sm",
                                 // Legacy labelWeight support
                                 !element.labelBold && element.labelWeight === 'normal' && "font-normal",
-                                !element.labelBold && element.labelWeight === 'medium' && "font-medium", 
+                                !element.labelBold && element.labelWeight === 'medium' && "font-medium",
                                 !element.labelBold && element.labelWeight === 'semibold' && "font-semibold",
                                 !element.labelBold && element.labelWeight === 'bold' && "font-bold",
                                 !element.labelBold && !element.labelWeight && "font-medium",
@@ -92,9 +92,9 @@ export const getComponentHtml = (element: FormElement, options: HtmlOptions = {}
 
                 {/* Labels for container elements - exactly like Canvas */}
                 {isFormProject && ['container', 'columns', 'rows', 'grid', 'menu'].includes(element.type) && element.label && element.label.trim() && (
-                    <div 
+                    <div
                         className="flex justify-between items-start"
-                        style={{ marginBottom: element.labelGap !== undefined ? `${element.labelGap * 0.25}rem` : '0.75rem' }}
+                        style={{ marginBottom: element.labelGap !== undefined ? `${element.labelGap}px` : '12px' }}
                     >
                         <div>
                             <label className={clsx(
@@ -107,7 +107,7 @@ export const getComponentHtml = (element: FormElement, options: HtmlOptions = {}
                                 // Legacy labelWeight support
                                 !element.labelBold && element.labelWeight === 'normal' && "font-normal",
                                 !element.labelBold && element.labelWeight === 'medium' && "font-medium",
-                                !element.labelBold && element.labelWeight === 'semibold' && "font-semibold", 
+                                !element.labelBold && element.labelWeight === 'semibold' && "font-semibold",
                                 !element.labelBold && element.labelWeight === 'bold' && "font-bold",
                                 !element.labelBold && !element.labelWeight && "font-medium",
                                 // New formatting system takes priority
@@ -124,13 +124,13 @@ export const getComponentHtml = (element: FormElement, options: HtmlOptions = {}
                 )}
 
                 {/* Element Content - exactly like Canvas */}
-                <div 
+                <div
                     style={{
                         // Apply padding to regular form elements exactly like Canvas
-                        paddingTop: (!['container', 'columns', 'rows', 'button', 'textarea', 'select', 'checkbox', 'radio'].includes(element.type)) ? `${(element.paddingTop ?? 0) * 0.25}rem` : undefined,
-                        paddingRight: (!['container', 'columns', 'rows', 'button', 'textarea', 'select', 'checkbox', 'radio'].includes(element.type)) ? `${(element.paddingRight ?? 0) * 0.25}rem` : undefined,
-                        paddingBottom: (!['container', 'columns', 'rows', 'button', 'textarea', 'select', 'checkbox', 'radio'].includes(element.type)) ? `${(element.paddingBottom ?? 0) * 0.25}rem` : undefined,
-                        paddingLeft: (!['container', 'columns', 'rows', 'button', 'textarea', 'select', 'checkbox', 'radio'].includes(element.type)) ? `${(element.paddingLeft ?? 0) * 0.25}rem` : undefined
+                        paddingTop: (!['container', 'columns', 'rows', 'button', 'textarea', 'select', 'checkbox', 'radio'].includes(element.type)) ? `${(element.paddingTop ?? 0)}px` : undefined,
+                        paddingRight: (!['container', 'columns', 'rows', 'button', 'textarea', 'select', 'checkbox', 'radio'].includes(element.type)) ? `${(element.paddingRight ?? 0)}px` : undefined,
+                        paddingBottom: (!['container', 'columns', 'rows', 'button', 'textarea', 'select', 'checkbox', 'radio'].includes(element.type)) ? `${(element.paddingBottom ?? 0)}px` : undefined,
+                        paddingLeft: (!['container', 'columns', 'rows', 'button', 'textarea', 'select', 'checkbox', 'radio'].includes(element.type)) ? `${(element.paddingLeft ?? 0)}px` : undefined
                     }}
                 >
                     {getElementContentHtml(element, options)}
@@ -154,10 +154,10 @@ const getElementContentHtml = (element: FormElement, options: HtmlOptions): Reac
                     )}
                     style={{
                         backgroundColor: element.backgroundColor,
-                        paddingTop: `${(element.paddingTop ?? 3) * 0.25}rem`,
-                        paddingRight: `${(element.paddingRight ?? 3) * 0.25}rem`,
-                        paddingBottom: `${(element.paddingBottom ?? 3) * 0.25}rem`,
-                        paddingLeft: `${(element.paddingLeft ?? 3) * 0.25}rem`
+                        paddingTop: `${(element.paddingTop ?? 12)}px`,
+                        paddingRight: `${(element.paddingRight ?? 12)}px`,
+                        paddingBottom: `${(element.paddingBottom ?? 12)}px`,
+                        paddingLeft: `${(element.paddingLeft ?? 12)}px`
                     }}
                     placeholder={element.placeholder}
                     rows={3}
@@ -168,19 +168,19 @@ const getElementContentHtml = (element: FormElement, options: HtmlOptions): Reac
         case 'select':
             return (
                 <div className="relative">
-                    <select 
+                    <select
                         {...(register && showInteractiveElements ? register(element.id, { required: element.required }) : {})}
                         className={clsx(
                             "w-full rounded-lg text-slate-500 text-sm appearance-none",
                             isFormProject && "border border-slate-200"
-                        )} 
+                        )}
                         style={{
                             backgroundColor: element.backgroundColor,
-                            paddingTop: element.paddingTop !== undefined ? `${element.paddingTop * 0.25}rem` : '0.75rem',
-                            paddingRight: element.paddingRight !== undefined ? `${element.paddingRight * 0.25}rem` : '0.75rem',
-                            paddingBottom: element.paddingBottom !== undefined ? `${element.paddingBottom * 0.25}rem` : '0.75rem',
-                            paddingLeft: element.paddingLeft !== undefined ? `${element.paddingLeft * 0.25}rem` : '0.75rem'
-                        }} 
+                            paddingTop: element.paddingTop !== undefined ? `${element.paddingTop}px` : '12px',
+                            paddingRight: element.paddingRight !== undefined ? `${element.paddingRight}px` : '12px',
+                            paddingBottom: element.paddingBottom !== undefined ? `${element.paddingBottom}px` : '12px',
+                            paddingLeft: element.paddingLeft !== undefined ? `${element.paddingLeft}px` : '12px'
+                        }}
                         disabled={!showInteractiveElements}
                     >
                         {element.options?.map((opt, idx) => (
@@ -202,15 +202,15 @@ const getElementContentHtml = (element: FormElement, options: HtmlOptions): Reac
                     isFormProject && "border border-slate-200"
                 )} style={{
                     backgroundColor: element.backgroundColor || '#f8fafc',
-                    paddingTop: element.paddingTop !== undefined ? `${element.paddingTop * 0.25}rem` : '0.75rem',
-                    paddingRight: element.paddingRight !== undefined ? `${element.paddingRight * 0.25}rem` : '0.75rem',
-                    paddingBottom: element.paddingBottom !== undefined ? `${element.paddingBottom * 0.25}rem` : '0.75rem',
-                    paddingLeft: element.paddingLeft !== undefined ? `${element.paddingLeft * 0.25}rem` : '0.75rem'
+                    paddingTop: element.paddingTop !== undefined ? `${element.paddingTop}px` : '12px',
+                    paddingRight: element.paddingRight !== undefined ? `${element.paddingRight}px` : '12px',
+                    paddingBottom: element.paddingBottom !== undefined ? `${element.paddingBottom}px` : '12px',
+                    paddingLeft: element.paddingLeft !== undefined ? `${element.paddingLeft}px` : '12px'
                 }}>
-                    <input 
-                        type="checkbox" 
+                    <input
+                        type="checkbox"
                         {...(register && showInteractiveElements ? register(element.id, { required: element.required }) : {})}
-                        className="h-4 w-4 text-brand-600 rounded border-slate-300" 
+                        className="h-4 w-4 text-brand-600 rounded border-slate-300"
                         disabled={!showInteractiveElements}
                     />
                     <span className="ml-3 text-sm text-slate-600">{element.placeholder || 'Checkbox option'}</span>
@@ -224,19 +224,19 @@ const getElementContentHtml = (element: FormElement, options: HtmlOptions): Reac
                     isFormProject && "border border-slate-200"
                 )} style={{
                     backgroundColor: element.backgroundColor || '#f8fafc',
-                    paddingTop: element.paddingTop !== undefined ? `${element.paddingTop * 0.25}rem` : '0.75rem',
-                    paddingRight: element.paddingRight !== undefined ? `${element.paddingRight * 0.25}rem` : '0.75rem',
-                    paddingBottom: element.paddingBottom !== undefined ? `${element.paddingBottom * 0.25}rem` : '0.75rem',
-                    paddingLeft: element.paddingLeft !== undefined ? `${element.paddingLeft * 0.25}rem` : '0.75rem'
+                    paddingTop: element.paddingTop !== undefined ? `${element.paddingTop}px` : '12px',
+                    paddingRight: element.paddingRight !== undefined ? `${element.paddingRight}px` : '12px',
+                    paddingBottom: element.paddingBottom !== undefined ? `${element.paddingBottom}px` : '12px',
+                    paddingLeft: element.paddingLeft !== undefined ? `${element.paddingLeft}px` : '12px'
                 }}>
                     {(element.options || [{ label: 'Option 1', value: 'option1' }, { label: 'Option 2', value: 'option2' }]).map((opt, idx) => (
                         <div key={idx} className="flex items-center">
-                            <input 
-                                type="radio" 
+                            <input
+                                type="radio"
                                 {...(register && showInteractiveElements ? register(element.id, { required: element.required }) : {})}
-                                name={element.id} 
+                                name={element.id}
                                 value={opt.value}
-                                className="h-4 w-4 text-brand-600 border-slate-300 focus:ring-brand-500" 
+                                className="h-4 w-4 text-brand-600 border-slate-300 focus:ring-brand-500"
                                 disabled={!showInteractiveElements}
                             />
                             <span className="ml-3 text-sm text-slate-600">{opt.label}</span>
@@ -253,7 +253,7 @@ const getElementContentHtml = (element: FormElement, options: HtmlOptions): Reac
                         className={clsx(
                             "font-medium rounded-lg border",
                             element.buttonSize === 'sm' && "text-sm",
-                            element.buttonSize === 'lg' && "text-lg", 
+                            element.buttonSize === 'lg' && "text-lg",
                             (!element.buttonSize || element.buttonSize === 'md') && "text-base",
                             element.buttonStyle === 'primary' && "bg-blue-600 border-blue-600 text-white hover:bg-blue-700",
                             element.buttonStyle === 'secondary' && "bg-gray-600 border-gray-600 text-white hover:bg-gray-700",
@@ -263,12 +263,12 @@ const getElementContentHtml = (element: FormElement, options: HtmlOptions): Reac
                             (!element.buttonStyle || element.buttonStyle === 'primary') && "bg-blue-600 border-blue-600 text-white hover:bg-blue-700"
                         )}
                         style={{
-                            backgroundColor: element.backgroundColor && element.buttonStyle !== 'text' && element.buttonStyle !== 'outline' && element.buttonStyle !== 'link' ? 
+                            backgroundColor: element.backgroundColor && element.buttonStyle !== 'text' && element.buttonStyle !== 'outline' && element.buttonStyle !== 'link' ?
                                 element.backgroundColor : undefined,
-                            paddingTop: element.paddingTop !== undefined ? `${element.paddingTop * 0.25}rem` : undefined,
-                            paddingRight: element.paddingRight !== undefined ? `${element.paddingRight * 0.25}rem` : undefined,
-                            paddingBottom: element.paddingBottom !== undefined ? `${element.paddingBottom * 0.25}rem` : undefined,
-                            paddingLeft: element.paddingLeft !== undefined ? `${element.paddingLeft * 0.25}rem` : undefined
+                            paddingTop: element.paddingTop !== undefined ? `${element.paddingTop}px` : undefined,
+                            paddingRight: element.paddingRight !== undefined ? `${element.paddingRight}px` : undefined,
+                            paddingBottom: element.paddingBottom !== undefined ? `${element.paddingBottom}px` : undefined,
+                            paddingLeft: element.paddingLeft !== undefined ? `${element.paddingLeft}px` : undefined
                         }}
                         disabled={!showInteractiveElements}
                     >
@@ -286,20 +286,20 @@ const getElementContentHtml = (element: FormElement, options: HtmlOptions): Reac
                 ) : null;
             }
             return (
-                <div 
+                <div
                     className={clsx(
                         "rounded-lg",
                         showInteractiveElements && isFormProject && "border border-slate-200"
                     )}
                     style={{
                         backgroundColor: element.backgroundColor || 'transparent',
-                        paddingTop: element.paddingTop !== undefined ? `${element.paddingTop * 0.25}rem` : '0',
-                        paddingRight: element.paddingRight !== undefined ? `${element.paddingRight * 0.25}rem` : '0',
-                        paddingBottom: element.paddingBottom !== undefined ? `${element.paddingBottom * 0.25}rem` : '0',
-                        paddingLeft: element.paddingLeft !== undefined ? `${element.paddingLeft * 0.25}rem` : '0'
+                        paddingTop: element.paddingTop !== undefined ? `${element.paddingTop}px` : '0',
+                        paddingRight: element.paddingRight !== undefined ? `${element.paddingRight}px` : '0',
+                        paddingBottom: element.paddingBottom !== undefined ? `${element.paddingBottom}px` : '0',
+                        paddingLeft: element.paddingLeft !== undefined ? `${element.paddingLeft}px` : '0'
                     }}
                 >
-                    <div 
+                    <div
                         className={clsx(
                             "prose prose-sm max-w-none",
                             !element.textColor && "text-slate-600",
@@ -332,7 +332,7 @@ const getElementContentHtml = (element: FormElement, options: HtmlOptions): Reac
             }
             return (
                 <div className="rounded-lg" style={{ backgroundColor: element.backgroundColor }}>
-                    <div 
+                    <div
                         className={clsx(
                             "prose prose-sm max-w-none",
                             !element.textColor && "text-slate-600",
@@ -393,7 +393,7 @@ const getElementContentHtml = (element: FormElement, options: HtmlOptions): Reac
 
         case 'image':
             return (
-                <div 
+                <div
                     className={clsx(
                         "relative group",
                         element.imageAlign === 'center' && "flex justify-center",
@@ -444,10 +444,10 @@ const getElementContentHtml = (element: FormElement, options: HtmlOptions): Reac
                         )}
                         style={{
                             backgroundColor: element.backgroundColor,
-                            paddingTop: element.paddingTop !== undefined ? `${element.paddingTop * 0.25}rem` : '0.75rem',
-                            paddingRight: element.paddingRight !== undefined ? `${element.paddingRight * 0.25}rem` : '0.75rem',
-                            paddingBottom: element.paddingBottom !== undefined ? `${element.paddingBottom * 0.25}rem` : '0.75rem',
-                            paddingLeft: element.paddingLeft !== undefined ? `${element.paddingLeft * 0.25}rem` : '0.75rem'
+                            paddingTop: element.paddingTop !== undefined ? `${element.paddingTop}px` : '12px',
+                            paddingRight: element.paddingRight !== undefined ? `${element.paddingRight}px` : '12px',
+                            paddingBottom: element.paddingBottom !== undefined ? `${element.paddingBottom}px` : '12px',
+                            paddingLeft: element.paddingLeft !== undefined ? `${element.paddingLeft}px` : '12px'
                         }}
                         placeholder={element.placeholder}
                         readOnly={!showInteractiveElements}
@@ -461,7 +461,7 @@ const getElementContentHtml = (element: FormElement, options: HtmlOptions): Reac
 // Container HTML generators exactly matching Canvas layout logic
 const getContainerHtml = (element: FormElement, options: HtmlOptions): React.ReactElement => {
     const { isFormProject } = options;
-    
+
     return (
         <div
             className={clsx(
@@ -472,7 +472,7 @@ const getContainerHtml = (element: FormElement, options: HtmlOptions): React.Rea
                 backgroundColor: element.backgroundColor || 'transparent'
             }}
         >
-            <div 
+            <div
                 style={{
                     display: 'flex',
                     flexDirection: element.flexDirection || 'column',
@@ -480,8 +480,8 @@ const getContainerHtml = (element: FormElement, options: HtmlOptions): React.Rea
                     justifyContent: element.justifyContent || 'flex-start',
                     alignItems: element.alignItems || 'stretch',
                     alignContent: element.alignContent || 'flex-start',
-                    rowGap: `${(element.rowGap ?? element.gap ?? 0) * 0.25}rem`,
-                    columnGap: element.display !== 'block' ? `${(element.columnGap || element.gap || 12) * 0.25}rem` : '0.75rem'
+                    rowGap: `${(element.rowGap ?? element.gap ?? 0)}px`,
+                    columnGap: element.display !== 'block' ? `${(element.columnGap || element.gap || 12)}px` : '12px'
                 }}
             >
                 {element.children && element.children.length > 0 ? (
@@ -496,7 +496,7 @@ const getContainerHtml = (element: FormElement, options: HtmlOptions): React.Rea
 
 const getColumnsHtml = (element: FormElement, options: HtmlOptions): React.ReactElement => {
     const { isFormProject } = options;
-    
+
     return (
         <div
             className={clsx(
@@ -507,11 +507,11 @@ const getColumnsHtml = (element: FormElement, options: HtmlOptions): React.React
                 backgroundColor: element.backgroundColor || 'transparent'
             }}
         >
-            <div 
+            <div
                 style={{
                     display: 'grid',
                     gridTemplateColumns: `repeat(${element.columnCount || 2}, 1fr)`,
-                    gap: `${(element.columnGap || element.gap || 12) * 0.25}rem`
+                    gap: `${(element.columnGap || element.gap || 12)}px`
                 }}
             >
                 {Array.from({ length: element.columnCount || 2 }).map((_, index) => {
@@ -520,7 +520,7 @@ const getColumnsHtml = (element: FormElement, options: HtmlOptions): React.React
                         <div
                             key={index}
                             className="min-h-[32px]"
-                            style={{ 
+                            style={{
                                 backgroundColor: element.columnBackgrounds?.[index] || 'transparent'
                             }}
                         >
@@ -535,7 +535,7 @@ const getColumnsHtml = (element: FormElement, options: HtmlOptions): React.React
 
 const getRowsHtml = (element: FormElement, options: HtmlOptions): React.ReactElement => {
     const { isFormProject } = options;
-    
+
     return (
         <div
             className={clsx(
@@ -546,7 +546,7 @@ const getRowsHtml = (element: FormElement, options: HtmlOptions): React.ReactEle
                 backgroundColor: element.backgroundColor || 'transparent'
             }}
         >
-            <div 
+            <div
                 style={{
                     display: 'flex',
                     flexDirection: 'column',
@@ -554,8 +554,8 @@ const getRowsHtml = (element: FormElement, options: HtmlOptions): React.ReactEle
                     justifyContent: element.justifyContent || 'flex-start',
                     alignItems: element.alignItems || 'stretch',
                     alignContent: element.alignContent || 'flex-start',
-                    rowGap: `${(element.rowGap ?? element.gap ?? 0) * 0.25}rem`,
-                    columnGap: `${(element.columnGap ?? element.gap ?? 0) * 0.25}rem`
+                    rowGap: `${(element.rowGap ?? element.gap ?? 0)}px`,
+                    columnGap: `${(element.columnGap ?? element.gap ?? 0)}px`
                 }}
             >
                 {Array.from({ length: element.rowCount || 1 }).map((_, index) => {
@@ -564,7 +564,7 @@ const getRowsHtml = (element: FormElement, options: HtmlOptions): React.ReactEle
                         <div
                             key={index}
                             className="min-h-[32px]"
-                            style={{ 
+                            style={{
                                 backgroundColor: element.rowBackgrounds?.[index] || 'transparent'
                             }}
                         >
@@ -579,7 +579,7 @@ const getRowsHtml = (element: FormElement, options: HtmlOptions): React.ReactEle
 
 const getMenuHtml = (element: FormElement, options: HtmlOptions): React.ReactElement => {
     return (
-        <div 
+        <div
             className="min-h-[40px]"
             style={{
                 display: 'flex',
@@ -588,8 +588,8 @@ const getMenuHtml = (element: FormElement, options: HtmlOptions): React.ReactEle
                 justifyContent: element.justifyContent || 'flex-start',
                 alignItems: element.alignItems || 'center',
                 alignContent: element.alignContent || 'flex-start',
-                rowGap: `${(element.rowGap || element.gap || 0) * 0.25}rem`,
-                columnGap: `${(element.columnGap || element.gap || 16) * 0.25}rem`
+                rowGap: `${(element.rowGap || element.gap || 0)}px`,
+                columnGap: `${(element.columnGap || element.gap || 16)}px`
             }}
         >
             {element.children && element.children.length > 0 ? (
