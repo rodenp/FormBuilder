@@ -2,7 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { useDroppable, useDraggable } from '@dnd-kit/core';
 import { useStore } from '../store/useStore';
 import type { FormElement } from '../types';
-import { Trash2, Info, Copy, Star, EyeOff, Plus, ChevronUp, ChevronDown, Menu, GripVertical, Bookmark } from 'lucide-react';
+import { Trash2, Info, Copy, Star, EyeOff, Plus, GripVertical, Bookmark, Sun, Moon } from 'lucide-react';
 import { clsx } from 'clsx';
 import { RichTextEditor } from './RichTextEditor';
 import { CategoryModal } from './CategoryModal';
@@ -12,18 +12,19 @@ const ColumnPlaceholder: React.FC<{ element: FormElement; index: number }> = ({ 
         id: `column-cell-${element.id}-${index}`,
         data: { type: 'columns', containerId: element.id, columnIndex: index }
     });
-    
-    const { currentProject, selectedElementId, elements } = useStore();
+
+    const { currentProject, selectedElementId, elements, settings } = useStore();
     const isFormProject = currentProject?.type === 'form';
-    
+    const isDark = settings.canvasTheme === 'dark';
+
     // Check if this column placeholder is part of a selected container
     const isDescendantOfSelected = selectedElementId && (() => {
         // Check if the parent columns element is the selected element or a descendant of it
         const isAncestor = (currentElementId: string, targetAncestorId: string, elements: FormElement[]): boolean => {
-            let currentId = currentElementId;
+            let currentId: string | null = currentElementId;
             while (currentId) {
                 if (currentId === targetAncestorId) return true;
-                
+
                 // Find parent of current element
                 const findParent = (id: string, elems: FormElement[]): string | null => {
                     for (const el of elems) {
@@ -37,26 +38,27 @@ const ColumnPlaceholder: React.FC<{ element: FormElement; index: number }> = ({ 
                     }
                     return null;
                 };
-                
+
                 currentId = findParent(currentId, elements);
             }
             return false;
         };
-        
+
         return isAncestor(element.id, selectedElementId, elements);
     })();
-    
+
     return (
-        <div 
+        <div
             ref={setNodeRef}
             className={clsx(
-                "flex-1 rounded-lg flex flex-col items-center justify-center h-32 text-slate-400 cursor-pointer transition-all duration-200",
+                "flex-1 rounded-lg flex flex-col items-center justify-center h-32 cursor-pointer transition-all duration-200",
+                isDark ? "text-gray-500" : "text-slate-400",
                 isFormProject && "border-2",
-                isOver 
+                isOver
                     ? (isFormProject ? "border-solid border-blue-500 bg-blue-100 shadow-lg transform scale-105" : "bg-blue-100 shadow-lg transform scale-105")
-                    : isDescendantOfSelected 
+                    : isDescendantOfSelected
                         ? "border-solid border-blue-400 hover:border-blue-500"
-                        : (isFormProject ? "border-dashed border-slate-300" : "")
+                        : (isFormProject ? clsx("border-dashed", isDark ? "border-gray-700" : "border-slate-300") : "")
             )}
         >
             {isOver ? (
@@ -78,14 +80,17 @@ const ColumnCellDropZone: React.FC<{ containerId: string; columnIndex: number }>
         id: `column-cell-add-${containerId}`,
         data: { type: 'container', containerId }
     });
-    
+    const { settings } = useStore();
+    const isDark = settings.canvasTheme === 'dark';
+
     return (
-        <div 
+        <div
             ref={setNodeRef}
             className={clsx(
-                "w-full h-full flex items-center justify-center text-center text-slate-400 text-sm transition-all",
-                isOver 
-                    ? "bg-blue-100 text-blue-600" 
+                "w-full h-full flex items-center justify-center text-center text-sm transition-all",
+                isDark ? "text-gray-500" : "text-slate-400",
+                isOver
+                    ? "bg-blue-100 text-blue-600"
                     : ""
             )}
         >
@@ -103,19 +108,22 @@ const ColumnCellDropZone: React.FC<{ containerId: string; columnIndex: number }>
     );
 };
 
-const RowCellDropZone: React.FC<{ containerId: string; rowIndex: number }> = ({ containerId, rowIndex }) => {
+const RowCellDropZone: React.FC<{ containerId: string }> = ({ containerId }) => {
     const { setNodeRef, isOver } = useDroppable({
         id: `row-cell-add-${containerId}`,
         data: { type: 'container', containerId }
     });
-    
+    const { settings } = useStore();
+    const isDark = settings.canvasTheme === 'dark';
+
     return (
-        <div 
+        <div
             ref={setNodeRef}
             className={clsx(
-                "w-full h-full flex items-center justify-center text-center text-slate-400 text-sm transition-all",
-                isOver 
-                    ? "bg-blue-100 text-blue-600" 
+                "w-full h-full flex items-center justify-center text-center text-sm transition-all",
+                isDark ? "text-gray-500" : "text-slate-400",
+                isOver
+                    ? "bg-blue-100 text-blue-600"
                     : ""
             )}
         >
@@ -138,14 +146,17 @@ const RowCellEndDropZone: React.FC<{ containerId: string; gap: number }> = ({ co
         id: `row-cell-end-${containerId}`,
         data: { type: 'container', containerId }
     });
-    
+    const { settings } = useStore();
+    const isDark = settings.canvasTheme === 'dark';
+
     return (
-        <div 
+        <div
             ref={setNodeRef}
             className={clsx(
-                "w-full min-h-[8px] flex items-center justify-center text-slate-400 text-xs transition-all",
-                isOver 
-                    ? "bg-blue-100 min-h-[24px]" 
+                "w-full min-h-[8px] flex items-center justify-center text-xs transition-all",
+                isDark ? "text-gray-500" : "text-slate-400",
+                isOver
+                    ? "bg-blue-100 min-h-[24px]"
                     : "opacity-0 hover:opacity-100"
             )}
             style={{ marginTop: `${gap * 0.25}rem` }}
@@ -155,7 +166,7 @@ const RowCellEndDropZone: React.FC<{ containerId: string; gap: number }> = ({ co
                     Drop here to add after
                 </div>
             ) : (
-                <div className="h-px bg-slate-300 w-full"></div>
+                <div className={clsx("h-px w-full", isDark ? "bg-gray-700" : "bg-slate-300")}></div>
             )}
         </div>
     );
@@ -180,24 +191,24 @@ interface RowDropZoneProps {
 const ColumnDropZone: React.FC<ColumnDropZoneProps> = ({ element, index, child, cellEditMode, handleCellClick }) => {
     const { setNodeRef, isOver } = useDroppable({
         id: `column-cell-${element.id}-${index}`,
-        data: { 
-            type: 'columns', 
-            containerId: element.id, 
-            columnIndex: index 
+        data: {
+            type: 'columns',
+            containerId: element.id,
+            columnIndex: index
         }
     });
 
     const { selectElement, currentProject, selectedElementId, elements } = useStore();
     const isFormProject = currentProject?.type === 'form';
-    
+
     // Check if this column cell is a descendant of the selected element
     const isDescendantOfSelected = selectedElementId && child && (() => {
         // Walk up the parent chain to see if we're a descendant of the selected element
         const isAncestor = (currentElementId: string, targetAncestorId: string, elements: FormElement[]): boolean => {
-            let currentId = currentElementId;
+            let currentId: string | null = currentElementId;
             while (currentId) {
                 if (currentId === targetAncestorId) return true;
-                
+
                 // Find parent of current element
                 const findParent = (id: string, elems: FormElement[]): string | null => {
                     for (const el of elems) {
@@ -211,12 +222,12 @@ const ColumnDropZone: React.FC<ColumnDropZoneProps> = ({ element, index, child, 
                     }
                     return null;
                 };
-                
+
                 currentId = findParent(currentId, elements);
             }
             return false;
         };
-        
+
         return isAncestor(child.id, selectedElementId, elements);
     })();
 
@@ -251,7 +262,7 @@ const ColumnDropZone: React.FC<ColumnDropZoneProps> = ({ element, index, child, 
                 cellEditMode && "border-orange-400 bg-orange-50 hover:border-orange-600 hover:bg-orange-100 cursor-pointer border-2 border-dashed",
                 isOver && !cellEditMode && (isFormProject ? "border-4 border-solid border-blue-500 bg-blue-100 rounded-lg shadow-lg transform scale-105" : "bg-blue-100 rounded-lg shadow-lg transform scale-105"),
                 !cellEditMode && !isOver && isDescendantOfSelected && "border-2 border-blue-400 border-dashed rounded-lg hover:border-blue-500",
-                !cellEditMode && !isOver && !isDescendantOfSelected && isFormProject && "border-2 border-dashed border-slate-300 hover:border-blue-400 rounded-lg",
+                !cellEditMode && !isOver && !isDescendantOfSelected && isFormProject && "border-2 border-dashed border-slate-300 dark:border-gray-700 hover:border-blue-400 rounded-lg",
                 !cellEditMode && !isOver && !isDescendantOfSelected && !isFormProject && "hover:border-2 hover:border-dashed hover:border-blue-400 rounded-lg"
             )}
             style={{
@@ -275,12 +286,12 @@ const ColumnDropZone: React.FC<ColumnDropZoneProps> = ({ element, index, child, 
             )}
 
             {/* Content area */}
-            <div 
+            <div
                 className={clsx(
                     "relative w-full h-full p-2 transition-all duration-200",
                     child && child.type === 'container' && isDescendantOfSelected && "border border-blue-400 border-dashed rounded-lg"
                 )}
-                style={{ 
+                style={{
                     pointerEvents: cellEditMode ? 'none' : 'auto',
                     backgroundColor: 'transparent',
                     display: child && child.type === 'container' ? (child.display || 'flex') : 'flex',
@@ -290,7 +301,7 @@ const ColumnDropZone: React.FC<ColumnDropZoneProps> = ({ element, index, child, 
                     alignItems: child && child.type === 'container' ? (child.alignItems || 'flex-start') : 'flex-start',
                     alignContent: child && child.type === 'container' ? (child.alignContent || 'flex-start') : 'flex-start',
                     gap: child && child.type === 'container' ? `${(child.gap ?? 16) * 0.25}rem` : '1rem',
-                    gridTemplateColumns: child && child.type === 'container' && child.display === 'grid' ? 
+                    gridTemplateColumns: child && child.type === 'container' && child.display === 'grid' ?
                         `repeat(${child.gridColumns || 3}, auto)` : undefined
                 }}
             >
@@ -298,19 +309,19 @@ const ColumnDropZone: React.FC<ColumnDropZoneProps> = ({ element, index, child, 
                     child.children && child.children.length > 0 ? (
                         // Column cell has content - render all children
                         <>
-                            {child.children.map((cellChild, cellIndex) => (
-                                <SortableElement 
-                                    key={cellChild.id} 
-                                    element={cellChild} 
-                                    parentId={child.id} 
+                            {child.children.map((cellChild) => (
+                                <SortableElement
+                                    key={cellChild.id}
+                                    element={cellChild}
+                                    parentId={child.id}
                                 />
                             ))}
                         </>
                     ) : (
                         // Empty column cell container - show drop zone
                         !cellEditMode && (
-                            <ColumnCellDropZone 
-                                containerId={child.id} 
+                            <ColumnCellDropZone
+                                containerId={child.id}
                                 columnIndex={index}
                             />
                         )
@@ -318,7 +329,7 @@ const ColumnDropZone: React.FC<ColumnDropZoneProps> = ({ element, index, child, 
                 ) : (
                     // Fallback - should not happen with new structure
                     !cellEditMode && (
-                        <div className="w-full h-full flex items-center justify-center text-center text-slate-400 text-sm transition-all">
+                        <div className="w-full h-full flex items-center justify-center text-center text-slate-400 dark:text-gray-500 text-sm transition-all">
                             <div>
                                 <Plus size={16} className="mx-auto mb-1 opacity-60" />
                                 Drop here to add to Column {index + 1}
@@ -326,7 +337,7 @@ const ColumnDropZone: React.FC<ColumnDropZoneProps> = ({ element, index, child, 
                         </div>
                     )
                 )}
-                
+
                 {/* Click overlay when in cell edit mode */}
                 {cellEditMode && (
                     <div
@@ -345,24 +356,24 @@ const ColumnDropZone: React.FC<ColumnDropZoneProps> = ({ element, index, child, 
 const RowDropZone: React.FC<RowDropZoneProps> = ({ element, index, child, cellEditMode, handleCellClick }) => {
     const { setNodeRef, isOver } = useDroppable({
         id: `row-cell-${element.id}-${index}`,
-        data: { 
-            type: child && child.type === 'container' ? 'container' : 'rows', 
-            containerId: child && child.type === 'container' ? child.id : element.id, 
-            rowIndex: index 
+        data: {
+            type: child && child.type === 'container' ? 'container' : 'rows',
+            containerId: child && child.type === 'container' ? child.id : element.id,
+            rowIndex: index
         }
     });
 
     const { selectElement, currentProject, selectedElementId, elements } = useStore();
     const isFormProject = currentProject?.type === 'form';
-    
+
     // Check if this row cell is a descendant of the selected element
     const isDescendantOfSelected = selectedElementId && child && (() => {
         // Walk up the parent chain to see if we're a descendant of the selected element
         const isAncestor = (currentElementId: string, targetAncestorId: string, elements: FormElement[]): boolean => {
-            let currentId = currentElementId;
+            let currentId: string | null = currentElementId;
             while (currentId) {
                 if (currentId === targetAncestorId) return true;
-                
+
                 // Find parent of current element
                 const findParent = (id: string, elems: FormElement[]): string | null => {
                     for (const el of elems) {
@@ -376,12 +387,12 @@ const RowDropZone: React.FC<RowDropZoneProps> = ({ element, index, child, cellEd
                     }
                     return null;
                 };
-                
+
                 currentId = findParent(currentId, elements);
             }
             return false;
         };
-        
+
         return isAncestor(child.id, selectedElementId, elements);
     })();
 
@@ -417,7 +428,7 @@ const RowDropZone: React.FC<RowDropZoneProps> = ({ element, index, child, cellEd
                 isOver && !cellEditMode && (isFormProject ? "border-4 border-solid border-blue-500 rounded-lg shadow-lg transform scale-105" : "rounded-lg shadow-lg transform scale-105"),
                 isOver && !cellEditMode && !element.rowBackgrounds?.[index] && "bg-blue-100",
                 !cellEditMode && !isOver && isDescendantOfSelected && "border-2 border-blue-400 border-dashed bg-blue-50/20 rounded-lg",
-                !cellEditMode && !isOver && !isDescendantOfSelected && isFormProject && "border-2 border-dashed border-slate-300 rounded-lg"
+                !cellEditMode && !isOver && !isDescendantOfSelected && isFormProject && "border-2 border-dashed border-slate-300 dark:border-gray-700 rounded-lg"
             )}
             style={{
                 backgroundColor: element.rowBackgrounds?.[index] || element.backgroundColor || 'transparent'
@@ -440,12 +451,12 @@ const RowDropZone: React.FC<RowDropZoneProps> = ({ element, index, child, cellEd
             )}
 
             {/* Content area */}
-            <div 
+            <div
                 className={clsx(
                     "relative w-full h-full p-2 transition-all duration-200",
                     child && child.type === 'container' && isDescendantOfSelected && "border border-blue-400 border-dashed bg-blue-50/20 rounded-lg"
                 )}
-                style={{ 
+                style={{
                     pointerEvents: cellEditMode ? 'none' : 'auto',
                     display: child && child.type === 'container' ? (child.display || 'flex') : 'flex',
                     flexDirection: child && child.type === 'container' ? (child.flexDirection || 'column') : 'column',
@@ -454,7 +465,7 @@ const RowDropZone: React.FC<RowDropZoneProps> = ({ element, index, child, cellEd
                     alignItems: child && child.type === 'container' ? (child.alignItems || 'flex-start') : 'flex-start',
                     alignContent: child && child.type === 'container' ? (child.alignContent || 'flex-start') : 'flex-start',
                     gap: child && child.type === 'container' ? `${(element.gap ?? 0) * 0.25}rem` : '0rem',
-                    gridTemplateColumns: child && child.type === 'container' && child.display === 'grid' ? 
+                    gridTemplateColumns: child && child.type === 'container' && child.display === 'grid' ?
                         `repeat(${child.gridColumns || 3}, auto)` : undefined
                 }}
             >
@@ -462,11 +473,11 @@ const RowDropZone: React.FC<RowDropZoneProps> = ({ element, index, child, cellEd
                     child.children && child.children.length > 0 ? (
                         // Row cell has content - render all children with drop zones
                         <>
-                            {child.children.map((cellChild, cellIndex) => (
-                                <SortableElement 
-                                    key={cellChild.id} 
-                                    element={cellChild} 
-                                    parentId={child.id} 
+                            {child.children.map((cellChild) => (
+                                <SortableElement
+                                    key={cellChild.id}
+                                    element={cellChild}
+                                    parentId={child.id}
                                 />
                             ))}
                             <RowCellEndDropZone containerId={child.id} gap={element.gap ?? 0} />
@@ -474,16 +485,15 @@ const RowDropZone: React.FC<RowDropZoneProps> = ({ element, index, child, cellEd
                     ) : (
                         // Empty row cell container - show drop zone
                         !cellEditMode && (
-                            <RowCellDropZone 
-                                containerId={child.id} 
-                                rowIndex={index}
+                            <RowCellDropZone
+                                containerId={child.id}
                             />
                         )
                     )
                 ) : (
                     // Fallback - should not happen with new structure
                     !cellEditMode && (
-                        <div className="flex items-center justify-center h-full text-slate-400 text-sm">
+                        <div className="flex items-center justify-center h-full text-slate-400 dark:text-gray-500 text-sm">
                             <div className="text-center">
                                 <Plus size={20} className="mx-auto mb-2 opacity-60" />
                                 <p>Empty Row {index + 1}</p>
@@ -492,7 +502,7 @@ const RowDropZone: React.FC<RowDropZoneProps> = ({ element, index, child, cellEd
                         </div>
                     )
                 )}
-                
+
                 {/* Click overlay when in cell edit mode */}
                 {cellEditMode && (
                     <div
@@ -519,15 +529,16 @@ const ContainerContent: React.FC<{ element: FormElement }> = ({ element }) => {
         id: `container-${element.id}`,
         data: { type: element.type, containerId: element.id }
     });
-    const { selectElement, currentProject } = useStore();
+    const { currentProject, settings } = useStore();
     const isFormProject = currentProject?.type === 'form';
+    const isDark = settings.canvasTheme === 'dark';
 
     return (
         <div
             ref={setNodeRef}
             className={clsx(
                 "container-content rounded-lg",
-                isFormProject && "border-2 border-dashed border-slate-200",
+                isFormProject && clsx("border-2 border-dashed", isDark ? "border-gray-700" : "border-slate-200"),
                 false
             )}
             style={{
@@ -539,17 +550,20 @@ const ContainerContent: React.FC<{ element: FormElement }> = ({ element }) => {
                     // Show placeholder drop zones for columns
                     <div className="flex gap-4 w-full">
                         {Array.from({ length: element.columnCount || 2 }).map((_, index) => (
-                            <ColumnPlaceholder 
+                            <ColumnPlaceholder
                                 key={`placeholder-${index}`}
-                                element={element} 
-                                index={index} 
+                                element={element}
+                                index={index}
                             />
                         ))}
                     </div>
                 ) : (
                     // Default empty state for other containers
-                    <div 
-                        className="container-empty-area flex flex-col items-center justify-center h-28 text-slate-400 cursor-pointer"
+                    <div
+                        className={clsx(
+                            "container-empty-area flex flex-col items-center justify-center h-28 cursor-pointer",
+                            isDark ? "text-gray-500" : "text-slate-400"
+                        )}
                     >
                         <Plus size={24} className="mb-2 opacity-50" />
                         <p className="text-sm font-medium">Drop elements here</p>
@@ -557,16 +571,16 @@ const ContainerContent: React.FC<{ element: FormElement }> = ({ element }) => {
                     </div>
                 )
             ) : (
-                <div 
+                <div
                     className="container-grid"
                     style={{
                         // Auto-set layout for rows, columns, grid, and menu containers
                         display: element.type === 'rows' ? 'flex' : element.type === 'columns' ? 'flex' : element.type === 'menu' ? 'flex' : element.type === 'grid' ? 'grid' : (element.display || 'flex'),
-                        flexDirection: element.type === 'rows' ? 'column' : element.type === 'columns' ? 'row' : 
+                        flexDirection: element.type === 'rows' ? 'column' : element.type === 'columns' ? 'row' :
                             element.type === 'menu' ? (element.flexDirection || 'row') :
-                            element.type === 'container' ? (element.flexDirection || 'column') :
-                            (element.display === 'flex' ? (element.flexDirection || 'column') : undefined),
-                        flexWrap: (element.type === 'rows' || element.type === 'columns' || element.type === 'menu' || element.display === 'flex') ? 
+                                element.type === 'container' ? (element.flexDirection || 'column') :
+                                    (element.display === 'flex' ? (element.flexDirection || 'column') : undefined),
+                        flexWrap: (element.type === 'rows' || element.type === 'columns' || element.type === 'menu' || element.display === 'flex') ?
                             (element.flexWrap || (element.type === 'menu' ? 'nowrap' : 'wrap')) : undefined,
                         justifyContent: (element.display === 'flex' || element.display === 'grid' || element.type === 'rows' || element.type === 'columns' || element.type === 'menu') ? element.justifyContent : undefined,
                         alignItems: (element.display === 'flex' || element.display === 'grid' || element.type === 'rows' || element.type === 'columns' || element.type === 'menu') ? element.alignItems : undefined,
@@ -574,10 +588,10 @@ const ContainerContent: React.FC<{ element: FormElement }> = ({ element }) => {
                         gridTemplateColumns: (element.display === 'grid' || element.type === 'grid') && element.type !== 'rows' ? `repeat(${element.gridColumns || 3}, auto)` : undefined,
                         gap: (element.display !== 'block' || element.type === 'rows' || element.type === 'grid' || element.type === 'menu') && element.type !== 'columns' ? `${(element.gap || 0) * 0.25}rem` : undefined,
                         // Add minimum height only when needed for spacing to work in column direction
-                        minHeight: (element.display === 'flex' && element.flexDirection === 'column') || 
-                                   element.type === 'rows' ||
-                                   (element.display === 'flex' && !element.flexDirection && element.type !== 'menu' && element.type !== 'columns') ? 
-                                   '120px' : undefined
+                        minHeight: (element.display === 'flex' && element.flexDirection === 'column') ||
+                            element.type === 'rows' ||
+                            (element.display === 'flex' && !element.flexDirection && element.type !== 'menu' && element.type !== 'columns') ?
+                            '120px' : undefined
                     }}
                 >
                     {element.children.map((child, index) => {
@@ -616,7 +630,7 @@ const ColumnsContent: React.FC<{ element: FormElement }> = ({ element }) => {
         const checkMobile = () => {
             setIsMobile(window.innerWidth < 768);
         };
-        
+
         checkMobile();
         window.addEventListener('resize', checkMobile);
         return () => window.removeEventListener('resize', checkMobile);
@@ -671,112 +685,111 @@ const ColumnsContent: React.FC<{ element: FormElement }> = ({ element }) => {
                     Cell Edit Mode - Click any cell to edit background
                 </div>
             )}
-            
-            <div 
+
+            <div
                 style={{
                     // Auto-set layout based on container type
-                    display: element.type === 'columns' || element.type === 'rows' ? 'flex' : 
-                             element.type === 'grid' ? 'grid' : (element.display || 'grid'),
-                    flexDirection: element.type === 'columns' ? 'row' : element.type === 'rows' ? 'column' : 
+                    display: element.type === 'columns' || element.type === 'rows' ? 'flex' :
+                        element.type === 'grid' ? 'grid' : (element.display || 'grid'),
+                    flexDirection: element.type === 'columns' ? 'row' : element.type === 'rows' ? 'column' :
                         (element.display === 'flex' ? (element.flexDirection || 'row') : undefined),
-                    flexWrap: (element.type === 'columns' || element.type === 'rows' || element.display === 'flex') ? 
+                    flexWrap: (element.type === 'columns' || element.type === 'rows' || element.display === 'flex') ?
                         (element.flexWrap || 'wrap') : undefined,
-                    justifyContent: (element.display !== 'block' || element.type === 'columns' || element.type === 'rows') ? 
+                    justifyContent: (element.display !== 'block' || element.type === 'columns' || element.type === 'rows') ?
                         element.justifyContent : undefined,
-                    alignItems: (element.display !== 'block' || element.type === 'columns' || element.type === 'rows') ? 
+                    alignItems: (element.display !== 'block' || element.type === 'columns' || element.type === 'rows') ?
                         element.alignItems : undefined,
-                    alignContent: (element.type === 'columns' || element.type === 'rows' || element.display === 'flex') ? 
+                    alignContent: (element.type === 'columns' || element.type === 'rows' || element.display === 'flex') ?
                         (element.alignContent || 'flex-start') : 'start',
-                    gridTemplateColumns: (element.display === 'grid' || element.type === 'grid') && element.type !== 'columns' && element.type !== 'rows' ? 
+                    gridTemplateColumns: (element.display === 'grid' || element.type === 'grid') && element.type !== 'columns' && element.type !== 'rows' ?
                         (isMobile ? '1fr' : `repeat(${element.gridColumns || element.columnCount || 3}, 1fr)`) : undefined,
-                    gap: (element.display !== 'block' || element.type === 'rows' || element.type === 'grid') && element.type !== 'columns' ? 
+                    gap: (element.display !== 'block' || element.type === 'rows' || element.type === 'grid') && element.type !== 'columns' ?
                         `${(element.gap ?? 0) * 0.25}rem` : undefined
                 }}
             >
-{(element.type === 'columns') ? (
-                // For columns, use individual drop zones for each column
-                Array.from({ length: element.columnCount || 2 }).map((_, index) => {
-                    const child = element.children?.[index];
-                    return (
-                        <ColumnDropZone
-                            key={index}
-                            element={element}
-                            index={index}
-                            child={child}
-                            cellEditMode={cellEditMode}
-                            handleCellClick={handleCellClick}
-                        />
-                    );
-                })
-            ) : ((element.type === 'rows' || element.type === 'grid' || element.display === 'flex') ? (
-                // For flex layout (rows/grid) or dedicated grid, render all children directly
-                element.children?.map((child: any, index) => {
-                    if (!child) {
-                        return <div key={`empty-${index}`} className="flex-1 min-h-[32px]" />;
-                    }
-                    return <SortableElement key={child.id} element={child} parentId={element.id} />;
-                })
-            ) : (
-                // For legacy grid layout in columns, use the original column-based layout  
-                Array.from({ length: element.columnCount || 2 }).map((_, index) => {
-                    const child = element.children?.[index];
-                    // If no child, create a mock placeholder element
-                    const displayChild = child || {
-                        id: `placeholder-${element.id}-${index}`,
-                        type: 'text' as const,
-                        label: '',
-                        name: `placeholder-${index}`,
-                        placeholder: 'Drop element here',
-                        required: false,
-                        width: 12,
-                        isPlaceholder: true // Mark this as a placeholder
-                    };
-                    
-                    return (
-                        <div
-                            key={index}
-                            className={`relative ${
-                                cellEditMode 
-                                    ? 'border-orange-400 bg-orange-50 hover:border-orange-600 hover:bg-orange-100 cursor-pointer border-2 border-dashed' 
-                                    : ''
-                            }`}
-                            style={{
-                                backgroundColor: element.columnBackgrounds?.[index] || element.backgroundColor || 'transparent'
-                            }}
-                            data-debug-legacy-cell={`index-${index}-bg-${element.columnBackgrounds?.[index] || 'none'}`}
-                        >
-                            {cellEditMode && (
-                                <div className="absolute top-1 right-1 bg-orange-600 text-white text-xs px-2 py-1 rounded font-medium z-40">
-                                    Cell {index + 1}
-                                </div>
-                            )}
+                {(element.type === 'columns') ? (
+                    // For columns, use individual drop zones for each column
+                    Array.from({ length: element.columnCount || 2 }).map((_, index) => {
+                        const child = element.children?.[index];
+                        return (
+                            <ColumnDropZone
+                                key={index}
+                                element={element}
+                                index={index}
+                                child={child}
+                                cellEditMode={cellEditMode}
+                                handleCellClick={handleCellClick}
+                            />
+                        );
+                    })
+                ) : ((element.type === 'rows' || element.type === 'grid' || element.display === 'flex') ? (
+                    // For flex layout (rows/grid) or dedicated grid, render all children directly
+                    element.children?.map((child: any, index) => {
+                        if (!child) {
+                            return <div key={`empty-${index}`} className="flex-1 min-h-[32px]" />;
+                        }
+                        return <SortableElement key={child.id} element={child} parentId={element.id} />;
+                    })
+                ) : (
+                    // For legacy grid layout in columns, use the original column-based layout  
+                    Array.from({ length: element.columnCount || 2 }).map((_, index) => {
+                        const child = element.children?.[index];
+                        // If no child, create a mock placeholder element
+                        const displayChild = child || {
+                            id: `placeholder-${element.id}-${index}`,
+                            type: 'text' as const,
+                            label: '',
+                            name: `placeholder-${index}`,
+                            placeholder: 'Drop element here',
+                            required: false,
+                            width: 12,
+                            isPlaceholder: true // Mark this as a placeholder
+                        };
 
-                            {/* Always render content - either real child or placeholder */}
-                            <div 
-                                className="relative w-full h-full"
-                                style={{ pointerEvents: cellEditMode ? 'none' : 'auto' }}
+                        return (
+                            <div
+                                key={index}
+                                className={`relative ${cellEditMode
+                                    ? 'border-orange-400 bg-orange-50 hover:border-orange-600 hover:bg-orange-100 cursor-pointer border-2 border-dashed'
+                                    : ''
+                                    }`}
+                                style={{
+                                    backgroundColor: element.columnBackgrounds?.[index] || element.backgroundColor || 'transparent'
+                                }}
+                                data-debug-legacy-cell={`index-${index}-bg-${element.columnBackgrounds?.[index] || 'none'}`}
                             >
-                                {child ? (
-                                    <SortableElement element={child} parentId={element.id} />
-                                ) : (
-                                    <SortableElement element={displayChild} parentId={element.id} />
-                                )}
-                                
-                                {/* Click overlay when in cell edit mode - above content */}
                                 {cellEditMode && (
-                                    <div
-                                        className="absolute inset-0 z-50 cursor-pointer bg-transparent"
-                                        onClick={(e) => handleCellClick(e, index)}
-                                        onMouseDown={(e) => e.preventDefault()}
-                                        title={`Click to edit Cell ${index + 1} background`}
-                                        style={{ pointerEvents: 'auto' }}
-                                    />
+                                    <div className="absolute top-1 right-1 bg-orange-600 text-white text-xs px-2 py-1 rounded font-medium z-40">
+                                        Cell {index + 1}
+                                    </div>
                                 )}
+
+                                {/* Always render content - either real child or placeholder */}
+                                <div
+                                    className="relative w-full h-full"
+                                    style={{ pointerEvents: cellEditMode ? 'none' : 'auto' }}
+                                >
+                                    {child ? (
+                                        <SortableElement element={child} parentId={element.id} />
+                                    ) : (
+                                        <SortableElement element={displayChild} parentId={element.id} />
+                                    )}
+
+                                    {/* Click overlay when in cell edit mode - above content */}
+                                    {cellEditMode && (
+                                        <div
+                                            className="absolute inset-0 z-50 cursor-pointer bg-transparent"
+                                            onClick={(e) => handleCellClick(e, index)}
+                                            onMouseDown={(e) => e.preventDefault()}
+                                            title={`Click to edit Cell ${index + 1} background`}
+                                            style={{ pointerEvents: 'auto' }}
+                                        />
+                                    )}
+                                </div>
                             </div>
-                        </div>
-                    );
-                })
-            ))}
+                        );
+                    })
+                ))}
             </div>
         </div>
     );
@@ -840,8 +853,8 @@ const RowsContent: React.FC<{ element: FormElement }> = ({ element }) => {
                     Cell Edit Mode - Click any row to edit background
                 </div>
             )}
-            
-            <div 
+
+            <div
                 style={{
                     display: 'flex',
                     flexDirection: 'column',
@@ -872,15 +885,12 @@ const RowsContent: React.FC<{ element: FormElement }> = ({ element }) => {
 };
 
 const SortableElement: React.FC<SortableElementProps> = ({ element, parentId }) => {
-    const { selectElement, selectedElementId, removeElement, duplicateElement, updateElement, moveElementUp, moveElementDown, elements, currentProject, saveElementAsBlock, isElementSavedAsBlock } = useStore();
-    
+    const { selectElement, selectedElementId, removeElement, duplicateElement, updateElement, elements, currentProject, saveElementAsBlock, isElementSavedAsBlock } = useStore();
+
     const [showCategoryModal, setShowCategoryModal] = useState(false);
-    
-    // Add hover state for container highlighting
-    const [hoveredContainerId, setHoveredContainerId] = React.useState<string | null>(null);
-    
+
     // Add draggable functionality
-    const { attributes, listeners, setNodeRef: setDragNodeRef, transform, isDragging } = useDraggable({
+    const { attributes, listeners, setNodeRef: setDragNodeRef, isDragging } = useDraggable({
         id: element.id,
         data: {
             type: element.type,
@@ -888,7 +898,7 @@ const SortableElement: React.FC<SortableElementProps> = ({ element, parentId }) 
             parentId: parentId
         }
     });
-    
+
     // Add droppable functionality for "insert before" drop zones
     const { setNodeRef: setDropBeforeNodeRef, isOver: isOverBefore } = useDroppable({
         id: `drop-before-${element.id}`,
@@ -913,7 +923,7 @@ const SortableElement: React.FC<SortableElementProps> = ({ element, parentId }) 
     const isSelected = selectedElementId === element.id;
     const hasAnySelection = selectedElementId !== null;
     const isFormProject = currentProject?.type === 'form';
-    
+
     // Check if this element is a descendant of the selected element (for showing nested borders)
     const isDescendantOfSelected = selectedElementId && (() => {
         // Walk up the parent chain to see if we're a descendant of the selected element
@@ -932,11 +942,11 @@ const SortableElement: React.FC<SortableElementProps> = ({ element, parentId }) 
                 }
                 return null;
             };
-            
-            let currentId = currentElementId;
+
+            let currentId: string | null = currentElementId;
             while (currentId) {
                 if (currentId === targetAncestorId) return true;
-                
+
                 // Find parent of current element
                 const findParent = (id: string, elems: FormElement[]): string | null => {
                     for (const el of elems) {
@@ -950,18 +960,17 @@ const SortableElement: React.FC<SortableElementProps> = ({ element, parentId }) 
                     }
                     return null;
                 };
-                
+
                 currentId = findParent(currentId, elements);
             }
             return false;
         };
-        
+
         return isAncestor(element.id, selectedElementId, elements);
     })();
 
-    // Check if parent is a columns or container component
-    const parentInfo = parentId && (() => {
-        const findParent = (elements: any[]): any => {
+    const parentInfo = parentId ? (() => {
+        const findParent = (elements: any[]): FormElement | null => {
             for (const el of elements) {
                 if (!el) continue; // Skip undefined/null elements
                 if (el.id === parentId) return el;
@@ -973,34 +982,16 @@ const SortableElement: React.FC<SortableElementProps> = ({ element, parentId }) 
             return null;
         };
         const parent = findParent(elements);
-        return {
-            isInColumns: parent?.type === 'columns',
-            isInContainer: parent?.type === 'container',
-            isInRows: parent?.type === 'rows',
-            parentType: parent?.type,
+        return parent ? {
+            isInColumns: parent.type === 'columns',
+            isInContainer: parent.type === 'container',
+            isInRows: parent.type === 'rows',
+            parentType: parent.type,
             parent: parent
-        };
-    })();
+        } : null;
+    })() : null;
 
-    const isInColumns = parentInfo?.isInColumns || false;
-    const isInContainer = parentInfo?.isInContainer || false;
-    const isInRows = parentInfo?.isInRows || false;
     const isNested = parentInfo ? true : false;
-
-    const colSpanMap: Record<number, string> = {
-        1: 'col-span-1',
-        2: 'col-span-2',
-        3: 'col-span-3',
-        4: 'col-span-4',
-        5: 'col-span-5',
-        6: 'col-span-6',
-        7: 'col-span-7',
-        8: 'col-span-8',
-        9: 'col-span-9',
-        10: 'col-span-10',
-        11: 'col-span-11',
-        12: 'col-span-12',
-    };
 
     // Save-as-block logic
     const hasChildren = element.children && element.children.length > 0;
@@ -1014,41 +1005,41 @@ const SortableElement: React.FC<SortableElementProps> = ({ element, parentId }) 
     const handleResizeStart = (e: React.MouseEvent, direction: 'left' | 'right') => {
         e.stopPropagation();
         e.preventDefault();
-        
+
         setIsResizing(true);
-        
+
         // Store initial state
         const startX = e.clientX;
         const startWidth = element.width || 12;
-        
+
         console.log('Resize started:', { direction, startX, startWidth, parentId, elementId: element.id });
-        
+
         const handleMouseMove = (moveEvent: MouseEvent) => {
             moveEvent.preventDefault();
-            
+
             const deltaX = moveEvent.clientX - startX;
             // Adjust pixels per column based on container context
             const pixelsPerColumn = parentId ? 60 : 80; // Smaller columns in containers
             const columnDelta = Math.round(deltaX / pixelsPerColumn);
-            
+
             let newWidth = startWidth;
-            
+
             if (direction === 'right') {
                 newWidth = startWidth + columnDelta;
             } else {
                 newWidth = startWidth - columnDelta;
             }
-            
+
             // Clamp to valid range
             newWidth = Math.min(12, Math.max(1, newWidth));
-            
+
             console.log('Resize move:', { deltaX, columnDelta, newWidth, currentWidth: element.width, inContainer: !!parentId });
-            
+
             if (newWidth !== element.width) {
                 updateElement(element.id, { width: newWidth });
             }
         };
-        
+
         const handleMouseUp = () => {
             setIsResizing(false);
             document.removeEventListener('mousemove', handleMouseMove);
@@ -1060,7 +1051,7 @@ const SortableElement: React.FC<SortableElementProps> = ({ element, parentId }) 
         // Add listeners
         document.addEventListener('mousemove', handleMouseMove);
         document.addEventListener('mouseup', handleMouseUp);
-        
+
         // Prevent text selection
         document.body.style.userSelect = 'none';
         document.body.style.cursor = direction === 'right' ? 'e-resize' : 'w-resize';
@@ -1069,32 +1060,32 @@ const SortableElement: React.FC<SortableElementProps> = ({ element, parentId }) 
     const handleImageResize = (e: React.MouseEvent, direction: 'nw' | 'ne' | 'sw' | 'se') => {
         e.stopPropagation();
         e.preventDefault();
-        
+
         setIsResizing(true);
-        
+
         // Store initial state
         const startX = e.clientX;
         const startWidth = element.width || 2; // Default ~17% (2 of 12 columns)
-        
+
         const handleMouseMove = (moveEvent: MouseEvent) => {
             moveEvent.preventDefault();
-            
+
             const deltaX = moveEvent.clientX - startX;
             const pixelsPerColumn = 80; // Approximate pixels per column
             let columnDelta = Math.round(deltaX / pixelsPerColumn);
-            
+
             // Adjust for left-side handles
             if (direction === 'nw' || direction === 'sw') {
                 columnDelta = -columnDelta;
             }
-            
+
             const newWidth = Math.max(1, Math.min(12, startWidth + columnDelta));
-            
+
             if (newWidth !== element.width) {
                 updateElement(element.id, { width: newWidth });
             }
         };
-        
+
         const handleMouseUp = () => {
             setIsResizing(false);
             document.removeEventListener('mousemove', handleMouseMove);
@@ -1106,7 +1097,7 @@ const SortableElement: React.FC<SortableElementProps> = ({ element, parentId }) 
         // Add listeners
         document.addEventListener('mousemove', handleMouseMove);
         document.addEventListener('mouseup', handleMouseUp);
-        
+
         // Prevent text selection
         document.body.style.userSelect = 'none';
         document.body.style.cursor = `${direction}-resize`;
@@ -1131,7 +1122,7 @@ const SortableElement: React.FC<SortableElementProps> = ({ element, parentId }) 
             className={clsx(
                 "group relative flex flex-col",
                 !isSelected || !['rich-text', 'text-block', 'heading'].includes(element.type) ? "cursor-pointer" : "cursor-auto",
-                isNested && !['columns', 'menu'].includes(parentInfo?.parent?.type) && "w-full", // Full width inside any container but not columns or menu
+                isNested && !['columns', 'menu'].includes(parentInfo?.parent?.type || '') && "w-full", // Full width inside any container but not columns or menu
                 "opacity-100",
                 isSelected && "z-10",
                 isResizing && "z-50 select-none",
@@ -1151,10 +1142,10 @@ const SortableElement: React.FC<SortableElementProps> = ({ element, parentId }) 
             style={{
                 ...(parentId ? { pointerEvents: 'auto', position: 'relative' } : {}),
                 // Apply percentage width for root level elements, elements in columns, and elements in menu containers
-                ...(!isNested || ['columns', 'menu'].includes(parentInfo?.parent?.type) ? 
-                    (parentInfo?.parent?.type === 'menu' ? 
+                ...(!isNested || ['columns', 'menu'].includes(parentInfo?.parent?.type || '') ?
+                    (parentInfo?.parent?.type === 'menu' ?
                         // For menu items, remove fixed width and let flex container control layout
-                        { flex: '0 0 auto', alignSelf: 'stretch' } : 
+                        { flex: '0 0 auto', alignSelf: 'stretch' } :
                         { width: `${(element.width || (element.type === 'image' ? 2 : 12)) / 12 * 100}%` }) : {}),
                 // Apply margins
                 marginTop: `${(element.marginTop ?? 0) * 0.25}rem`,
@@ -1162,13 +1153,13 @@ const SortableElement: React.FC<SortableElementProps> = ({ element, parentId }) 
                 marginBottom: `${(element.marginBottom ?? 0) * 0.25}rem`,
                 marginLeft: `${(element.marginLeft ?? 0) * 0.25}rem`,
                 // Apply horizontal alignment for non-containers
-                ...(element.horizontalAlign === 'center' && !['container', 'columns', 'rows', 'grid'].includes(element.type) ? 
+                ...(element.horizontalAlign === 'center' && !['container', 'columns', 'rows', 'grid'].includes(element.type) ?
                     { marginLeft: 'auto', marginRight: 'auto' } : {}),
-                ...(element.horizontalAlign === 'right' && !['container', 'columns', 'rows', 'grid'].includes(element.type) ? 
+                ...(element.horizontalAlign === 'right' && !['container', 'columns', 'rows', 'grid'].includes(element.type) ?
                     { marginLeft: 'auto' } : {}),
                 // Apply stretch behavior when parent has alignItems: 'stretch'
-                ...(parentInfo?.parent?.alignItems === 'stretch' && parentInfo?.parent?.display !== 'block' && 
-                    !['container', 'columns', 'menu', 'social'].includes(element.type) ? 
+                ...(parentInfo?.parent?.alignItems === 'stretch' && parentInfo?.parent?.display !== 'block' &&
+                    !['container', 'columns', 'menu', 'social'].includes(element.type) ?
                     { minHeight: 'fit-content' } : {})
             }}
         >
@@ -1212,54 +1203,54 @@ const SortableElement: React.FC<SortableElementProps> = ({ element, parentId }) 
 
             {/* Selected Element Toolbar - Only show for selected element */}
             {isSelected && (
-                <div 
+                <div
                     className="absolute top-1 left-1 opacity-100 z-[9999] flex gap-1 bg-white rounded-md shadow-lg p-1 border border-slate-200"
                     style={{ pointerEvents: 'auto' }}
                 >
-                <div
-                    className="p-1 bg-white border border-slate-300 rounded shadow-sm text-slate-600 hover:text-blue-600 hover:bg-blue-50 cursor-grab active:cursor-grabbing"
-                    title="Drag to move"
-                >
-                    <GripVertical size={12} />
-                </div>
-                <button
-                    onClick={(e) => {
-                        e.stopPropagation();
-                        duplicateElement(element.id);
-                    }}
-                    className="p-1 bg-white border border-slate-300 rounded shadow-sm text-slate-600 hover:text-green-600 hover:bg-green-50"
-                    title="Duplicate"
-                >
-                    <Copy size={12} />
-                </button>
-                {/* Save as block button - only for containers with children at root level */}
-                {canSaveAsBlock && (
+                    <div
+                        className="p-1 bg-white border border-slate-300 rounded shadow-sm text-slate-600 hover:text-blue-600 hover:bg-blue-50 cursor-grab active:cursor-grabbing"
+                        title="Drag to move"
+                    >
+                        <GripVertical size={12} />
+                    </div>
                     <button
                         onClick={(e) => {
                             e.stopPropagation();
-                            setShowCategoryModal(true);
+                            duplicateElement(element.id);
                         }}
-                        className={clsx(
-                            "p-1 bg-white border border-slate-300 rounded shadow-sm transition-colors",
-                            isAlreadySavedAsBlock 
-                                ? "text-purple-600 bg-purple-50 border-purple-200 hover:bg-purple-100" 
-                                : "text-slate-600 hover:text-purple-600 hover:bg-purple-50"
-                        )}
-                        title={isAlreadySavedAsBlock ? "Component saved as block" : "Save as reusable block"}
+                        className="p-1 bg-white border border-slate-300 rounded shadow-sm text-slate-600 hover:text-green-600 hover:bg-green-50"
+                        title="Duplicate"
                     >
-                        <Bookmark size={12} />
+                        <Copy size={12} />
                     </button>
-                )}
-                <button
-                    onClick={(e) => {
-                        e.stopPropagation();
-                        removeElement(element.id);
-                    }}
-                    className="p-1 bg-white border border-slate-300 rounded shadow-sm text-slate-600 hover:text-red-600 hover:bg-red-50"
-                    title="Delete"
-                >
-                    <Trash2 size={12} />
-                </button>
+                    {/* Save as block button - only for containers with children at root level */}
+                    {canSaveAsBlock && (
+                        <button
+                            onClick={(e) => {
+                                e.stopPropagation();
+                                setShowCategoryModal(true);
+                            }}
+                            className={clsx(
+                                "p-1 bg-white border border-slate-300 rounded shadow-sm transition-colors",
+                                isAlreadySavedAsBlock
+                                    ? "text-purple-600 bg-purple-50 border-purple-200 hover:bg-purple-100"
+                                    : "text-slate-600 hover:text-purple-600 hover:bg-purple-50"
+                            )}
+                            title={isAlreadySavedAsBlock ? "Component saved as block" : "Save as reusable block"}
+                        >
+                            <Bookmark size={12} />
+                        </button>
+                    )}
+                    <button
+                        onClick={(e) => {
+                            e.stopPropagation();
+                            removeElement(element.id);
+                        }}
+                        className="p-1 bg-white border border-slate-300 rounded shadow-sm text-slate-600 hover:text-red-600 hover:bg-red-50"
+                        title="Delete"
+                    >
+                        <Trash2 size={12} />
+                    </button>
                 </div>
             )}
 
@@ -1268,9 +1259,9 @@ const SortableElement: React.FC<SortableElementProps> = ({ element, parentId }) 
                 <>
                     <div className={clsx(
                         "absolute right-0 top-0 bottom-0 w-4 cursor-e-resize flex items-center justify-center z-30",
-                        isResizing ? "opacity-100 bg-brand-100/80" : 
-                        isSelected ? "opacity-80 hover:opacity-100 hover:bg-brand-50/50" :
-                        hasAnySelection ? "opacity-0" : "opacity-0"
+                        isResizing ? "opacity-100 bg-brand-100/80" :
+                            isSelected ? "opacity-80 hover:opacity-100 hover:bg-brand-50/50" :
+                                hasAnySelection ? "opacity-0" : "opacity-0"
                     )}
                         onMouseDown={(e) => {
                             e.stopPropagation();
@@ -1281,8 +1272,8 @@ const SortableElement: React.FC<SortableElementProps> = ({ element, parentId }) 
                         <div className={clsx(
                             "w-1 rounded-full",
                             parentId ? "h-6" : "h-8", // Smaller handles in containers
-                            isResizing ? "bg-brand-500" : 
-                            isSelected ? "bg-brand-400" : "bg-slate-300"
+                            isResizing ? "bg-brand-500" :
+                                isSelected ? "bg-brand-400" : "bg-slate-300"
                         )}></div>
                     </div>
                 </>
@@ -1290,7 +1281,7 @@ const SortableElement: React.FC<SortableElementProps> = ({ element, parentId }) 
 
 
             {/* Visual wrapper around label and component */}
-            <div 
+            <div
                 className={clsx(
                     "relative rounded-lg flex-1",
                     isSelected && "ring-2 ring-brand-400 ring-opacity-50"
@@ -1305,7 +1296,7 @@ const SortableElement: React.FC<SortableElementProps> = ({ element, parentId }) 
                 }}
             >
                 {isFormProject && !['hidden', 'rich-text', 'container', 'columns', 'rows', 'grid', 'menu'].includes(element.type) && element.label && element.label.trim() && (
-                    <div 
+                    <div
                         className="flex justify-between items-start"
                         style={{ marginBottom: element.labelGap !== undefined ? `${element.labelGap * 0.25}rem` : '0.75rem' }}
                     >
@@ -1319,7 +1310,7 @@ const SortableElement: React.FC<SortableElementProps> = ({ element, parentId }) 
                                 !element.labelSize && "text-sm",
                                 // Legacy labelWeight support (only if no new formatting is used)
                                 !element.labelBold && element.labelWeight === 'normal' && "font-normal",
-                                !element.labelBold && element.labelWeight === 'medium' && "font-medium", 
+                                !element.labelBold && element.labelWeight === 'medium' && "font-medium",
                                 !element.labelBold && element.labelWeight === 'semibold' && "font-semibold",
                                 !element.labelBold && element.labelWeight === 'bold' && "font-bold",
                                 !element.labelBold && !element.labelWeight && "font-medium",
@@ -1337,12 +1328,12 @@ const SortableElement: React.FC<SortableElementProps> = ({ element, parentId }) 
                 )}
 
                 {isFormProject && ['container', 'columns', 'rows', 'grid', 'menu'].includes(element.type) && element.label && element.label.trim() && (
-                    <div 
+                    <div
                         className="flex justify-between items-start"
                         style={{ marginBottom: element.labelGap !== undefined ? `${element.labelGap * 0.25}rem` : '0.75rem' }}
                     >
                         <div>
-                            <label 
+                            <label
                                 className={clsx(
                                     "block text-slate-700 cursor-pointer hover:text-brand-600",
                                     element.labelSize === 'xs' && "text-xs",
@@ -1353,7 +1344,7 @@ const SortableElement: React.FC<SortableElementProps> = ({ element, parentId }) 
                                     // Legacy labelWeight support (only if no new formatting is used)
                                     !element.labelBold && element.labelWeight === 'normal' && "font-normal",
                                     !element.labelBold && element.labelWeight === 'medium' && "font-medium",
-                                    !element.labelBold && element.labelWeight === 'semibold' && "font-semibold", 
+                                    !element.labelBold && element.labelWeight === 'semibold' && "font-semibold",
                                     !element.labelBold && element.labelWeight === 'bold' && "font-bold",
                                     !element.labelBold && !element.labelWeight && "font-medium",
                                     // New formatting system takes priority
@@ -1378,7 +1369,7 @@ const SortableElement: React.FC<SortableElementProps> = ({ element, parentId }) 
                 )}
 
                 {/* Element Content */}
-                <div 
+                <div
                     className={clsx(
                         "pointer-events-none",
                         isSelected && ['rich-text', 'text-block', 'heading'].includes(element.type) && "pointer-events-auto"
@@ -1485,7 +1476,7 @@ const SortableElement: React.FC<SortableElementProps> = ({ element, parentId }) 
                         <div className={clsx(
                             "flex items-center bg-slate-100 rounded-lg opacity-60",
                             isFormProject && "border border-slate-300"
-                        )} style={{ 
+                        )} style={{
                             paddingTop: element.paddingTop !== undefined ? `${element.paddingTop * 0.25}rem` : '0.75rem',
                             paddingRight: element.paddingRight !== undefined ? `${element.paddingRight * 0.25}rem` : '0.75rem',
                             paddingBottom: element.paddingBottom !== undefined ? `${element.paddingBottom * 0.25}rem` : '0.75rem',
@@ -1524,7 +1515,7 @@ const SortableElement: React.FC<SortableElementProps> = ({ element, parentId }) 
                                 paddingBottom: element.paddingBottom !== undefined ? `${element.paddingBottom * 0.25}rem` : '0',
                                 paddingLeft: element.paddingLeft !== undefined ? `${element.paddingLeft * 0.25}rem` : '0'
                             }}>
-                                <div 
+                                <div
                                     className={clsx(
                                         "prose prose-sm max-w-none",
                                         !element.textColor && "text-slate-600",
@@ -1553,7 +1544,7 @@ const SortableElement: React.FC<SortableElementProps> = ({ element, parentId }) 
                                 className={clsx(
                                     "font-medium rounded-lg border",
                                     element.buttonSize === 'sm' && "text-sm",
-                                    element.buttonSize === 'lg' && "text-lg", 
+                                    element.buttonSize === 'lg' && "text-lg",
                                     (!element.buttonSize || element.buttonSize === 'md') && "text-base",
                                     element.buttonStyle === 'primary' && "bg-blue-600 border-blue-600 text-white hover:bg-blue-700",
                                     element.buttonStyle === 'secondary' && "bg-gray-600 border-gray-600 text-white hover:bg-gray-700",
@@ -1563,7 +1554,7 @@ const SortableElement: React.FC<SortableElementProps> = ({ element, parentId }) 
                                     (!element.buttonStyle || element.buttonStyle === 'primary') && "bg-blue-600 border-blue-600 text-white hover:bg-blue-700"
                                 )}
                                 style={{
-                                    backgroundColor: element.backgroundColor && element.buttonStyle !== 'text' && element.buttonStyle !== 'outline' && element.buttonStyle !== 'link' ? 
+                                    backgroundColor: element.backgroundColor && element.buttonStyle !== 'text' && element.buttonStyle !== 'outline' && element.buttonStyle !== 'link' ?
                                         element.backgroundColor : undefined,
                                     paddingTop: element.paddingTop !== undefined ? `${element.paddingTop * 0.25}rem` : undefined,
                                     paddingRight: element.paddingRight !== undefined ? `${element.paddingRight * 0.25}rem` : undefined,
@@ -1609,7 +1600,7 @@ const SortableElement: React.FC<SortableElementProps> = ({ element, parentId }) 
                                 paddingBottom: element.paddingBottom !== undefined ? `${element.paddingBottom * 0.25}rem` : undefined,
                                 paddingLeft: element.paddingLeft !== undefined ? `${element.paddingLeft * 0.25}rem` : undefined
                             }}>
-                                <div 
+                                <div
                                     className={clsx(
                                         "prose prose-sm max-w-none",
                                         !element.textColor && "text-slate-600",
@@ -1694,9 +1685,9 @@ const SortableElement: React.FC<SortableElementProps> = ({ element, parentId }) 
                                 id: `menu-${element.id}`,
                                 data: { type: 'menu', containerId: element.id }
                             });
-                            
+
                             return (
-                                <div 
+                                <div
                                     ref={setNodeRef}
                                     className="min-h-[40px]"
                                     style={{
@@ -1710,11 +1701,11 @@ const SortableElement: React.FC<SortableElementProps> = ({ element, parentId }) 
                                     }}
                                 >
                                     {element.children && element.children.length > 0 ? (
-                                        element.children.map((child, index) => (
-                                            <SortableElement 
-                                                key={child.id} 
-                                                element={child} 
-                                                parentId={element.id} 
+                                        element.children.map((child) => (
+                                            <SortableElement
+                                                key={child.id}
+                                                element={child}
+                                                parentId={element.id}
                                             />
                                         ))
                                     ) : (
@@ -1759,7 +1750,7 @@ const SortableElement: React.FC<SortableElementProps> = ({ element, parentId }) 
                             </div>
                         </div>
                     ) : element.type === 'image' ? (
-                        <div 
+                        <div
                             className={clsx(
                                 "relative group",
                                 element.imageAlign === 'center' && "flex justify-center",
@@ -1831,7 +1822,7 @@ const SortableElement: React.FC<SortableElementProps> = ({ element, parentId }) 
                     )}
                 </div>
             </div>
-            
+
             {/* Category Modal */}
             <CategoryModal
                 isOpen={showCategoryModal}
@@ -1892,51 +1883,97 @@ const CanvasEndDropZone: React.FC = () => {
 };
 
 export const Canvas: React.FC = () => {
-    const { elements, selectElement, settings, currentProject } = useStore();
+    const { elements, selectElement, settings, currentProject, toggleCanvasTheme } = useStore();
     const { setNodeRef } = useDroppable({
         id: 'canvas',
     });
 
     return (
         <div
-            className="form-builder-canvas"
+            className="form-builder-canvas flex flex-col h-full"
             onClick={() => selectElement(null)}
         >
-            <div 
-                className="form-builder-canvas-inner"
+            {/* Canvas Toolbar - Always visible against App Theme */}
+            <div className="flex justify-end items-center px-4 py-2 bg-transparent">
+                <div className="flex items-center gap-2 bg-white dark:bg-gray-800 rounded-lg shadow-sm border border-slate-200 dark:border-gray-700 px-3 py-1.5">
+                    <span className="text-xs font-medium text-slate-600 dark:text-gray-400">Canvas Theme:</span>
+                    <button
+                        onClick={toggleCanvasTheme}
+                        className={clsx(
+                            "p-1.5 rounded-md transition-colors",
+                            "text-slate-500 hover:text-slate-800 hover:bg-slate-100",
+                            "dark:text-gray-400 dark:hover:text-gray-200 dark:hover:bg-gray-700"
+                        )}
+                        title={`Switch to ${settings.canvasTheme === 'dark' ? 'light' : 'dark'} canvas`}
+                    >
+                        {settings.canvasTheme !== 'dark' && <Sun size={14} />}
+                        {settings.canvasTheme === 'dark' && <Moon size={14} />}
+                    </button>
+                    <div className="w-px h-3 bg-slate-200 dark:bg-gray-700 mx-1"></div>
+                    <span className="text-xs text-slate-400 dark:text-gray-500 capitalize">
+                        {settings.canvasTheme === 'dark' ? 'Dark' : 'Light'}
+                    </span>
+                </div>
+            </div>
+
+            <div
+                className="form-builder-canvas-inner flex-1 overflow-y-auto overflow-x-hidden p-4 sm:p-8"
                 style={{
                     display: 'flex',
-                    justifyContent: settings.contentAlignment === 'center' ? 'center' : 
-                                   settings.contentAlignment === 'right' ? 'flex-end' : 'flex-start'
+                    justifyContent: settings.contentAlignment === 'center' ? 'center' :
+                        settings.contentAlignment === 'right' ? 'flex-end' : 'flex-start'
                 }}
             >
                 <div
                     ref={setNodeRef}
                     className={clsx(
-                        "min-h-[800px] bg-white rounded-2xl shadow-card px-8 pb-8",
+                        "min-h-[800px] rounded-2xl shadow-card transition-colors duration-300",
                         currentProject?.type !== 'form' && "pt-0",
                         currentProject?.type === 'form' && "pt-8",
-                        elements.length === 0 && "form-builder-canvas-empty flex items-center justify-center"
+                        // Empty state alignment
+                        elements.length === 0 && "form-builder-canvas-empty flex items-center justify-center",
+                        // Apply canvas theme locally - independent of Main App Theme
+                        settings.canvasTheme === 'dark' ? "bg-gray-900 text-gray-100" : "bg-white text-gray-900"
                     )}
                     style={{
-                        backgroundColor: settings.formBackground || '#ffffff',
+                        backgroundColor: settings.formBackground || (
+                            settings.canvasTheme === 'dark' ? '#111827' : '#ffffff'
+                        ),
                         width: settings.contentWidth ? `${settings.contentWidth}px` : '100%',
-                        maxWidth: settings.contentWidth ? `${settings.contentWidth}px` : 'none'
+                        maxWidth: settings.contentWidth ? `${settings.contentWidth}px` : 'none',
+                        // Ensure padding for empty state
+                        paddingBottom: '2rem'
                     }}
                 >
                     {elements.length === 0 ? (
-                        <div className="form-builder-canvas-empty-content">
-                            <div className="form-builder-canvas-empty-icon">
-                                <Info size={24} />
+                        <div className={clsx(
+                            "form-builder-canvas-empty-content text-center max-w-md mx-auto p-8 rounded-xl border-2 border-dashed",
+                            settings.canvasTheme === 'dark'
+                                ? "border-gray-700 bg-gray-800/50"
+                                : "border-slate-200 bg-slate-50/50"
+                        )}>
+                            <div className={clsx(
+                                "form-builder-canvas-empty-icon w-16 h-16 mx-auto mb-4 rounded-full flex items-center justify-center",
+                                settings.canvasTheme === 'dark' ? "bg-gray-800 text-gray-400" : "bg-white text-slate-400 shadow-sm"
+                            )}>
+                                <Info size={32} />
                             </div>
-                            <h3 className="form-builder-canvas-empty-title">Start Building</h3>
-                            <p className="form-builder-canvas-empty-text">
+                            <h3 className={clsx(
+                                "form-builder-canvas-empty-title text-lg font-semibold mb-2",
+                                settings.canvasTheme === 'dark' ? "text-gray-200" : "text-slate-800"
+                            )}>
+                                Start Building
+                            </h3>
+                            <p className={clsx(
+                                "form-builder-canvas-empty-text text-sm",
+                                settings.canvasTheme === 'dark' ? "text-gray-400" : "text-slate-500"
+                            )}>
                                 Drag elements from the sidebar to start constructing your form. Use the up/down arrows to reorder elements.
                             </p>
                         </div>
                     ) : (
                         <div
-                            className="flex flex-col"
+                            className="flex flex-col px-8"
                         >
                             {/* Start of canvas drop zone - only for form projects */}
                             {currentProject?.type === 'form' && <CanvasStartDropZone />}

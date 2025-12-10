@@ -103,7 +103,7 @@ export interface FormElement {
     // For Button
     buttonText?: string;
     buttonType?: 'button' | 'submit' | 'reset';
-    buttonStyle?: 'primary' | 'secondary' | 'outline' | 'text';
+    buttonStyle?: 'primary' | 'secondary' | 'outline' | 'text' | 'link';
     buttonSize?: 'sm' | 'md' | 'lg';
     buttonAction?: 'none' | 'submit' | 'url';
     buttonUrl?: string;
@@ -194,6 +194,9 @@ export interface FormSettings {
     linkColor?: string;
     linkUnderline?: boolean;
     htmlTitle?: string;
+    // Theme settings
+    theme?: 'light' | 'dark';        // UI theme
+    canvasTheme?: 'light' | 'dark';  // Canvas/form preview theme
 }
 
 export interface Project {

@@ -33,6 +33,12 @@ interface FormStore {
     moveElementDown: (id: string, parentId?: string) => void;
     updateSettings: (settings: Partial<FormSettings>) => void;
     
+    // Theme management
+    setTheme: (theme: 'light' | 'dark') => void;
+    toggleTheme: () => void;
+    setCanvasTheme: (theme: 'light' | 'dark') => void;
+    toggleCanvasTheme: () => void;
+    
     // Project management methods
     createProject: (name: string, type: ProjectType) => void;
     loadProject: (projectId: string) => void;
@@ -1712,6 +1718,34 @@ export const useStore = create<FormStore>()(
     updateSettings: (newSettings) => set((state) => ({
         settings: { ...state.settings, ...newSettings },
     })),
+
+    // Theme management methods
+    setTheme: (theme) => set((state) => ({
+        settings: { ...state.settings, theme },
+    })),
+
+    toggleTheme: () => set((state) => {
+        const currentTheme = state.settings.theme || 'light';
+        const newTheme = currentTheme === 'light' ? 'dark' : 'light';
+        
+        return {
+            settings: { ...state.settings, theme: newTheme },
+        };
+    }),
+
+    // Canvas theme management methods
+    setCanvasTheme: (canvasTheme) => set((state) => ({
+        settings: { ...state.settings, canvasTheme },
+    })),
+
+    toggleCanvasTheme: () => set((state) => {
+        const currentCanvasTheme = state.settings.canvasTheme || 'light';
+        const newCanvasTheme = currentCanvasTheme === 'light' ? 'dark' : 'light';
+        
+        return {
+            settings: { ...state.settings, canvasTheme: newCanvasTheme },
+        };
+    }),
 
     // Project management methods
     createProject: (name: string, type: ProjectType) => {

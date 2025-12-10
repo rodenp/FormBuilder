@@ -25,49 +25,56 @@ interface ThemeProviderProps {
 
 export const ThemeProvider: React.FC<ThemeProviderProps> = ({ children }) => {
   const { settings, setTheme: setStoreTheme, toggleTheme: toggleStoreTheme } = useStore();
-  
+
   const theme = settings.theme || 'auto';
   const effectiveTheme = getEffectiveTheme(theme);
 
   // Apply theme to document
   useEffect(() => {
     const root = document.documentElement;
-    
+
     // Remove any existing theme attributes
     root.removeAttribute('data-theme');
-    
+
     // Apply the effective theme
     if (effectiveTheme === 'dark') {
       root.setAttribute('data-theme', 'dark');
+      root.classList.add('dark');
+    } else {
+      root.removeAttribute('data-theme');
+      root.classList.remove('dark');
     }
-    
+
     // Add class for body styling
-    document.body.style.backgroundColor = effectiveTheme === 'dark' 
-      ? 'var(--theme-bg-secondary)' 
+    document.body.style.backgroundColor = effectiveTheme === 'dark'
+      ? 'var(--theme-bg-secondary)'
       : 'var(--theme-bg-secondary)';
     document.body.style.color = effectiveTheme === 'dark'
       ? 'var(--theme-text-primary)'
       : 'var(--theme-text-primary)';
-    
+
   }, [effectiveTheme]);
 
   // Listen for system theme changes when in auto mode
   useEffect(() => {
     if (theme === 'auto') {
       const mediaQuery = window.matchMedia('(prefers-color-scheme: dark)');
-      
+
       const handleChange = () => {
         // Re-trigger theme application when system preference changes
         const newEffectiveTheme = getEffectiveTheme('auto');
         const root = document.documentElement;
-        
-        root.removeAttribute('data-theme');
+
         if (newEffectiveTheme === 'dark') {
           root.setAttribute('data-theme', 'dark');
+          root.classList.add('dark');
+        } else {
+          root.removeAttribute('data-theme');
+          root.classList.remove('dark');
         }
-        
-        document.body.style.backgroundColor = newEffectiveTheme === 'dark' 
-          ? 'var(--theme-bg-secondary)' 
+
+        document.body.style.backgroundColor = newEffectiveTheme === 'dark'
+          ? 'var(--theme-bg-secondary)'
           : 'var(--theme-bg-secondary)';
         document.body.style.color = newEffectiveTheme === 'dark'
           ? 'var(--theme-text-primary)'

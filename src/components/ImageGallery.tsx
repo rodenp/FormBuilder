@@ -1,6 +1,6 @@
 import React, { useState, useRef } from 'react';
 import { useStore } from '../store/useStore';
-import { Upload, Link as LinkIcon, Trash2, Edit2, X, Plus, Image as ImageIcon } from 'lucide-react';
+import { Upload, Link as LinkIcon, Trash2, Edit2, X, Image as ImageIcon } from 'lucide-react';
 import { clsx } from 'clsx';
 import type { GalleryImage } from '../types';
 
@@ -11,9 +11,9 @@ interface ImageGalleryProps {
     mode?: 'picker' | 'manage'; // picker for selecting, manage for full management
 }
 
-export const ImageGallery: React.FC<ImageGalleryProps> = ({ 
-    isOpen, 
-    onClose, 
+export const ImageGallery: React.FC<ImageGalleryProps> = ({
+    isOpen,
+    onClose,
     onImageSelect,
     mode = 'picker'
 }) => {
@@ -43,7 +43,7 @@ export const ImageGallery: React.FC<ImageGalleryProps> = ({
                         alt: file.name.replace(/\.[^/.]+$/, ''), // Remove extension for alt
                         size: file.size
                     });
-                    
+
                     // Auto-load image dimensions
                     const img = new Image();
                     img.onload = () => {
@@ -57,7 +57,7 @@ export const ImageGallery: React.FC<ImageGalleryProps> = ({
                 reader.readAsDataURL(file);
             }
         });
-        
+
         setShowUpload(false);
     };
 
@@ -131,7 +131,7 @@ export const ImageGallery: React.FC<ImageGalleryProps> = ({
     if (!isOpen) return null;
 
     return (
-        <div 
+        <div
             className="fixed inset-0 z-[9999] flex items-center justify-center bg-black bg-opacity-50"
             onClick={(e) => {
                 if (e.target === e.currentTarget) {
@@ -139,28 +139,28 @@ export const ImageGallery: React.FC<ImageGalleryProps> = ({
                 }
             }}
         >
-            <div 
-                className="bg-white rounded-xl shadow-xl max-w-4xl w-full max-h-[90vh] flex flex-col mx-4"
+            <div
+                className="bg-white dark:bg-gray-900 rounded-xl shadow-xl max-w-4xl w-full max-h-[90vh] flex flex-col mx-4 dark:border dark:border-gray-700"
                 onClick={(e) => e.stopPropagation()}
             >
                 {/* Header */}
-                <div className="flex items-center justify-between p-6 border-b border-slate-200">
+                <div className="flex items-center justify-between p-6 border-b border-slate-200 dark:border-gray-700">
                     <div className="flex items-center gap-3">
-                        <ImageIcon className="text-slate-600" size={24} />
-                        <h2 className="text-xl font-semibold text-slate-800">
+                        <ImageIcon className="text-slate-600 dark:text-gray-400" size={24} />
+                        <h2 className="text-xl font-semibold text-slate-800 dark:text-gray-100">
                             {mode === 'picker' ? 'Choose Image' : 'Image Gallery'}
                         </h2>
                     </div>
                     <button
                         onClick={onClose}
-                        className="p-2 hover:bg-slate-100 rounded-lg transition-colors"
+                        className="p-2 hover:bg-slate-100 dark:hover:bg-gray-800 rounded-lg transition-colors"
                     >
-                        <X size={20} className="text-slate-500" />
+                        <X size={20} className="text-slate-500 dark:text-gray-400" />
                     </button>
                 </div>
 
                 {/* Add Images Section */}
-                <div className="p-6 border-b border-slate-200">
+                <div className="p-6 border-b border-slate-200 dark:border-gray-700">
                     <div className="flex gap-3">
                         <button
                             onClick={() => {
@@ -170,8 +170,8 @@ export const ImageGallery: React.FC<ImageGalleryProps> = ({
                             className={clsx(
                                 "flex items-center gap-2 px-4 py-2 rounded-lg border transition-colors",
                                 showUpload
-                                    ? "bg-blue-50 border-blue-200 text-blue-700"
-                                    : "bg-white border-slate-200 text-slate-700 hover:bg-slate-50"
+                                    ? "bg-blue-50 dark:bg-blue-900/20 border-blue-200 dark:border-blue-800 text-blue-700 dark:text-blue-300"
+                                    : "bg-white dark:bg-gray-800 border-slate-200 dark:border-gray-700 text-slate-700 dark:text-gray-300 hover:bg-slate-50 dark:hover:bg-gray-700"
                             )}
                         >
                             <Upload size={16} />
@@ -185,8 +185,8 @@ export const ImageGallery: React.FC<ImageGalleryProps> = ({
                             className={clsx(
                                 "flex items-center gap-2 px-4 py-2 rounded-lg border transition-colors",
                                 showUrlForm
-                                    ? "bg-blue-50 border-blue-200 text-blue-700"
-                                    : "bg-white border-slate-200 text-slate-700 hover:bg-slate-50"
+                                    ? "bg-blue-50 dark:bg-blue-900/20 border-blue-200 dark:border-blue-800 text-blue-700 dark:text-blue-300"
+                                    : "bg-white dark:bg-gray-800 border-slate-200 dark:border-gray-700 text-slate-700 dark:text-gray-300 hover:bg-slate-50 dark:hover:bg-gray-700"
                             )}
                         >
                             <LinkIcon size={16} />
@@ -201,19 +201,19 @@ export const ImageGallery: React.FC<ImageGalleryProps> = ({
                                 className={clsx(
                                     "border-2 border-dashed rounded-lg p-8 text-center transition-colors",
                                     dragOver
-                                        ? "border-blue-500 bg-blue-50"
-                                        : "border-slate-300 bg-slate-50"
+                                        ? "border-blue-500 bg-blue-50 dark:bg-blue-900/10"
+                                        : "border-slate-300 dark:border-gray-600 bg-slate-50 dark:bg-gray-800"
                                 )}
                                 onDragOver={handleDragOver}
                                 onDragLeave={handleDragLeave}
                                 onDrop={handleDrop}
                                 onClick={() => fileInputRef.current?.click()}
                             >
-                                <Upload size={32} className="mx-auto mb-3 text-slate-400" />
-                                <p className="text-slate-600 font-medium mb-1">
+                                <Upload size={32} className="mx-auto mb-3 text-slate-400 dark:text-gray-500" />
+                                <p className="text-slate-600 dark:text-gray-300 font-medium mb-1">
                                     Drop images here or click to browse
                                 </p>
-                                <p className="text-slate-400 text-sm">
+                                <p className="text-slate-400 dark:text-gray-500 text-sm">
                                     Supports JPG, PNG, GIF, WebP
                                 </p>
                                 <input
@@ -233,40 +233,40 @@ export const ImageGallery: React.FC<ImageGalleryProps> = ({
                         <form onSubmit={handleUrlSubmit} className="mt-4 space-y-4">
                             <div className="grid grid-cols-2 gap-4">
                                 <div>
-                                    <label className="block text-xs font-medium text-slate-600 mb-2">
+                                    <label className="block text-xs font-medium text-slate-600 dark:text-gray-400 mb-2">
                                         Image URL *
                                     </label>
                                     <input
                                         type="url"
                                         value={urlInput}
                                         onChange={(e) => setUrlInput(e.target.value)}
-                                        className="w-full px-3 py-2 border border-slate-200 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                                        className="w-full px-3 py-2 border border-slate-200 dark:border-gray-600 bg-white dark:bg-gray-800 rounded-lg text-sm text-slate-700 dark:text-gray-200 focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none"
                                         placeholder="https://example.com/image.jpg"
                                         required
                                     />
                                 </div>
                                 <div>
-                                    <label className="block text-xs font-medium text-slate-600 mb-2">
+                                    <label className="block text-xs font-medium text-slate-600 dark:text-gray-400 mb-2">
                                         Name
                                     </label>
                                     <input
                                         type="text"
                                         value={nameInput}
                                         onChange={(e) => setNameInput(e.target.value)}
-                                        className="w-full px-3 py-2 border border-slate-200 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                                        className="w-full px-3 py-2 border border-slate-200 dark:border-gray-600 bg-white dark:bg-gray-800 rounded-lg text-sm text-slate-700 dark:text-gray-200 focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none"
                                         placeholder="My image"
                                     />
                                 </div>
                             </div>
                             <div>
-                                <label className="block text-xs font-medium text-slate-600 mb-2">
+                                <label className="block text-xs font-medium text-slate-600 dark:text-gray-400 mb-2">
                                     Alt Text
                                 </label>
                                 <input
                                     type="text"
                                     value={altInput}
                                     onChange={(e) => setAltInput(e.target.value)}
-                                    className="w-full px-3 py-2 border border-slate-200 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                                    className="w-full px-3 py-2 border border-slate-200 dark:border-gray-600 bg-white dark:bg-gray-800 rounded-lg text-sm text-slate-700 dark:text-gray-200 focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none"
                                     placeholder="Description of the image"
                                 />
                             </div>
@@ -280,7 +280,7 @@ export const ImageGallery: React.FC<ImageGalleryProps> = ({
                                 <button
                                     type="button"
                                     onClick={() => setShowUrlForm(false)}
-                                    className="px-4 py-2 border border-slate-200 text-slate-700 rounded-lg hover:bg-slate-50 transition-colors"
+                                    className="px-4 py-2 border border-slate-200 dark:border-gray-700 text-slate-700 dark:text-gray-300 rounded-lg hover:bg-slate-50 dark:hover:bg-gray-800 transition-colors"
                                 >
                                     Cancel
                                 </button>
@@ -293,9 +293,9 @@ export const ImageGallery: React.FC<ImageGalleryProps> = ({
                 <div className="flex-1 overflow-y-auto p-6">
                     {imageGallery.length === 0 ? (
                         <div className="text-center py-12">
-                            <ImageIcon size={48} className="mx-auto mb-3 text-slate-300" />
-                            <p className="text-slate-500 font-medium mb-1">No images in gallery</p>
-                            <p className="text-slate-400 text-sm">Upload images or add URLs to get started</p>
+                            <ImageIcon size={48} className="mx-auto mb-3 text-slate-300 dark:text-gray-600" />
+                            <p className="text-slate-500 dark:text-gray-400 font-medium mb-1">No images in gallery</p>
+                            <p className="text-slate-400 dark:text-gray-500 text-sm">Upload images or add URLs to get started</p>
                         </div>
                     ) : (
                         <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4">
@@ -303,14 +303,14 @@ export const ImageGallery: React.FC<ImageGalleryProps> = ({
                                 <div
                                     key={image.id}
                                     className={clsx(
-                                        "group relative border rounded-lg overflow-hidden transition-all",
+                                        "group relative border rounded-lg overflow-hidden transition-all dark:bg-gray-800",
                                         mode === 'picker'
-                                            ? "border-slate-200 hover:border-blue-300 cursor-pointer hover:shadow-md"
-                                            : "border-slate-200"
+                                            ? "border-slate-200 dark:border-gray-700 hover:border-blue-300 dark:hover:border-blue-700 cursor-pointer hover:shadow-md"
+                                            : "border-slate-200 dark:border-gray-700"
                                     )}
                                     onClick={() => mode === 'picker' && onImageSelect?.(image)}
                                 >
-                                    <div className="aspect-square bg-slate-100 flex items-center justify-center">
+                                    <div className="aspect-square bg-slate-100 dark:bg-gray-900 flex items-center justify-center">
                                         <img
                                             src={image.url}
                                             alt={image.alt || image.name}
@@ -332,10 +332,10 @@ export const ImageGallery: React.FC<ImageGalleryProps> = ({
                                             }}
                                         />
                                     </div>
-                                    
+
                                     {/* Image Info */}
-                                    <div className="p-2 bg-white border-t border-slate-100">
-                                        <p className="text-xs font-medium text-slate-700 truncate" title={image.name}>
+                                    <div className="p-2 bg-white dark:bg-gray-800 border-t border-slate-100 dark:border-gray-700">
+                                        <p className="text-xs font-medium text-slate-700 dark:text-gray-200 truncate" title={image.name}>
                                             {image.name}
                                         </p>
                                         <div className="flex items-center justify-between mt-1">
@@ -435,14 +435,14 @@ export const ImageGallery: React.FC<ImageGalleryProps> = ({
 
                 {/* Footer */}
                 {mode === 'picker' && (
-                    <div className="p-6 border-t border-slate-200">
+                    <div className="p-6 border-t border-slate-200 dark:border-gray-700">
                         <div className="flex items-center justify-between">
                             <p className="text-sm text-slate-500">
                                 Select an image from your gallery
                             </p>
                             <button
                                 onClick={onClose}
-                                className="px-4 py-2 border border-slate-200 text-slate-700 rounded-lg hover:bg-slate-50 transition-colors"
+                                className="px-4 py-2 border border-slate-200 dark:border-gray-700 text-slate-700 dark:text-gray-300 rounded-lg hover:bg-slate-50 dark:hover:bg-gray-800 transition-colors"
                             >
                                 Cancel
                             </button>

@@ -48,8 +48,8 @@ export const PropertiesPanel: React.FC = () => {
         const renderElement = (element: FormElement, indent = '    '): string => {
             const labelClasses = [
                 'form-label',
-                element.labelSize === 'xs' ? 'text-xs' : element.labelSize === 'sm' ? 'text-sm' : 
-                element.labelSize === 'lg' ? 'text-lg' : 'text-base',
+                element.labelSize === 'xs' ? 'text-xs' : element.labelSize === 'sm' ? 'text-sm' :
+                    element.labelSize === 'lg' ? 'text-lg' : 'text-base',
                 element.labelBold ? 'font-bold' : '',
                 element.labelItalic ? 'font-italic' : '',
                 element.labelUnderline ? 'text-underline' : '',
@@ -100,7 +100,7 @@ ${indent}</div>`;
         };
 
         const formElements = elements.map(element => renderElement(element)).join('\n');
-        
+
         return `<!DOCTYPE html>
 <html>
 <head>
@@ -139,8 +139,8 @@ ${formElements}
     const generateReactCode = () => {
         const renderElement = (element: FormElement, indent = '      '): string => {
             const labelClasses = [
-                element.labelSize === 'xs' ? 'text-xs' : element.labelSize === 'sm' ? 'text-sm' : 
-                element.labelSize === 'lg' ? 'text-lg' : 'text-base',
+                element.labelSize === 'xs' ? 'text-xs' : element.labelSize === 'sm' ? 'text-sm' :
+                    element.labelSize === 'lg' ? 'text-lg' : 'text-base',
                 element.labelBold ? 'font-bold' : '',
                 element.labelItalic ? 'italic' : '',
                 element.labelUnderline ? 'underline' : '',
@@ -353,159 +353,171 @@ export default MyForm;`;
 
     if (!selectedElement) {
         return (
-            <div className="form-builder-properties">
-                <div className="properties-header">
-                    <div style={{padding: 'var(--spacing-2)', backgroundColor: 'var(--color-slate-50)', color: 'var(--color-slate-500)', borderRadius: 'var(--radius-lg)'}}>
+            <div className="form-builder-properties bg-white dark:bg-gray-900 border-l border-slate-200 dark:border-gray-800">
+                <div className="properties-header bg-white dark:bg-gray-900 border-b border-slate-100 dark:border-gray-800">
+                    <div style={{ padding: 'var(--spacing-2)', borderRadius: 'var(--radius-lg)' }} className="bg-slate-50 text-slate-500 dark:bg-gray-800 dark:text-gray-400">
                         <Settings size={18} />
                     </div>
                     <div>
-                        <h2 className="properties-header-title">Form Settings</h2>
-                        <p style={{fontSize: '0.75rem', color: 'var(--color-slate-500)', margin: 0}}>Global configuration</p>
+                        <h2 className="properties-header-title text-slate-800 dark:text-gray-100">Form Settings</h2>
+                        <p style={{ fontSize: '0.75rem', margin: 0 }} className="text-slate-500 dark:text-gray-500">Global configuration</p>
                     </div>
                 </div>
 
                 {/* Tabs */}
-                <div className="tabs">
+                <div className="tabs border-b border-slate-200 dark:border-gray-800">
                     <button
                         onClick={() => setActiveFormTab('settings')}
-                        className={clsx("tab", activeFormTab === 'settings' && "active")}
+                        className={clsx("tab flex-1 py-3 text-sm font-medium transition-colors relative",
+                            activeFormTab === 'settings'
+                                ? "text-brand-600 dark:text-brand-400 after:absolute after:bottom-0 after:left-0 after:right-0 after:h-0.5 after:bg-brand-500"
+                                : "text-slate-600 dark:text-gray-400 hover:text-slate-900 dark:hover:text-gray-200"
+                        )}
                     >
                         Settings
                     </button>
                     <button
                         onClick={() => setActiveFormTab('actions')}
-                        className={clsx("tab", activeFormTab === 'actions' && "active")}
-                        >
-                            Actions
-                        </button>
-                        <button
+                        className={clsx("tab flex-1 py-3 text-sm font-medium transition-colors relative",
+                            activeFormTab === 'actions'
+                                ? "text-brand-600 dark:text-brand-400 after:absolute after:bottom-0 after:left-0 after:right-0 after:h-0.5 after:bg-brand-500"
+                                : "text-slate-600 dark:text-gray-400 hover:text-slate-900 dark:hover:text-gray-200"
+                        )}
+                    >
+                        Actions
+                    </button>
+                    <button
                         onClick={() => setActiveFormTab('code')}
-                        className={clsx("tab", activeFormTab === 'code' && "active")}
+                        className={clsx("tab flex-1 py-3 text-sm font-medium transition-colors relative",
+                            activeFormTab === 'code'
+                                ? "text-brand-600 dark:text-brand-400 after:absolute after:bottom-0 after:left-0 after:right-0 after:h-0.5 after:bg-brand-500"
+                                : "text-slate-600 dark:text-gray-400 hover:text-slate-900 dark:hover:text-gray-200"
+                        )}
                     >
                         Code
                     </button>
                 </div>
 
-                <div style={{padding: '24px 32px', gap: '12px', overflowY: 'auto', display: 'flex', flexDirection: 'column'}}>
+                <div style={{ padding: '24px 32px', gap: '12px', overflowY: 'auto', display: 'flex', flexDirection: 'column' }}>
                     {activeFormTab === 'settings' && (
                         <>
-                    <div>
-                        <label className="block text-xs font-semibold text-slate-500 uppercase tracking-wider mb-2">
-                            Form Title
-                        </label>
-                        <input
-                            type="text"
-                            value={settings.title}
-                            onChange={(e) => updateSettings({ title: e.target.value })}
-                            className="w-full p-3 bg-slate-50 border border-slate-200 rounded-lg text-sm text-slate-700 focus:ring-2 focus:ring-brand-500 focus:border-transparent transition-all outline-none"
-                        />
-                    </div>
-
-                    <div>
-                        <label className="block text-xs font-semibold text-slate-500 uppercase tracking-wider mb-2">
-                            Description
-                        </label>
-                        <textarea
-                            value={settings.description || ''}
-                            onChange={(e) => updateSettings({ description: e.target.value })}
-                            className="w-full p-3 bg-slate-50 border border-slate-200 rounded-lg text-sm text-slate-700 focus:ring-2 focus:ring-brand-500 focus:border-transparent transition-all outline-none resize-none"
-                            rows={4}
-                        />
-                    </div>
-
-                    <div>
-                        <label className="block text-xs font-semibold text-slate-500 uppercase tracking-wider mb-2">
-                            Submit Button Text
-                        </label>
-                        <input
-                            type="text"
-                            value={settings.submitButtonText}
-                            onChange={(e) => updateSettings({ submitButtonText: e.target.value })}
-                            className="w-full p-3 bg-slate-50 border border-slate-200 rounded-lg text-sm text-slate-700 focus:ring-2 focus:ring-brand-500 focus:border-transparent transition-all outline-none"
-                        />
-                    </div>
-
-                    {/* Primary Color Control */}
-                    <div>
-                        <label className="block text-xs font-semibold text-slate-500 uppercase tracking-wider mb-2">
-                            Primary Color
-                        </label>
-                        <div className="relative inline-block">
-                            <div 
-                                className="w-12 h-12 rounded-lg border border-slate-200 relative overflow-hidden cursor-pointer"
-                                style={{
-                                    backgroundColor: settings.primaryColor || '#3b82f6'
-                                }}
-                                onClick={() => {
-                                    // Create a color input element and trigger click
-                                    const colorInput = document.createElement('input');
-                                    colorInput.type = 'color';
-                                    colorInput.value = settings.primaryColor || '#3b82f6';
-                                    colorInput.onchange = (e) => {
-                                        const target = e.target as HTMLInputElement;
-                                        updateSettings({ primaryColor: target.value });
-                                    };
-                                    colorInput.click();
-                                }}
-                            >
-                                {!settings.primaryColor && (
-                                    <svg className="absolute inset-0 w-full h-full" viewBox="0 0 48 48">
-                                        <path d="M6 42L42 6" stroke="#ef4444" strokeWidth="2"/>
-                                    </svg>
-                                )}
+                            <div>
+                                <label className="block text-xs font-semibold text-slate-500 dark:text-gray-400 uppercase tracking-wider mb-2">
+                                    Form Title
+                                </label>
+                                <input
+                                    type="text"
+                                    value={settings.title}
+                                    onChange={(e) => updateSettings({ title: e.target.value })}
+                                    className="w-full p-3 bg-slate-50 dark:bg-gray-800 border border-slate-200 dark:border-gray-700 rounded-lg text-sm text-slate-700 dark:text-gray-200 focus:ring-2 focus:ring-brand-500 focus:border-transparent transition-all outline-none"
+                                />
                             </div>
-                            {settings.primaryColor && (
-                                <button
-                                    onClick={() => updateSettings({ primaryColor: undefined })}
-                                    className="absolute -top-1 -right-1 w-5 h-5 bg-red-500 hover:bg-red-600 text-white rounded-full flex items-center justify-center text-xs font-bold transition-colors"
-                                    title="Remove primary color"
-                                >
-                                    ×
-                                </button>
-                            )}
-                        </div>
-                    </div>
 
-                    {/* Form Background Color Control */}
-                    <div>
-                        <label className="block text-xs font-semibold text-slate-500 uppercase tracking-wider mb-2">
-                            Form Background
-                        </label>
-                        <div className="relative inline-block">
-                            <div 
-                                className="w-12 h-12 rounded-lg border border-slate-200 relative overflow-hidden cursor-pointer"
-                                style={{
-                                    backgroundColor: settings.formBackground || '#ffffff'
-                                }}
-                                onClick={() => {
-                                    // Create a color input element and trigger click
-                                    const colorInput = document.createElement('input');
-                                    colorInput.type = 'color';
-                                    colorInput.value = settings.formBackground || '#ffffff';
-                                    colorInput.onchange = (e) => {
-                                        const target = e.target as HTMLInputElement;
-                                        updateSettings({ formBackground: target.value });
-                                    };
-                                    colorInput.click();
-                                }}
-                            >
-                                {!settings.formBackground && (
-                                    <svg className="absolute inset-0 w-full h-full" viewBox="0 0 48 48">
-                                        <path d="M6 42L42 6" stroke="#ef4444" strokeWidth="2"/>
-                                    </svg>
-                                )}
+                            <div>
+                                <label className="block text-xs font-semibold text-slate-500 dark:text-gray-400 uppercase tracking-wider mb-2">
+                                    Description
+                                </label>
+                                <textarea
+                                    value={settings.description || ''}
+                                    onChange={(e) => updateSettings({ description: e.target.value })}
+                                    className="w-full p-3 bg-slate-50 dark:bg-gray-800 border border-slate-200 dark:border-gray-700 rounded-lg text-sm text-slate-700 dark:text-gray-200 focus:ring-2 focus:ring-brand-500 focus:border-transparent transition-all outline-none resize-none"
+                                    rows={4}
+                                />
                             </div>
-                            {settings.formBackground && (
-                                <button
-                                    onClick={() => updateSettings({ formBackground: undefined })}
-                                    className="absolute -top-1 -right-1 w-5 h-5 bg-red-500 hover:bg-red-600 text-white rounded-full flex items-center justify-center text-xs font-bold transition-colors"
-                                    title="Remove form background"
-                                >
-                                    ×
-                                </button>
-                            )}
-                        </div>
-                    </div>
+
+                            <div>
+                                <label className="block text-xs font-semibold text-slate-500 dark:text-gray-400 uppercase tracking-wider mb-2">
+                                    Submit Button Text
+                                </label>
+                                <input
+                                    type="text"
+                                    value={settings.submitButtonText}
+                                    onChange={(e) => updateSettings({ submitButtonText: e.target.value })}
+                                    className="w-full p-3 bg-slate-50 dark:bg-gray-800 border border-slate-200 dark:border-gray-700 rounded-lg text-sm text-slate-700 dark:text-gray-200 focus:ring-2 focus:ring-brand-500 focus:border-transparent transition-all outline-none"
+                                />
+                            </div>
+
+                            {/* Primary Color Control */}
+                            <div>
+                                <label className="block text-xs font-semibold text-slate-500 dark:text-gray-400 uppercase tracking-wider mb-2">
+                                    Primary Color
+                                </label>
+                                <div className="relative inline-block">
+                                    <div
+                                        className="w-12 h-12 rounded-lg border border-slate-200 relative overflow-hidden cursor-pointer"
+                                        style={{
+                                            backgroundColor: settings.primaryColor || '#3b82f6'
+                                        }}
+                                        onClick={() => {
+                                            // Create a color input element and trigger click
+                                            const colorInput = document.createElement('input');
+                                            colorInput.type = 'color';
+                                            colorInput.value = settings.primaryColor || '#3b82f6';
+                                            colorInput.onchange = (e) => {
+                                                const target = e.target as HTMLInputElement;
+                                                updateSettings({ primaryColor: target.value });
+                                            };
+                                            colorInput.click();
+                                        }}
+                                    >
+                                        {!settings.primaryColor && (
+                                            <svg className="absolute inset-0 w-full h-full" viewBox="0 0 48 48">
+                                                <path d="M6 42L42 6" stroke="#ef4444" strokeWidth="2" />
+                                            </svg>
+                                        )}
+                                    </div>
+                                    {settings.primaryColor && (
+                                        <button
+                                            onClick={() => updateSettings({ primaryColor: undefined })}
+                                            className="absolute -top-1 -right-1 w-5 h-5 bg-red-500 hover:bg-red-600 text-white rounded-full flex items-center justify-center text-xs font-bold transition-colors"
+                                            title="Remove primary color"
+                                        >
+                                            ×
+                                        </button>
+                                    )}
+                                </div>
+                            </div>
+
+                            {/* Form Background Color Control */}
+                            <div>
+                                <label className="block text-xs font-semibold text-slate-500 dark:text-gray-400 uppercase tracking-wider mb-2">
+                                    Form Background
+                                </label>
+                                <div className="relative inline-block">
+                                    <div
+                                        className="w-12 h-12 rounded-lg border border-slate-200 relative overflow-hidden cursor-pointer"
+                                        style={{
+                                            backgroundColor: settings.formBackground || '#ffffff'
+                                        }}
+                                        onClick={() => {
+                                            // Create a color input element and trigger click
+                                            const colorInput = document.createElement('input');
+                                            colorInput.type = 'color';
+                                            colorInput.value = settings.formBackground || '#ffffff';
+                                            colorInput.onchange = (e) => {
+                                                const target = e.target as HTMLInputElement;
+                                                updateSettings({ formBackground: target.value });
+                                            };
+                                            colorInput.click();
+                                        }}
+                                    >
+                                        {!settings.formBackground && (
+                                            <svg className="absolute inset-0 w-full h-full" viewBox="0 0 48 48">
+                                                <path d="M6 42L42 6" stroke="#ef4444" strokeWidth="2" />
+                                            </svg>
+                                        )}
+                                    </div>
+                                    {settings.formBackground && (
+                                        <button
+                                            onClick={() => updateSettings({ formBackground: undefined })}
+                                            className="absolute -top-1 -right-1 w-5 h-5 bg-red-500 hover:bg-red-600 text-white rounded-full flex items-center justify-center text-xs font-bold transition-colors"
+                                            title="Remove form background"
+                                        >
+                                            ×
+                                        </button>
+                                    )}
+                                </div>
+                            </div>
 
                         </>
                     )}
@@ -515,12 +527,12 @@ export default MyForm;`;
                         <div className="space-y-6">
                             {/* Form Action Configuration */}
                             <div>
-                                <label className="block text-xs font-semibold text-slate-500 uppercase tracking-wider mb-2">
+                                <label className="block text-xs font-semibold text-slate-500 dark:text-gray-400 uppercase tracking-wider mb-2">
                                     Form Action
                                 </label>
                                 <div className="space-y-4">
                                     <div>
-                                        <label className="block text-xs font-medium text-slate-600 mb-2">
+                                        <label className="block text-xs font-medium text-slate-600 dark:text-gray-400 mb-2">
                                             Action URL (optional)
                                         </label>
                                         <input
@@ -528,34 +540,34 @@ export default MyForm;`;
                                             value={settings.formAction || ''}
                                             onChange={(e) => updateSettings({ formAction: e.target.value })}
                                             placeholder="https://your-domain.com/submit"
-                                            className="w-full p-3 bg-slate-50 border border-slate-200 rounded-lg text-sm text-slate-700 focus:ring-2 focus:ring-brand-500 focus:border-transparent transition-all outline-none font-mono"
+                                            className="w-full p-3 bg-slate-50 dark:bg-gray-800 border border-slate-200 dark:border-gray-700 rounded-lg text-sm text-slate-700 dark:text-gray-200 focus:ring-2 focus:ring-brand-500 focus:border-transparent transition-all outline-none font-mono"
                                         />
-                                        <p className="text-xs text-slate-400 mt-1">Submit form directly to your server endpoint</p>
+                                        <p className="text-xs text-slate-400 dark:text-gray-500 mt-1">Submit form directly to your server endpoint</p>
                                     </div>
-                                    
+
                                     <div className="grid grid-cols-2 gap-3">
                                         <div>
-                                            <label className="block text-xs font-medium text-slate-600 mb-2">
+                                            <label className="block text-xs font-medium text-slate-600 dark:text-gray-400 mb-2">
                                                 Method
                                             </label>
                                             <select
                                                 value={settings.formMethod || 'POST'}
                                                 onChange={(e) => updateSettings({ formMethod: e.target.value as any })}
-                                                className="w-full p-3 bg-slate-50 border border-slate-200 rounded-lg text-sm text-slate-700 focus:ring-2 focus:ring-brand-500 focus:border-transparent transition-all outline-none"
+                                                className="w-full p-3 bg-slate-50 dark:bg-gray-800 border border-slate-200 dark:border-gray-700 rounded-lg text-sm text-slate-700 dark:text-gray-200 focus:ring-2 focus:ring-brand-500 focus:border-transparent transition-all outline-none"
                                             >
                                                 <option value="POST">POST</option>
                                                 <option value="GET">GET</option>
                                             </select>
                                         </div>
-                                        
+
                                         <div>
-                                            <label className="block text-xs font-medium text-slate-600 mb-2">
+                                            <label className="block text-xs font-medium text-slate-600 dark:text-gray-400 mb-2">
                                                 Target
                                             </label>
                                             <select
                                                 value={settings.formTarget || '_self'}
                                                 onChange={(e) => updateSettings({ formTarget: e.target.value })}
-                                                className="w-full p-3 bg-slate-50 border border-slate-200 rounded-lg text-sm text-slate-700 focus:ring-2 focus:ring-brand-500 focus:border-transparent transition-all outline-none"
+                                                className="w-full p-3 bg-slate-50 dark:bg-gray-800 border border-slate-200 dark:border-gray-700 rounded-lg text-sm text-slate-700 dark:text-gray-200 focus:ring-2 focus:ring-brand-500 focus:border-transparent transition-all outline-none"
                                             >
                                                 <option value="_self">Same Window</option>
                                                 <option value="_blank">New Tab</option>
@@ -564,11 +576,11 @@ export default MyForm;`;
                                             </select>
                                         </div>
                                     </div>
-                                    
+
                                     {settings.formAction && (
                                         <div className="bg-blue-50 border border-blue-200 rounded-lg p-3">
                                             <p className="text-xs text-blue-700">
-                                                <strong>Note:</strong> When form action is set, only webhook submission actions are available. 
+                                                <strong>Note:</strong> When form action is set, only webhook submission actions are available.
                                                 Form data will be submitted directly to your endpoint.
                                             </p>
                                         </div>
@@ -576,252 +588,252 @@ export default MyForm;`;
                                 </div>
                             </div>
 
-                            <div className="border-t border-slate-200 pt-6">
-                                <label className="block text-xs font-semibold text-slate-500 uppercase tracking-wider mb-4">
+                            <div className="border-t border-slate-200 dark:border-gray-700 pt-6">
+                                <label className="block text-xs font-semibold text-slate-500 dark:text-gray-400 uppercase tracking-wider mb-4">
                                     Additional Submission Actions
                                 </label>
                             </div>
 
-                        <div className="space-y-3">
-                            {settings.submissionActions.map((action, index) => (
-                                <div key={action.id} className="bg-white border border-slate-200 rounded-xl p-4 shadow-sm">
-                                    <div className="flex justify-between items-start mb-3">
-                                        <div className="flex items-center gap-3">
-                                            <div className={clsx(
-                                                "p-2 rounded-lg",
-                                                action.type === 'redirect' && "bg-blue-50 text-blue-500",
-                                                action.type === 'webhook' && "bg-green-50 text-green-500",
-                                                action.type === 'message' && "bg-purple-50 text-purple-500"
-                                            )}>
-                                                {action.type === 'redirect' && <ExternalLink size={16} />}
-                                                {action.type === 'webhook' && <Webhook size={16} />}
-                                                {action.type === 'message' && <MessageCircle size={16} />}
+                            <div className="space-y-3">
+                                {settings.submissionActions.map((action, index) => (
+                                    <div key={action.id} className="bg-white dark:bg-gray-900 border border-slate-200 dark:border-gray-700 rounded-xl p-4 shadow-sm">
+                                        <div className="flex justify-between items-start mb-3">
+                                            <div className="flex items-center gap-3">
+                                                <div className={clsx(
+                                                    "p-2 rounded-lg",
+                                                    action.type === 'redirect' && "bg-blue-50 text-blue-500",
+                                                    action.type === 'webhook' && "bg-green-50 text-green-500",
+                                                    action.type === 'message' && "bg-purple-50 text-purple-500"
+                                                )}>
+                                                    {action.type === 'redirect' && <ExternalLink size={16} />}
+                                                    {action.type === 'webhook' && <Webhook size={16} />}
+                                                    {action.type === 'message' && <MessageCircle size={16} />}
+                                                </div>
+                                                <div>
+                                                    <span className="text-sm font-semibold text-slate-700 capitalize">{action.type}</span>
+                                                    {action.type === 'webhook' && action.webhook && (
+                                                        <p
+                                                            className="text-xs text-slate-400 font-mono truncate max-w-[140px] cursor-help"
+                                                            title={action.webhook.url}
+                                                        >
+                                                            {action.webhook.url}
+                                                        </p>
+                                                    )}
+                                                </div>
                                             </div>
-                                            <div>
-                                                <span className="text-sm font-semibold text-slate-700 capitalize">{action.type}</span>
-                                                {action.type === 'webhook' && action.webhook && (
-                                                    <p 
-                                                        className="text-xs text-slate-400 font-mono truncate max-w-[140px] cursor-help"
-                                                        title={action.webhook.url}
-                                                    >
-                                                        {action.webhook.url}
-                                                    </p>
-                                                )}
-                                            </div>
-                                        </div>
-                                        <div className="flex items-center gap-2">
-                                            <div className="relative inline-block w-10 mr-2 align-middle select-none transition duration-200 ease-in">
-                                                <input
-                                                    type="checkbox"
-                                                    checked={action.enabled}
-                                                    onChange={(e) => {
-                                                        const newActions = [...settings.submissionActions];
-                                                        newActions[index] = { ...action, enabled: e.target.checked };
-                                                        updateSettings({ submissionActions: newActions });
-                                                    }}
-                                                    className="toggle-checkbox absolute block w-5 h-5 rounded-full bg-white border-4 appearance-none cursor-pointer transition-all duration-300 ease-in-out checked:right-0 checked:border-brand-500 right-5 border-slate-300"
-                                                />
-                                                <label className={`toggle-label block overflow-hidden h-5 rounded-full cursor-pointer transition-colors ${action.enabled ? 'bg-brand-500' : 'bg-slate-300'}`}></label>
-                                            </div>
-                                            <button
-                                                onClick={() => {
-                                                    const newActions = settings.submissionActions.filter((_, i) => i !== index);
-                                                    updateSettings({ submissionActions: newActions });
-                                                }}
-                                                className="p-1.5 text-slate-400 hover:text-red-500 hover:bg-red-50 rounded-md transition-all"
-                                            >
-                                                <Trash size={14} />
-                                            </button>
-                                        </div>
-                                    </div>
-
-                                    {action.type === 'redirect' && (
-                                        <div className="space-y-3">
-                                            <div>
-                                                <label className="block text-xs font-semibold text-slate-500 uppercase tracking-wider mb-2">
-                                                    Redirect URL
-                                                </label>
-                                                <input
-                                                    type="url"
-                                                    value={action.redirectUrl || ''}
-                                                    onChange={(e) => {
-                                                        const newActions = [...settings.submissionActions];
-                                                        newActions[index] = { ...action, redirectUrl: e.target.value };
-                                                        updateSettings({ submissionActions: newActions });
-                                                    }}
-                                                    placeholder="https://example.com/success"
-                                                    className="w-full p-3 bg-slate-50 border border-slate-200 rounded-lg text-sm text-slate-700 focus:ring-2 focus:ring-brand-500 focus:border-transparent transition-all outline-none font-mono"
-                                                />
-                                            </div>
-                                            <div className="flex items-center justify-between p-3 bg-slate-50 rounded-lg border border-slate-200">
-                                                <label className="text-sm font-medium text-slate-700">
-                                                    Open in new tab
-                                                </label>
+                                            <div className="flex items-center gap-2">
                                                 <div className="relative inline-block w-10 mr-2 align-middle select-none transition duration-200 ease-in">
                                                     <input
                                                         type="checkbox"
-                                                        checked={action.openInNewTab || false}
+                                                        checked={action.enabled}
                                                         onChange={(e) => {
                                                             const newActions = [...settings.submissionActions];
-                                                            newActions[index] = { ...action, openInNewTab: e.target.checked };
+                                                            newActions[index] = { ...action, enabled: e.target.checked };
                                                             updateSettings({ submissionActions: newActions });
                                                         }}
                                                         className="toggle-checkbox absolute block w-5 h-5 rounded-full bg-white border-4 appearance-none cursor-pointer transition-all duration-300 ease-in-out checked:right-0 checked:border-brand-500 right-5 border-slate-300"
                                                     />
-                                                    <label className={`toggle-label block overflow-hidden h-5 rounded-full cursor-pointer transition-colors ${action.openInNewTab ? 'bg-brand-500' : 'bg-slate-300'}`}></label>
+                                                    <label className={`toggle-label block overflow-hidden h-5 rounded-full cursor-pointer transition-colors ${action.enabled ? 'bg-brand-500' : 'bg-slate-300'}`}></label>
                                                 </div>
-                                            </div>
-                                        </div>
-                                    )}
-
-                                    {action.type === 'webhook' && action.webhook && (
-                                        <div className="space-y-3">
-                                            <div>
-                                                <label className="block text-xs font-semibold text-slate-500 uppercase tracking-wider mb-2">
-                                                    Method
-                                                </label>
-                                                <select
-                                                    value={action.webhook.method}
-                                                    onChange={(e) => {
-                                                        const newActions = [...settings.submissionActions];
-                                                        newActions[index] = { 
-                                                            ...action, 
-                                                            webhook: { ...action.webhook!, method: e.target.value as any }
-                                                        };
+                                                <button
+                                                    onClick={() => {
+                                                        const newActions = settings.submissionActions.filter((_, i) => i !== index);
                                                         updateSettings({ submissionActions: newActions });
                                                     }}
-                                                    className="w-full p-3 bg-slate-50 border border-slate-200 rounded-lg text-sm text-slate-700 focus:ring-2 focus:ring-brand-500 focus:border-transparent transition-all outline-none"
+                                                    className="p-1.5 text-slate-400 hover:text-red-500 hover:bg-red-50 rounded-md transition-all"
                                                 >
-                                                    <option value="POST">POST</option>
-                                                    <option value="PUT">PUT</option>
-                                                    <option value="PATCH">PATCH</option>
-                                                </select>
-                                            </div>
-                                            <div>
-                                                <label className="block text-xs font-semibold text-slate-500 uppercase tracking-wider mb-2">
-                                                    Webhook URL
-                                                </label>
-                                                <input
-                                                    type="url"
-                                                    value={action.webhook.url}
-                                                    onChange={(e) => {
-                                                        const newActions = [...settings.submissionActions];
-                                                        newActions[index] = { 
-                                                            ...action, 
-                                                            webhook: { ...action.webhook!, url: e.target.value }
-                                                        };
-                                                        updateSettings({ submissionActions: newActions });
-                                                    }}
-                                                    placeholder="https://api.example.com/webhook"
-                                                    className="w-full p-3 bg-slate-50 border border-slate-200 rounded-lg text-sm text-slate-700 focus:ring-2 focus:ring-brand-500 focus:border-transparent transition-all outline-none font-mono"
-                                                />
+                                                    <Trash size={14} />
+                                                </button>
                                             </div>
                                         </div>
-                                    )}
 
-                                    {action.type === 'message' && (
-                                        <div className="space-y-3">
-                                            <div>
-                                                <label className="block text-xs font-semibold text-slate-500 uppercase tracking-wider mb-2">
-                                                    Message Type
-                                                </label>
-                                                <select
-                                                    value={action.messageType || 'success'}
-                                                    onChange={(e) => {
-                                                        const newActions = [...settings.submissionActions];
-                                                        newActions[index] = { ...action, messageType: e.target.value as any };
-                                                        updateSettings({ submissionActions: newActions });
-                                                    }}
-                                                    className="w-full p-3 bg-slate-50 border border-slate-200 rounded-lg text-sm text-slate-700 focus:ring-2 focus:ring-brand-500 focus:border-transparent transition-all outline-none"
-                                                >
-                                                    <option value="success">Success</option>
-                                                    <option value="info">Info</option>
-                                                    <option value="warning">Warning</option>
-                                                    <option value="error">Error</option>
-                                                </select>
-                                            </div>
-                                            <div>
-                                                <label className="block text-xs font-semibold text-slate-500 uppercase tracking-wider mb-2">
-                                                    Message Content
-                                                </label>
-                                                <textarea
-                                                    value={action.message || ''}
-                                                    onChange={(e) => {
-                                                        const newActions = [...settings.submissionActions];
-                                                        newActions[index] = { ...action, message: e.target.value };
-                                                        updateSettings({ submissionActions: newActions });
-                                                    }}
-                                                    placeholder="Thank you for your submission!"
-                                                    className="w-full p-3 bg-slate-50 border border-slate-200 rounded-lg text-sm text-slate-700 focus:ring-2 focus:ring-brand-500 focus:border-transparent transition-all outline-none resize-none"
-                                                    rows={4}
-                                                />
-                                            </div>
-                                        </div>
-                                    )}
-                                </div>
-                            ))}
-                        </div>
-
-                        {/* Add Action Button */}
-                        <div className="mt-4">
-                            {!showActionSelector ? (
-                                <button
-                                    onClick={() => setShowActionSelector(true)}
-                                    className="w-full flex items-center justify-center gap-2 p-4 border-2 border-dashed border-slate-200 rounded-xl text-slate-500 hover:border-brand-300 hover:text-brand-600 transition-colors"
-                                >
-                                    <Plus size={20} />
-                                    <span className="font-medium">Add Submission Action</span>
-                                </button>
-                            ) : (
-                                <div className="border border-slate-200 rounded-xl p-4 bg-slate-50">
-                                    <div className="flex justify-between items-center mb-4">
-                                        <h4 className="font-semibold text-slate-700">Choose Action Type</h4>
-                                        <button
-                                            onClick={() => setShowActionSelector(false)}
-                                            className="p-1 text-slate-400 hover:text-slate-600 rounded-lg"
-                                        >
-                                            <X size={16} />
-                                        </button>
-                                    </div>
-                                    <div className="grid grid-cols-3 gap-3">
-                                        {actionTypes.map((actionType) => (
-                                            <button
-                                                key={actionType.type}
-                                                onClick={() => {
-                                                    if (!actionType.disabled) {
-                                                        addSubmissionAction(actionType.type);
-                                                        setShowActionSelector(false);
-                                                    }
-                                                }}
-                                                disabled={actionType.disabled}
-                                                className={clsx(
-                                                    "flex flex-col items-center gap-1 p-1.5 border rounded transition-all text-center",
-                                                    actionType.disabled 
-                                                        ? "opacity-50 cursor-not-allowed border-slate-200 bg-slate-100"
-                                                        : `${actionType.borderColor} ${actionType.bgColor} ${actionType.hoverBg} hover:shadow-sm`
-                                                )}
-                                            >
-                                                <div className={`p-1 rounded ${actionType.bgColor} ${actionType.color}`}>
-                                                    <div className="w-3 h-3 flex items-center justify-center">
-                                                        {React.cloneElement(actionType.icon, { size: 12 })}
+                                        {action.type === 'redirect' && (
+                                            <div className="space-y-3">
+                                                <div>
+                                                    <label className="block text-xs font-semibold text-slate-500 uppercase tracking-wider mb-2">
+                                                        Redirect URL
+                                                    </label>
+                                                    <input
+                                                        type="url"
+                                                        value={action.redirectUrl || ''}
+                                                        onChange={(e) => {
+                                                            const newActions = [...settings.submissionActions];
+                                                            newActions[index] = { ...action, redirectUrl: e.target.value };
+                                                            updateSettings({ submissionActions: newActions });
+                                                        }}
+                                                        placeholder="https://example.com/success"
+                                                        className="w-full p-3 bg-slate-50 dark:bg-gray-800 border border-slate-200 dark:border-gray-700 rounded-lg text-sm text-slate-700 dark:text-gray-200 focus:ring-2 focus:ring-brand-500 focus:border-transparent transition-all outline-none font-mono"
+                                                    />
+                                                </div>
+                                                <div className="flex items-center justify-between p-3 bg-slate-50 dark:bg-gray-800 rounded-lg border border-slate-200 dark:border-gray-700">
+                                                    <label className="text-sm font-medium text-slate-700 dark:text-gray-300">
+                                                        Open in new tab
+                                                    </label>
+                                                    <div className="relative inline-block w-10 mr-2 align-middle select-none transition duration-200 ease-in">
+                                                        <input
+                                                            type="checkbox"
+                                                            checked={action.openInNewTab || false}
+                                                            onChange={(e) => {
+                                                                const newActions = [...settings.submissionActions];
+                                                                newActions[index] = { ...action, openInNewTab: e.target.checked };
+                                                                updateSettings({ submissionActions: newActions });
+                                                            }}
+                                                            className="toggle-checkbox absolute block w-5 h-5 rounded-full bg-white border-4 appearance-none cursor-pointer transition-all duration-300 ease-in-out checked:right-0 checked:border-brand-500 right-5 border-slate-300"
+                                                        />
+                                                        <label className={`toggle-label block overflow-hidden h-5 rounded-full cursor-pointer transition-colors ${action.openInNewTab ? 'bg-brand-500' : 'bg-slate-300'}`}></label>
                                                     </div>
                                                 </div>
+                                            </div>
+                                        )}
+
+                                        {action.type === 'webhook' && action.webhook && (
+                                            <div className="space-y-3">
                                                 <div>
-                                                    <h5 className="font-medium text-slate-700" style={{ fontSize: '10px' }}>{actionType.label}</h5>
+                                                    <label className="block text-xs font-semibold text-slate-500 uppercase tracking-wider mb-2">
+                                                        Method
+                                                    </label>
+                                                    <select
+                                                        value={action.webhook.method}
+                                                        onChange={(e) => {
+                                                            const newActions = [...settings.submissionActions];
+                                                            newActions[index] = {
+                                                                ...action,
+                                                                webhook: { ...action.webhook!, method: e.target.value as any }
+                                                            };
+                                                            updateSettings({ submissionActions: newActions });
+                                                        }}
+                                                        className="w-full p-3 bg-slate-50 dark:bg-gray-800 border border-slate-200 dark:border-gray-700 rounded-lg text-sm text-slate-700 dark:text-gray-200 focus:ring-2 focus:ring-brand-500 focus:border-transparent transition-all outline-none"
+                                                    >
+                                                        <option value="POST">POST</option>
+                                                        <option value="PUT">PUT</option>
+                                                        <option value="PATCH">PATCH</option>
+                                                    </select>
                                                 </div>
-                                            </button>
-                                        ))}
+                                                <div>
+                                                    <label className="block text-xs font-semibold text-slate-500 uppercase tracking-wider mb-2">
+                                                        Webhook URL
+                                                    </label>
+                                                    <input
+                                                        type="url"
+                                                        value={action.webhook.url}
+                                                        onChange={(e) => {
+                                                            const newActions = [...settings.submissionActions];
+                                                            newActions[index] = {
+                                                                ...action,
+                                                                webhook: { ...action.webhook!, url: e.target.value }
+                                                            };
+                                                            updateSettings({ submissionActions: newActions });
+                                                        }}
+                                                        placeholder="https://api.example.com/webhook"
+                                                        className="w-full p-3 bg-slate-50 dark:bg-gray-800 border border-slate-200 dark:border-gray-700 rounded-lg text-sm text-slate-700 dark:text-gray-200 focus:ring-2 focus:ring-brand-500 focus:border-transparent transition-all outline-none font-mono"
+                                                    />
+                                                </div>
+                                            </div>
+                                        )}
+
+                                        {action.type === 'message' && (
+                                            <div className="space-y-3">
+                                                <div>
+                                                    <label className="block text-xs font-semibold text-slate-500 uppercase tracking-wider mb-2">
+                                                        Message Type
+                                                    </label>
+                                                    <select
+                                                        value={action.messageType || 'success'}
+                                                        onChange={(e) => {
+                                                            const newActions = [...settings.submissionActions];
+                                                            newActions[index] = { ...action, messageType: e.target.value as any };
+                                                            updateSettings({ submissionActions: newActions });
+                                                        }}
+                                                        className="w-full p-3 bg-slate-50 dark:bg-gray-800 border border-slate-200 dark:border-gray-700 rounded-lg text-sm text-slate-700 dark:text-gray-200 focus:ring-2 focus:ring-brand-500 focus:border-transparent transition-all outline-none"
+                                                    >
+                                                        <option value="success">Success</option>
+                                                        <option value="info">Info</option>
+                                                        <option value="warning">Warning</option>
+                                                        <option value="error">Error</option>
+                                                    </select>
+                                                </div>
+                                                <div>
+                                                    <label className="block text-xs font-semibold text-slate-500 uppercase tracking-wider mb-2">
+                                                        Message Content
+                                                    </label>
+                                                    <textarea
+                                                        value={action.message || ''}
+                                                        onChange={(e) => {
+                                                            const newActions = [...settings.submissionActions];
+                                                            newActions[index] = { ...action, message: e.target.value };
+                                                            updateSettings({ submissionActions: newActions });
+                                                        }}
+                                                        placeholder="Thank you for your submission!"
+                                                        className="w-full p-3 bg-slate-50 dark:bg-gray-800 border border-slate-200 dark:border-gray-700 rounded-lg text-sm text-slate-700 dark:text-gray-200 focus:ring-2 focus:ring-brand-500 focus:border-transparent transition-all outline-none resize-none"
+                                                        rows={4}
+                                                    />
+                                                </div>
+                                            </div>
+                                        )}
                                     </div>
+                                ))}
+                            </div>
+
+                            {/* Add Action Button */}
+                            <div className="mt-4">
+                                {!showActionSelector ? (
+                                    <button
+                                        onClick={() => setShowActionSelector(true)}
+                                        className="w-full flex items-center justify-center gap-2 p-4 border-2 border-dashed border-slate-200 dark:border-gray-700 rounded-xl text-slate-500 dark:text-gray-400 hover:border-brand-300 dark:hover:border-brand-700 hover:text-brand-600 dark:hover:text-brand-400 transition-colors"
+                                    >
+                                        <Plus size={20} />
+                                        <span className="font-medium">Add Submission Action</span>
+                                    </button>
+                                ) : (
+                                    <div className="border border-slate-200 dark:border-gray-700 rounded-xl p-4 bg-slate-50 dark:bg-gray-800">
+                                        <div className="flex justify-between items-center mb-4">
+                                            <h4 className="font-semibold text-slate-700 dark:text-gray-200">Choose Action Type</h4>
+                                            <button
+                                                onClick={() => setShowActionSelector(false)}
+                                                className="p-1 text-slate-400 hover:text-slate-600 rounded-lg"
+                                            >
+                                                <X size={16} />
+                                            </button>
+                                        </div>
+                                        <div className="grid grid-cols-3 gap-3">
+                                            {actionTypes.map((actionType) => (
+                                                <button
+                                                    key={actionType.type}
+                                                    onClick={() => {
+                                                        if (!actionType.disabled) {
+                                                            addSubmissionAction(actionType.type);
+                                                            setShowActionSelector(false);
+                                                        }
+                                                    }}
+                                                    disabled={actionType.disabled}
+                                                    className={clsx(
+                                                        "flex flex-col items-center gap-1 p-1.5 border rounded transition-all text-center",
+                                                        actionType.disabled
+                                                            ? "opacity-50 cursor-not-allowed border-slate-200 bg-slate-100"
+                                                            : `${actionType.borderColor} ${actionType.bgColor} ${actionType.hoverBg} hover:shadow-sm`
+                                                    )}
+                                                >
+                                                    <div className={`p-1 rounded ${actionType.bgColor} ${actionType.color}`}>
+                                                        <div className="w-3 h-3 flex items-center justify-center">
+                                                            {React.cloneElement(actionType.icon, { size: 12 })}
+                                                        </div>
+                                                    </div>
+                                                    <div>
+                                                        <h5 className="font-medium text-slate-700" style={{ fontSize: '10px' }}>{actionType.label}</h5>
+                                                    </div>
+                                                </button>
+                                            ))}
+                                        </div>
+                                    </div>
+                                )}
+                            </div>
+
+                            {settings.submissionActions.length === 0 && !showActionSelector && (
+                                <div className="text-center py-4 text-slate-400">
+                                    <Globe size={20} className="mx-auto mb-2 opacity-50" />
+                                    <p className="text-sm">No submission actions configured</p>
                                 </div>
                             )}
-                        </div>
-                        
-                        {settings.submissionActions.length === 0 && !showActionSelector && (
-                            <div className="text-center py-4 text-slate-400">
-                                <Globe size={20} className="mx-auto mb-2 opacity-50" />
-                                <p className="text-sm">No submission actions configured</p>
-                            </div>
-                        )}
                         </div>
                     )}
 
@@ -946,11 +958,11 @@ export default MyForm;`;
                 </div>
                 <div>
                     <h2 className="properties-header-title">Properties</h2>
-                    <p style={{fontSize: '0.75rem', color: 'var(--color-slate-500)', margin: 0}}>Edit {selectedElement.type} field</p>
+                    <p style={{ fontSize: '0.75rem', color: 'var(--color-slate-500)', margin: 0 }}>Edit {selectedElement.type} field</p>
                 </div>
             </div>
 
-            <div style={{padding: '24px 32px', gap: '12px', overflowY: 'auto', display: 'flex', flexDirection: 'column'}}>
+            <div style={{ padding: '24px 32px', gap: '12px', overflowY: 'auto', display: 'flex', flexDirection: 'column' }}>
                 {/* Define input types that need field name and placeholder */}
                 {(() => {
                     const isInputType = !['container', 'columns', 'rich-text', 'text-block', 'star-rating', 'button'].includes(selectedElement.type);
@@ -961,28 +973,28 @@ export default MyForm;`;
                         <>
                             {isFormProject && selectedElement.type !== 'hidden' && selectedElement.type !== 'rich-text' && selectedElement.type !== 'text-block' && (
                                 <div>
-                                    <label className="block text-xs font-semibold text-slate-500 uppercase tracking-wider mb-2">
+                                    <label className="block text-xs font-semibold text-slate-500 dark:text-gray-400 uppercase tracking-wider mb-2">
                                         Label
                                     </label>
                                     <input
                                         type="text"
                                         value={selectedElement.label}
                                         onChange={(e) => updateElement(selectedElement.id, { label: e.target.value })}
-                                        className="w-full p-3 bg-slate-50 border border-slate-200 rounded-lg text-sm text-slate-700 focus:ring-2 focus:ring-brand-500 focus:border-transparent transition-all outline-none"
+                                        className="w-full p-3 bg-slate-50 dark:bg-gray-800 border border-slate-200 dark:border-gray-700 rounded-lg text-sm text-slate-700 dark:text-gray-200 focus:ring-2 focus:ring-brand-500 focus:border-transparent transition-all outline-none"
                                     />
                                 </div>
                             )}
 
                             {isFormProject && needsFieldName && (
                                 <div>
-                                    <label className="block text-xs font-semibold text-slate-500 uppercase tracking-wider mb-2">
+                                    <label className="block text-xs font-semibold text-slate-500 dark:text-gray-400 uppercase tracking-wider mb-2">
                                         Field Name (Data Key)
                                     </label>
                                     <input
                                         type="text"
                                         value={selectedElement.name}
                                         onChange={(e) => updateElement(selectedElement.id, { name: e.target.value.replace(/[^a-zA-Z0-9_]/g, '') })}
-                                        className="w-full p-3 bg-slate-50 border border-slate-200 rounded-lg text-sm text-slate-700 focus:ring-2 focus:ring-brand-500 focus:border-transparent transition-all outline-none font-mono"
+                                        className="w-full p-3 bg-slate-50 dark:bg-gray-800 border border-slate-200 dark:border-gray-700 rounded-lg text-sm text-slate-700 dark:text-gray-200 focus:ring-2 focus:ring-brand-500 focus:border-transparent transition-all outline-none font-mono"
                                     />
                                     <p className="text-xs text-slate-400 mt-1">Unique key for this field in the submitted data.</p>
                                 </div>
@@ -990,14 +1002,14 @@ export default MyForm;`;
 
                             {isFormProject && needsPlaceholder && (
                                 <div>
-                                    <label className="block text-xs font-semibold text-slate-500 uppercase tracking-wider mb-2">
+                                    <label className="block text-xs font-semibold text-slate-500 dark:text-gray-400 uppercase tracking-wider mb-2">
                                         Placeholder
                                     </label>
                                     <input
                                         type="text"
                                         value={selectedElement.placeholder || ''}
                                         onChange={(e) => updateElement(selectedElement.id, { placeholder: e.target.value })}
-                                        className="w-full p-3 bg-slate-50 border border-slate-200 rounded-lg text-sm text-slate-700 focus:ring-2 focus:ring-brand-500 focus:border-transparent transition-all outline-none"
+                                        className="w-full p-3 bg-slate-50 dark:bg-gray-800 border border-slate-200 dark:border-gray-700 rounded-lg text-sm text-slate-700 dark:text-gray-200 focus:ring-2 focus:ring-brand-500 focus:border-transparent transition-all outline-none"
                                     />
                                 </div>
                             )}
@@ -1009,26 +1021,26 @@ export default MyForm;`;
                 {selectedElement.type === 'hidden' ? (
                     <>
                         <div>
-                            <label className="block text-xs font-semibold text-slate-500 uppercase tracking-wider mb-2">
+                            <label className="block text-xs font-semibold text-slate-500 dark:text-gray-400 uppercase tracking-wider mb-2">
                                 Field Name (Data Key)
                             </label>
                             <input
                                 type="text"
                                 value={selectedElement.name}
                                 onChange={(e) => updateElement(selectedElement.id, { name: e.target.value.replace(/[^a-zA-Z0-9_]/g, '') })}
-                                className="w-full p-3 bg-slate-50 border border-slate-200 rounded-lg text-sm text-slate-700 focus:ring-2 focus:ring-brand-500 focus:border-transparent transition-all outline-none font-mono"
+                                className="w-full p-3 bg-slate-50 dark:bg-gray-800 border border-slate-200 dark:border-gray-700 rounded-lg text-sm text-slate-700 dark:text-gray-200 focus:ring-2 focus:ring-brand-500 focus:border-transparent transition-all outline-none font-mono"
                             />
                             <p className="text-xs text-slate-400 mt-1">Unique key for this field in the submitted data.</p>
                         </div>
                         <div>
-                            <label className="block text-xs font-semibold text-slate-500 uppercase tracking-wider mb-2">
+                            <label className="block text-xs font-semibold text-slate-500 dark:text-gray-400 uppercase tracking-wider mb-2">
                                 Hidden Value
                             </label>
                             <input
                                 type="text"
                                 value={selectedElement.value || ''}
                                 onChange={(e) => updateElement(selectedElement.id, { value: e.target.value })}
-                                className="w-full p-3 bg-slate-50 border border-slate-200 rounded-lg text-sm text-slate-700 focus:ring-2 focus:ring-brand-500 focus:border-transparent transition-all outline-none font-mono"
+                                className="w-full p-3 bg-slate-50 dark:bg-gray-800 border border-slate-200 dark:border-gray-700 rounded-lg text-sm text-slate-700 dark:text-gray-200 focus:ring-2 focus:ring-brand-500 focus:border-transparent transition-all outline-none font-mono"
                                 placeholder="Enter hidden value"
                             />
                             <p className="text-xs text-slate-400 mt-1">This value will be submitted with the form but not visible to users.</p>
@@ -1040,240 +1052,236 @@ export default MyForm;`;
 
                 {/* Collapsible Text Properties for text components */}
                 {(selectedElement.type === 'rich-text' || selectedElement.type === 'text-block' || selectedElement.type === 'heading') && (
-                        <div className="pt-4 border-t border-slate-100">
-                            <button
-                                type="button"
-                                onClick={() => setTextPropsOpen(!textPropsOpen)}
-                                className="flex items-center justify-between w-full p-3 text-left bg-slate-50 hover:bg-slate-100 border border-slate-200 rounded-lg transition-colors"
-                            >
-                                <div className="flex items-center gap-2">
-                                    <Type size={16} className="text-slate-600" />
-                                    <span className="text-sm font-medium text-slate-700">Text Styling</span>
+                    <div className="pt-4 border-t border-slate-100">
+                        <button
+                            type="button"
+                            onClick={() => setTextPropsOpen(!textPropsOpen)}
+                            className="flex items-center justify-between w-full p-3 text-left bg-slate-50 dark:bg-gray-800 hover:bg-slate-100 dark:hover:bg-gray-700 border border-slate-200 dark:border-gray-700 rounded-lg transition-colors"
+                        >
+                            <div className="flex items-center gap-2">
+                                <Type size={16} className="text-slate-600 dark:text-gray-400" />
+                                <span className="text-sm font-medium text-slate-700 dark:text-gray-200">Text Styling</span>
+                            </div>
+                            {textPropsOpen ? <ChevronUp size={16} className="text-slate-500 dark:text-gray-400" /> : <ChevronDown size={16} className="text-slate-500 dark:text-gray-400" />}
+                        </button>
+
+                        {textPropsOpen && (
+                            <div className="mt-3 space-y-4 p-4 border border-slate-200 dark:border-gray-700 rounded-lg bg-white dark:bg-gray-800">
+                                {/* Font Family */}
+                                <div>
+                                    <label className="block text-xs font-medium text-gray-600 dark:text-gray-400 mb-2">Font Family</label>
+                                    <select
+                                        value={selectedElement.fontFamily || ''}
+                                        onChange={(e) => updateElement(selectedElement.id, { fontFamily: e.target.value || undefined })}
+                                        className="w-full p-2.5 bg-slate-50 dark:bg-gray-900 border border-slate-200 dark:border-gray-600 rounded-lg text-sm text-slate-700 dark:text-gray-200 focus:ring-2 focus:ring-brand-500 focus:border-transparent transition-all outline-none"
+                                    >
+                                        <option value="">Select...</option>
+                                        <option value="Arial, sans-serif">Arial</option>
+                                        <option value="Helvetica, sans-serif">Helvetica</option>
+                                        <option value="Georgia, serif">Georgia</option>
+                                        <option value="Times New Roman, serif">Times New Roman</option>
+                                        <option value="Courier New, monospace">Courier New</option>
+                                        <option value="Verdana, sans-serif">Verdana</option>
+                                        <option value="Impact, sans-serif">Impact</option>
+                                    </select>
                                 </div>
-                                {textPropsOpen ? <ChevronUp size={16} className="text-slate-500" /> : <ChevronDown size={16} className="text-slate-500" />}
-                            </button>
-                            
-                            {textPropsOpen && (
-                                <div className="mt-3 space-y-4 p-4 border border-slate-200 rounded-lg bg-white">
-                                    {/* Font Family */}
-                                    <div>
-                                        <label className="block text-xs font-medium text-gray-600 mb-2">Font Family</label>
-                                        <select
-                                            value={selectedElement.fontFamily || ''}
-                                            onChange={(e) => updateElement(selectedElement.id, { fontFamily: e.target.value || undefined })}
-                                            className="w-full p-2.5 bg-slate-50 border border-slate-200 rounded-lg text-sm text-slate-700 focus:ring-2 focus:ring-brand-500 focus:border-transparent transition-all outline-none"
+
+                                {/* Font Weight */}
+                                <div>
+                                    <label className="block text-xs font-medium text-gray-600 dark:text-gray-400 mb-2">Font Weight</label>
+                                    <select
+                                        value={selectedElement.fontWeight || 'normal'}
+                                        onChange={(e) => updateElement(selectedElement.id, { fontWeight: e.target.value as any })}
+                                        className="w-full p-2.5 bg-slate-50 dark:bg-gray-900 border border-slate-200 dark:border-gray-600 rounded-lg text-sm text-slate-700 dark:text-gray-200 focus:ring-2 focus:ring-brand-500 focus:border-transparent transition-all outline-none"
+                                    >
+                                        <option value="normal">Regular</option>
+                                        <option value="medium">Medium</option>
+                                        <option value="semibold">Semi Bold</option>
+                                        <option value="bold">Bold</option>
+                                    </select>
+                                </div>
+
+                                {/* Font Size */}
+                                <div>
+                                    <label className="block text-xs font-medium text-gray-600 dark:text-gray-400 mb-2">Font Size</label>
+                                    <div className="flex items-center gap-2">
+                                        <input
+                                            type="number"
+                                            min="8"
+                                            max="96"
+                                            value={selectedElement.fontSize || 16}
+                                            onChange={(e) => updateElement(selectedElement.id, { fontSize: parseInt(e.target.value) || 16 })}
+                                            className="flex-1 p-2.5 bg-slate-50 dark:bg-gray-900 border border-slate-200 dark:border-gray-600 rounded-lg text-sm text-slate-700 dark:text-gray-200 focus:ring-2 focus:ring-brand-500 focus:border-transparent transition-all outline-none"
+                                        />
+                                        <span className="text-sm text-slate-500 dark:text-gray-400 bg-slate-100 dark:bg-gray-700 border border-slate-200 dark:border-gray-600 rounded-lg px-3 py-2.5">px</span>
+                                        <button
+                                            type="button"
+                                            onClick={() => updateElement(selectedElement.id, { fontSize: Math.max(8, (selectedElement.fontSize || 16) - 1) })}
+                                            className="p-2.5 bg-slate-50 dark:bg-gray-700 border border-slate-200 dark:border-gray-600 rounded-lg hover:bg-slate-100 dark:hover:bg-gray-600 text-slate-500 dark:text-gray-300 transition-colors"
                                         >
-                                            <option value="">Select...</option>
-                                            <option value="Arial, sans-serif">Arial</option>
-                                            <option value="Helvetica, sans-serif">Helvetica</option>
-                                            <option value="Georgia, serif">Georgia</option>
-                                            <option value="Times New Roman, serif">Times New Roman</option>
-                                            <option value="Courier New, monospace">Courier New</option>
-                                            <option value="Verdana, sans-serif">Verdana</option>
-                                            <option value="Impact, sans-serif">Impact</option>
-                                        </select>
-                                    </div>
-                                    
-                                    {/* Font Weight */}
-                                    <div>
-                                        <label className="block text-xs font-medium text-gray-600 mb-2">Font Weight</label>
-                                        <select
-                                            value={selectedElement.fontWeight || 'normal'}
-                                            onChange={(e) => updateElement(selectedElement.id, { fontWeight: e.target.value as any })}
-                                            className="w-full p-2.5 bg-slate-50 border border-slate-200 rounded-lg text-sm text-slate-700 focus:ring-2 focus:ring-brand-500 focus:border-transparent transition-all outline-none"
+                                            <Minus size={14} />
+                                        </button>
+                                        <button
+                                            type="button"
+                                            onClick={() => updateElement(selectedElement.id, { fontSize: Math.min(96, (selectedElement.fontSize || 16) + 1) })}
+                                            className="p-2.5 bg-slate-50 dark:bg-gray-700 border border-slate-200 dark:border-gray-600 rounded-lg hover:bg-slate-100 dark:hover:bg-gray-600 text-slate-500 dark:text-gray-300 transition-colors"
                                         >
-                                            <option value="normal">Regular</option>
-                                            <option value="medium">Medium</option>
-                                            <option value="semibold">Semi Bold</option>
-                                            <option value="bold">Bold</option>
-                                        </select>
-                                    </div>
-                                    
-                                    {/* Font Size */}
-                                    <div>
-                                        <label className="block text-xs font-medium text-gray-600 mb-2">Font Size</label>
-                                        <div className="flex items-center gap-2">
-                                            <input
-                                                type="number"
-                                                min="8"
-                                                max="96"
-                                                value={selectedElement.fontSize || 16}
-                                                onChange={(e) => updateElement(selectedElement.id, { fontSize: parseInt(e.target.value) || 16 })}
-                                                className="flex-1 p-2.5 bg-slate-50 border border-slate-200 rounded-lg text-sm text-slate-700 focus:ring-2 focus:ring-brand-500 focus:border-transparent transition-all outline-none"
-                                            />
-                                            <span className="text-sm text-slate-500 bg-slate-100 border border-slate-200 rounded-lg px-3 py-2.5">px</span>
-                                            <button
-                                                type="button"
-                                                onClick={() => updateElement(selectedElement.id, { fontSize: Math.max(8, (selectedElement.fontSize || 16) - 1) })}
-                                                className="p-2.5 bg-slate-50 border border-slate-200 rounded-lg hover:bg-slate-100 transition-colors"
-                                            >
-                                                <Minus size={14} />
-                                            </button>
-                                            <button
-                                                type="button"
-                                                onClick={() => updateElement(selectedElement.id, { fontSize: Math.min(96, (selectedElement.fontSize || 16) + 1) })}
-                                                className="p-2.5 bg-slate-50 border border-slate-200 rounded-lg hover:bg-slate-100 transition-colors"
-                                            >
-                                                <Plus size={14} />
-                                            </button>
-                                        </div>
-                                    </div>
-                                    
-                                    {/* Color */}
-                                    <div>
-                                        <label className="block text-xs font-medium text-gray-600 mb-2">Color</label>
-                                        <div className="flex items-center gap-3">
-                                            <input
-                                                type="color"
-                                                value={selectedElement.textColor || '#000000'}
-                                                onChange={(e) => updateElement(selectedElement.id, { textColor: e.target.value })}
-                                                className="w-12 h-10 border border-slate-200 rounded-lg cursor-pointer"
-                                            />
-                                            <input
-                                                type="text"
-                                                value={selectedElement.textColor || '#000000'}
-                                                onChange={(e) => updateElement(selectedElement.id, { textColor: e.target.value })}
-                                                className="flex-1 p-2.5 bg-slate-50 border border-slate-200 rounded-lg text-sm text-slate-700 focus:ring-2 focus:ring-brand-500 focus:border-transparent transition-all outline-none font-mono"
-                                                placeholder="#000000"
-                                            />
-                                            <button
-                                                type="button"
-                                                onClick={() => updateElement(selectedElement.id, { textColor: undefined })}
-                                                className="p-2 text-slate-400 hover:text-slate-600 hover:bg-slate-100 rounded-lg transition-colors"
-                                                title="Reset color"
-                                            >
-                                                <X size={16} />
-                                            </button>
-                                        </div>
-                                    </div>
-                                    
-                                    {/* Text Alignment */}
-                                    <div>
-                                        <label className="block text-xs font-medium text-gray-600 mb-2">Text Align</label>
-                                        <div className="flex rounded-lg border border-gray-200 p-1 bg-gray-50">
-                                            <button
-                                                type="button"
-                                                onClick={() => updateElement(selectedElement.id, { textAlign: 'left' })}
-                                                className={`flex items-center justify-center w-10 h-8 rounded transition-all ${
-                                                    (selectedElement.textAlign ?? 'left') === 'left'
-                                                        ? 'bg-gray-800 text-white shadow-sm'
-                                                        : 'text-gray-400 hover:text-gray-600 hover:bg-gray-100'
-                                                }`}
-                                            >
-                                                <AlignLeft size={16} />
-                                            </button>
-                                            <button
-                                                type="button"
-                                                onClick={() => updateElement(selectedElement.id, { textAlign: 'center' })}
-                                                className={`flex items-center justify-center w-10 h-8 rounded transition-all ${
-                                                    selectedElement.textAlign === 'center'
-                                                        ? 'bg-gray-800 text-white shadow-sm'
-                                                        : 'text-gray-400 hover:text-gray-600 hover:bg-gray-100'
-                                                }`}
-                                            >
-                                                <AlignCenter size={16} />
-                                            </button>
-                                            <button
-                                                type="button"
-                                                onClick={() => updateElement(selectedElement.id, { textAlign: 'right' })}
-                                                className={`flex items-center justify-center w-10 h-8 rounded transition-all ${
-                                                    selectedElement.textAlign === 'right'
-                                                        ? 'bg-gray-800 text-white shadow-sm'
-                                                        : 'text-gray-400 hover:text-gray-600 hover:bg-gray-100'
-                                                }`}
-                                            >
-                                                <AlignRight size={16} />
-                                            </button>
-                                            <button
-                                                type="button"
-                                                onClick={() => updateElement(selectedElement.id, { textAlign: 'justify' })}
-                                                className={`flex items-center justify-center w-10 h-8 rounded transition-all ${
-                                                    selectedElement.textAlign === 'justify'
-                                                        ? 'bg-gray-800 text-white shadow-sm'
-                                                        : 'text-gray-400 hover:text-gray-600 hover:bg-gray-100'
-                                                }`}
-                                            >
-                                                <AlignJustify size={16} />
-                                            </button>
-                                        </div>
-                                    </div>
-                                    
-                                    {/* Line Height */}
-                                    <div>
-                                        <label className="block text-xs font-medium text-gray-600 mb-2">Line Height</label>
-                                        <div className="flex items-center gap-2">
-                                            <input
-                                                type="number"
-                                                min="80"
-                                                max="200"
-                                                step="10"
-                                                value={selectedElement.lineHeight || 140}
-                                                onChange={(e) => updateElement(selectedElement.id, { lineHeight: parseInt(e.target.value) || 140 })}
-                                                className="flex-1 p-2.5 bg-slate-50 border border-slate-200 rounded-lg text-sm text-slate-700 focus:ring-2 focus:ring-brand-500 focus:border-transparent transition-all outline-none"
-                                            />
-                                            <span className="text-sm text-slate-500 bg-slate-100 border border-slate-200 rounded-lg px-3 py-2.5">%</span>
-                                            <button
-                                                type="button"
-                                                onClick={() => updateElement(selectedElement.id, { lineHeight: Math.max(80, (selectedElement.lineHeight || 140) - 10) })}
-                                                className="p-2.5 bg-slate-50 border border-slate-200 rounded-lg hover:bg-slate-100 transition-colors"
-                                            >
-                                                <Minus size={14} />
-                                            </button>
-                                            <button
-                                                type="button"
-                                                onClick={() => updateElement(selectedElement.id, { lineHeight: Math.min(200, (selectedElement.lineHeight || 140) + 10) })}
-                                                className="p-2.5 bg-slate-50 border border-slate-200 rounded-lg hover:bg-slate-100 transition-colors"
-                                            >
-                                                <Plus size={14} />
-                                            </button>
-                                        </div>
-                                    </div>
-                                    
-                                    {/* Letter Spacing */}
-                                    <div>
-                                        <label className="block text-xs font-medium text-gray-600 mb-2">Letter Spacing</label>
-                                        <div className="flex items-center gap-2">
-                                            <input
-                                                type="number"
-                                                min="-5"
-                                                max="10"
-                                                step="0.5"
-                                                value={selectedElement.letterSpacing || 0}
-                                                onChange={(e) => updateElement(selectedElement.id, { letterSpacing: parseFloat(e.target.value) || 0 })}
-                                                className="flex-1 p-2.5 bg-slate-50 border border-slate-200 rounded-lg text-sm text-slate-700 focus:ring-2 focus:ring-brand-500 focus:border-transparent transition-all outline-none"
-                                            />
-                                            <span className="text-sm text-slate-500 bg-slate-100 border border-slate-200 rounded-lg px-3 py-2.5">px</span>
-                                            <button
-                                                type="button"
-                                                onClick={() => updateElement(selectedElement.id, { letterSpacing: Math.max(-5, (selectedElement.letterSpacing || 0) - 0.5) })}
-                                                className="p-2.5 bg-slate-50 border border-slate-200 rounded-lg hover:bg-slate-100 transition-colors"
-                                            >
-                                                <Minus size={14} />
-                                            </button>
-                                            <button
-                                                type="button"
-                                                onClick={() => updateElement(selectedElement.id, { letterSpacing: Math.min(10, (selectedElement.letterSpacing || 0) + 0.5) })}
-                                                className="p-2.5 bg-slate-50 border border-slate-200 rounded-lg hover:bg-slate-100 transition-colors"
-                                            >
-                                                <Plus size={14} />
-                                            </button>
-                                        </div>
+                                            <Plus size={14} />
+                                        </button>
                                     </div>
                                 </div>
-                            )}
-                        </div>
+
+                                {/* Color */}
+                                <div>
+                                    <label className="block text-xs font-medium text-gray-600 dark:text-gray-400 mb-2">Color</label>
+                                    <div className="flex items-center gap-3">
+                                        <input
+                                            type="color"
+                                            value={selectedElement.textColor || '#000000'}
+                                            onChange={(e) => updateElement(selectedElement.id, { textColor: e.target.value })}
+                                            className="w-12 h-10 border border-slate-200 dark:border-gray-600 rounded-lg cursor-pointer bg-transparent"
+                                        />
+                                        <input
+                                            type="text"
+                                            value={selectedElement.textColor || '#000000'}
+                                            onChange={(e) => updateElement(selectedElement.id, { textColor: e.target.value })}
+                                            className="flex-1 p-2.5 bg-slate-50 dark:bg-gray-900 border border-slate-200 dark:border-gray-600 rounded-lg text-sm text-slate-700 dark:text-gray-200 focus:ring-2 focus:ring-brand-500 focus:border-transparent transition-all outline-none font-mono"
+                                            placeholder="#000000"
+                                        />
+                                        <button
+                                            type="button"
+                                            onClick={() => updateElement(selectedElement.id, { textColor: undefined })}
+                                            className="p-2 text-slate-400 hover:text-slate-600 dark:text-gray-500 dark:hover:text-gray-300 hover:bg-slate-100 dark:hover:bg-gray-700 rounded-lg transition-colors"
+                                            title="Reset color"
+                                        >
+                                            <X size={16} />
+                                        </button>
+                                    </div>
+                                </div>
+
+                                {/* Text Alignment */}
+                                <div>
+                                    <label className="block text-xs font-medium text-gray-600 dark:text-gray-400 mb-2">Text Align</label>
+                                    <div className="flex rounded-lg border border-gray-200 dark:border-gray-600 p-1 bg-gray-50 dark:bg-gray-900">
+                                        <button
+                                            type="button"
+                                            onClick={() => updateElement(selectedElement.id, { textAlign: 'left' })}
+                                            className={`flex items-center justify-center w-10 h-8 rounded transition-all ${(selectedElement.textAlign ?? 'left') === 'left'
+                                                ? 'bg-gray-800 dark:bg-gray-700 text-white shadow-sm'
+                                                : 'text-gray-400 hover:text-gray-600 dark:hover:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700'
+                                                }`}
+                                        >
+                                            <AlignLeft size={16} />
+                                        </button>
+                                        <button
+                                            type="button"
+                                            onClick={() => updateElement(selectedElement.id, { textAlign: 'center' })}
+                                            className={`flex items-center justify-center w-10 h-8 rounded transition-all ${selectedElement.textAlign === 'center'
+                                                ? 'bg-gray-800 dark:bg-gray-700 text-white shadow-sm'
+                                                : 'text-gray-400 hover:text-gray-600 dark:hover:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700'
+                                                }`}
+                                        >
+                                            <AlignCenter size={16} />
+                                        </button>
+                                        <button
+                                            type="button"
+                                            onClick={() => updateElement(selectedElement.id, { textAlign: 'right' })}
+                                            className={`flex items-center justify-center w-10 h-8 rounded transition-all ${selectedElement.textAlign === 'right'
+                                                ? 'bg-gray-800 dark:bg-gray-700 text-white shadow-sm'
+                                                : 'text-gray-400 hover:text-gray-600 dark:hover:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700'
+                                                }`}
+                                        >
+                                            <AlignRight size={16} />
+                                        </button>
+                                        <button
+                                            type="button"
+                                            onClick={() => updateElement(selectedElement.id, { textAlign: 'justify' })}
+                                            className={`flex items-center justify-center w-10 h-8 rounded transition-all ${selectedElement.textAlign === 'justify'
+                                                ? 'bg-gray-800 text-white shadow-sm'
+                                                : 'text-gray-400 hover:text-gray-600 hover:bg-gray-100'
+                                                }`}
+                                        >
+                                            <AlignJustify size={16} />
+                                        </button>
+                                    </div>
+                                </div>
+
+                                {/* Line Height */}
+                                <div>
+                                    <label className="block text-xs font-medium text-gray-600 dark:text-gray-400 mb-2">Line Height</label>
+                                    <div className="flex items-center gap-2">
+                                        <input
+                                            type="number"
+                                            min="80"
+                                            max="200"
+                                            step="10"
+                                            value={selectedElement.lineHeight || 140}
+                                            onChange={(e) => updateElement(selectedElement.id, { lineHeight: parseInt(e.target.value) || 140 })}
+                                            className="flex-1 p-2.5 bg-slate-50 dark:bg-gray-900 border border-slate-200 dark:border-gray-600 rounded-lg text-sm text-slate-700 dark:text-gray-200 focus:ring-2 focus:ring-brand-500 focus:border-transparent transition-all outline-none"
+                                        />
+                                        <span className="text-sm text-slate-500 dark:text-gray-400 bg-slate-100 dark:bg-gray-700 border border-slate-200 dark:border-gray-600 rounded-lg px-3 py-2.5">%</span>
+                                        <button
+                                            type="button"
+                                            onClick={() => updateElement(selectedElement.id, { lineHeight: Math.max(80, (selectedElement.lineHeight || 140) - 10) })}
+                                            className="p-2.5 bg-slate-50 dark:bg-gray-700 border border-slate-200 dark:border-gray-600 rounded-lg hover:bg-slate-100 dark:hover:bg-gray-600 text-slate-500 dark:text-gray-300 transition-colors"
+                                        >
+                                            <Minus size={14} />
+                                        </button>
+                                        <button
+                                            type="button"
+                                            onClick={() => updateElement(selectedElement.id, { lineHeight: Math.min(200, (selectedElement.lineHeight || 140) + 10) })}
+                                            className="p-2.5 bg-slate-50 dark:bg-gray-700 border border-slate-200 dark:border-gray-600 rounded-lg hover:bg-slate-100 dark:hover:bg-gray-600 text-slate-500 dark:text-gray-300 transition-colors"
+                                        >
+                                            <Plus size={14} />
+                                        </button>
+                                    </div>
+                                </div>
+
+                                {/* Letter Spacing */}
+                                <div>
+                                    <label className="block text-xs font-medium text-gray-600 dark:text-gray-400 mb-2">Letter Spacing</label>
+                                    <div className="flex items-center gap-2">
+                                        <input
+                                            type="number"
+                                            min="-5"
+                                            max="10"
+                                            step="0.5"
+                                            value={selectedElement.letterSpacing || 0}
+                                            onChange={(e) => updateElement(selectedElement.id, { letterSpacing: parseFloat(e.target.value) || 0 })}
+                                            className="flex-1 p-2.5 bg-slate-50 dark:bg-gray-900 border border-slate-200 dark:border-gray-600 rounded-lg text-sm text-slate-700 dark:text-gray-200 focus:ring-2 focus:ring-brand-500 focus:border-transparent transition-all outline-none"
+                                        />
+                                        <span className="text-sm text-slate-500 dark:text-gray-400 bg-slate-100 dark:bg-gray-700 border border-slate-200 dark:border-gray-600 rounded-lg px-3 py-2.5">px</span>
+                                        <button
+                                            type="button"
+                                            onClick={() => updateElement(selectedElement.id, { letterSpacing: Math.max(-5, (selectedElement.letterSpacing || 0) - 0.5) })}
+                                            className="p-2.5 bg-slate-50 dark:bg-gray-700 border border-slate-200 dark:border-gray-600 rounded-lg hover:bg-slate-100 dark:hover:bg-gray-600 text-slate-500 dark:text-gray-300 transition-colors"
+                                        >
+                                            <Minus size={14} />
+                                        </button>
+                                        <button
+                                            type="button"
+                                            onClick={() => updateElement(selectedElement.id, { letterSpacing: Math.min(10, (selectedElement.letterSpacing || 0) + 0.5) })}
+                                            className="p-2.5 bg-slate-50 dark:bg-gray-700 border border-slate-200 dark:border-gray-600 rounded-lg hover:bg-slate-100 dark:hover:bg-gray-600 text-slate-500 dark:text-gray-300 transition-colors"
+                                        >
+                                            <Plus size={14} />
+                                        </button>
+                                    </div>
+                                </div>
+                            </div>
+                        )}
+                    </div>
                 )}
 
                 {isFormProject && selectedElement.type !== 'hidden' && selectedElement.type !== 'rich-text' && selectedElement.type !== 'text-block' && (
                     <>
                         <div>
-                            <label className="block text-xs font-semibold text-slate-500 uppercase tracking-wider mb-2">
+                            <label className="block text-xs font-semibold text-slate-500 dark:text-gray-400 uppercase tracking-wider mb-2">
                                 Label Size
                             </label>
                             <select
                                 value={selectedElement.labelSize || 'sm'}
                                 onChange={(e) => updateElement(selectedElement.id, { labelSize: e.target.value as any })}
-                                className="w-full p-3 bg-slate-50 border border-slate-200 rounded-lg text-sm text-slate-700 focus:ring-2 focus:ring-brand-500 focus:border-transparent transition-all outline-none"
+                                className="w-full p-3 bg-slate-50 dark:bg-gray-800 border border-slate-200 dark:border-gray-700 rounded-lg text-sm text-slate-700 dark:text-gray-200 focus:ring-2 focus:ring-brand-500 focus:border-transparent transition-all outline-none"
                             >
                                 <option value="xs">Extra Small</option>
                                 <option value="sm">Small</option>
@@ -1282,10 +1290,10 @@ export default MyForm;`;
                             </select>
                         </div>
                         <div>
-                            <label className="block text-xs font-semibold text-slate-500 uppercase tracking-wider mb-2">
+                            <label className="block text-xs font-semibold text-slate-500 dark:text-gray-400 uppercase tracking-wider mb-2">
                                 Label Formatting
                             </label>
-                            <div className="flex gap-1 p-1 bg-slate-50 border border-slate-200 rounded-lg">
+                            <div className="flex gap-1 p-1 bg-slate-50 dark:bg-gray-800 border border-slate-200 dark:border-gray-700 rounded-lg">
                                 <button
                                     type="button"
                                     onClick={() => updateElement(selectedElement.id, { labelBold: !selectedElement.labelBold })}
@@ -1363,12 +1371,12 @@ export default MyForm;`;
 
                 {/* Background Color Control */}
                 <div>
-                    <label className="block text-xs font-semibold text-slate-500 uppercase tracking-wider mb-2">
+                    <label className="block text-xs font-semibold text-slate-500 dark:text-gray-400 uppercase tracking-wider mb-2">
                         Background Color
                     </label>
                     <div className="relative inline-block">
-                        <div 
-                            className="w-12 h-12 rounded-lg border border-slate-200 relative overflow-hidden cursor-pointer"
+                        <div
+                            className="w-12 h-12 rounded-lg border border-slate-200 dark:border-gray-700 relative overflow-hidden cursor-pointer"
                             style={{
                                 backgroundColor: selectedElement.backgroundColor || '#ffffff'
                             }}
@@ -1386,7 +1394,7 @@ export default MyForm;`;
                         >
                             {!selectedElement.backgroundColor && (
                                 <svg className="absolute inset-0 w-full h-full" viewBox="0 0 48 48">
-                                    <path d="M6 42L42 6" stroke="#ef4444" strokeWidth="2"/>
+                                    <path d="M6 42L42 6" stroke="#ef4444" strokeWidth="2" />
                                 </svg>
                             )}
                         </div>
@@ -1401,14 +1409,14 @@ export default MyForm;`;
                         )}
                     </div>
                 </div>
-                
+
                 {/* Image Width and Alignment - positioned after background color */}
                 {selectedElement.type === 'image' && (
                     <div className="pt-4 border-t border-slate-100 space-y-4">
                         {/* Width Percentage */}
                         <div>
-                            <label className="block text-xs font-medium text-gray-600 mb-2">
-                                Width: <span className="font-semibold">{selectedElement.imageWidthPercent || 100}%</span>
+                            <label className="block text-xs font-medium text-gray-600 dark:text-gray-400 mb-2">
+                                Width: <span className="font-semibold text-gray-900 dark:text-white">{selectedElement.imageWidthPercent || 100}%</span>
                             </label>
                             <div className="flex items-center gap-3">
                                 <input
@@ -1418,7 +1426,7 @@ export default MyForm;`;
                                     step="5"
                                     value={selectedElement.imageWidthPercent || 100}
                                     onChange={(e) => updateElement(selectedElement.id, { imageWidthPercent: parseInt(e.target.value) })}
-                                    className="flex-1 h-2 bg-slate-200 rounded-lg appearance-none cursor-pointer"
+                                    className="flex-1 h-2 bg-slate-200 dark:bg-gray-700 rounded-lg appearance-none cursor-pointer"
                                 />
                                 <input
                                     type="number"
@@ -1427,7 +1435,7 @@ export default MyForm;`;
                                     step="5"
                                     value={selectedElement.imageWidthPercent || 100}
                                     onChange={(e) => updateElement(selectedElement.id, { imageWidthPercent: parseInt(e.target.value) || 100 })}
-                                    className="w-16 px-2 py-1 text-xs border border-slate-200 rounded"
+                                    className="w-16 px-2 py-1 text-xs border border-slate-200 dark:border-gray-700 dark:bg-gray-800 dark:text-gray-200 rounded"
                                 />
                             </div>
                             <div className="flex justify-between text-xs text-slate-400 mt-1">
@@ -1438,16 +1446,15 @@ export default MyForm;`;
 
                         {/* Image Alignment */}
                         <div>
-                            <h3 className="text-xs font-medium text-gray-600 mb-3">Align</h3>
-                            <div className="flex rounded-lg border border-gray-200 p-1 bg-gray-50">
+                            <h3 className="text-xs font-medium text-gray-600 dark:text-gray-400 mb-3">Align</h3>
+                            <div className="flex rounded-lg border border-gray-200 dark:border-gray-700 p-1 bg-gray-50 dark:bg-gray-800">
                                 <button
                                     type="button"
                                     onClick={() => updateElement(selectedElement.id, { imageAlign: 'left' })}
-                                    className={`flex items-center justify-center w-10 h-8 rounded transition-all ${
-                                        (selectedElement.imageAlign ?? 'left') === 'left'
-                                            ? 'bg-gray-800 text-white shadow-sm'
-                                            : 'text-gray-400 hover:text-gray-600 hover:bg-gray-100'
-                                    }`}
+                                    className={`flex items-center justify-center w-10 h-8 rounded transition-all ${(selectedElement.imageAlign ?? 'left') === 'left'
+                                        ? 'bg-gray-800 text-white shadow-sm'
+                                        : 'text-gray-400 hover:text-gray-600 dark:hover:text-gray-200 hover:bg-gray-100 dark:hover:bg-gray-700'
+                                        }`}
                                     title="Align Left"
                                 >
                                     <AlignLeft size={16} />
@@ -1455,11 +1462,10 @@ export default MyForm;`;
                                 <button
                                     type="button"
                                     onClick={() => updateElement(selectedElement.id, { imageAlign: 'center' })}
-                                    className={`flex items-center justify-center w-10 h-8 rounded transition-all ${
-                                        selectedElement.imageAlign === 'center'
-                                            ? 'bg-gray-800 text-white shadow-sm'
-                                            : 'text-gray-400 hover:text-gray-600 hover:bg-gray-100'
-                                    }`}
+                                    className={`flex items-center justify-center w-10 h-8 rounded transition-all ${selectedElement.imageAlign === 'center'
+                                        ? 'bg-gray-800 text-white shadow-sm'
+                                        : 'text-gray-400 hover:text-gray-600 hover:bg-gray-100'
+                                        }`}
                                     title="Align Center"
                                 >
                                     <AlignCenter size={16} />
@@ -1467,11 +1473,10 @@ export default MyForm;`;
                                 <button
                                     type="button"
                                     onClick={() => updateElement(selectedElement.id, { imageAlign: 'right' })}
-                                    className={`flex items-center justify-center w-10 h-8 rounded transition-all ${
-                                        selectedElement.imageAlign === 'right'
-                                            ? 'bg-gray-800 text-white shadow-sm'
-                                            : 'text-gray-400 hover:text-gray-600 hover:bg-gray-100'
-                                    }`}
+                                    className={`flex items-center justify-center w-10 h-8 rounded transition-all ${selectedElement.imageAlign === 'right'
+                                        ? 'bg-gray-800 text-white shadow-sm'
+                                        : 'text-gray-400 hover:text-gray-600 hover:bg-gray-100'
+                                        }`}
                                     title="Align Right"
                                 >
                                     <AlignRight size={16} />
@@ -1479,11 +1484,10 @@ export default MyForm;`;
                                 <button
                                     type="button"
                                     onClick={() => updateElement(selectedElement.id, { imageAlign: 'justify' })}
-                                    className={`flex items-center justify-center w-10 h-8 rounded transition-all ${
-                                        selectedElement.imageAlign === 'justify'
-                                            ? 'bg-gray-800 text-white shadow-sm'
-                                            : 'text-gray-400 hover:text-gray-600 hover:bg-gray-100'
-                                    }`}
+                                    className={`flex items-center justify-center w-10 h-8 rounded transition-all ${selectedElement.imageAlign === 'justify'
+                                        ? 'bg-gray-800 text-white shadow-sm'
+                                        : 'text-gray-400 hover:text-gray-600 hover:bg-gray-100'
+                                        }`}
                                     title="Justify"
                                 >
                                     <AlignJustify size={16} />
@@ -1492,418 +1496,15 @@ export default MyForm;`;
                         </div>
                     </div>
                 )}
-                
+
                 {/* Layout Panel */}
                 {!['hidden'].includes(selectedElement.type) && (
-                    <LayoutPanel 
-                        selectedElement={selectedElement} 
-                        updateElement={updateElement} 
+                    <LayoutPanel
+                        selectedElement={selectedElement}
+                        updateElement={updateElement}
                     />
                 )}
-                
-                {/* Spacing Controls - Option 6: Clean Visual Editor */}
-                {false && !['hidden'].includes(selectedElement.type) && (() => {
-                    // Calculate actual container constraints by measuring the real element
-                    const getActualConstraints = () => {
-                        const elementInCanvas = document.querySelector(`[data-element-id="${selectedElement.id}"]`);
-                        if (elementInCanvas) {
-                            const rect = elementInCanvas.getBoundingClientRect();
-                            // Allow much higher margin limits with minimum fallback
-                            const maxMarginX = Math.max(48, Math.floor(rect.width / 8)); // More generous calculation
-                            const maxMarginY = Math.max(32, Math.floor(rect.height / 8));
-                            return {
-                                maxMarginX: Math.max(0, maxMarginX),
-                                maxMarginY: Math.max(0, maxMarginY),
-                                elementWidth: rect.width,
-                                elementHeight: rect.height
-                            };
-                        }
-                        // Fallback to reasonable defaults with higher limits
-                        return { maxMarginX: 48, maxMarginY: 32, elementWidth: 300, elementHeight: 80 };
-                    };
 
-                    const constraints = getActualConstraints();
-                    
-                    return (
-                        <div className="pt-4 border-t border-slate-100">
-                            <label className="block text-xs font-semibold text-slate-500 uppercase tracking-wider mb-3">
-                                Spacing
-                            </label>
-                            
-                            <div className="bg-slate-50 border border-slate-200 rounded-lg p-6 relative">
-                                <div className="group relative w-full h-36">
-                                {/* Margin Layer */}
-                                <div 
-                                    className="absolute inset-0 bg-gradient-to-br from-amber-100 to-orange-200 border-2 border-dashed border-orange-400 rounded-lg opacity-90 transition-all duration-200 hover:opacity-100"
-                                    style={{
-                                        borderColor: '#f59e0b'
-                                    }}
-                                >
-                                    {/* Margin Handles */}
-                                    <div 
-                                        className="absolute top-[-7px] left-1/2 transform -translate-x-1/2 w-3.5 h-3.5 bg-amber-100 border-2 border-orange-400 rounded-full cursor-ns-resize opacity-0 group-hover:opacity-100 transition-all duration-200 hover:scale-110 hover:border-orange-500 hover:bg-amber-200 hover:shadow-lg z-10"
-                                        onMouseDown={(e) => {
-                                            e.preventDefault();
-                                            const startY = e.clientY;
-                                            const startMargin = selectedElement.marginTop ?? 0;
-                                            
-                                            const handleMouseMove = (e: MouseEvent) => {
-                                                const deltaY = e.clientY - startY;
-                                                // Use actual element constraints
-                                                const currentConstraints = getActualConstraints();
-                                                const maxMarginTop = Math.floor(currentConstraints.maxMarginY / 2); // Half the height for margin
-                                                const newMargin = Math.max(0, Math.min(maxMarginTop, startMargin + Math.round(deltaY / 4))); // More sensitive dragging
-                                                updateElement(selectedElement.id, { marginTop: newMargin });
-                                            };
-                                            
-                                            const handleMouseUp = () => {
-                                                document.removeEventListener('mousemove', handleMouseMove);
-                                                document.removeEventListener('mouseup', handleMouseUp);
-                                            };
-                                            
-                                            document.addEventListener('mousemove', handleMouseMove);
-                                            document.addEventListener('mouseup', handleMouseUp);
-                                        }}
-                                        title="Drag to adjust top margin"
-                                    />
-                                    
-                                    <div 
-                                        className="absolute right-[-7px] top-1/2 transform -translate-y-1/2 w-3.5 h-3.5 bg-amber-100 border-2 border-orange-400 rounded-full cursor-ew-resize opacity-0 group-hover:opacity-100 transition-all duration-200 hover:scale-110 hover:border-orange-500 hover:bg-amber-200 hover:shadow-lg z-10"
-                                        onMouseDown={(e) => {
-                                            e.preventDefault();
-                                            const startX = e.clientX;
-                                            const startMargin = selectedElement.marginRight ?? 0;
-                                            
-                                            const handleMouseMove = (e: MouseEvent) => {
-                                                const deltaX = startX - e.clientX;
-                                                // Use actual element constraints
-                                                const currentConstraints = getActualConstraints();
-                                                const maxMarginRight = Math.floor(currentConstraints.maxMarginX / 2); // Half the width for margin
-                                                const newMargin = Math.max(0, Math.min(maxMarginRight, startMargin + Math.round(deltaX / 4))); // More sensitive dragging
-                                                updateElement(selectedElement.id, { marginRight: newMargin });
-                                            };
-                                            
-                                            const handleMouseUp = () => {
-                                                document.removeEventListener('mousemove', handleMouseMove);
-                                                document.removeEventListener('mouseup', handleMouseUp);
-                                            };
-                                            
-                                            document.addEventListener('mousemove', handleMouseMove);
-                                            document.addEventListener('mouseup', handleMouseUp);
-                                        }}
-                                        title="Drag to adjust right margin"
-                                    />
-                                    
-                                    <div 
-                                        className="absolute bottom-[-7px] left-1/2 transform -translate-x-1/2 w-3.5 h-3.5 bg-amber-100 border-2 border-orange-400 rounded-full cursor-ns-resize opacity-0 group-hover:opacity-100 transition-all duration-200 hover:scale-110 hover:border-orange-500 hover:bg-amber-200 hover:shadow-lg z-10"
-                                        onMouseDown={(e) => {
-                                            e.preventDefault();
-                                            const startY = e.clientY;
-                                            const startMargin = selectedElement.marginBottom ?? 0;
-                                            
-                                            const handleMouseMove = (e: MouseEvent) => {
-                                                const deltaY = startY - e.clientY;
-                                                // Use actual element constraints
-                                                const currentConstraints = getActualConstraints();
-                                                const maxMarginBottom = Math.floor(currentConstraints.maxMarginY / 2); // Half the height for margin
-                                                // Much more sensitive - allow fractional changes and round to integer
-                                                const rawChange = deltaY / 2; // Very sensitive
-                                                const newMargin = Math.max(0, Math.min(maxMarginBottom, Math.round(startMargin + rawChange)));
-                                                updateElement(selectedElement.id, { marginBottom: newMargin });
-                                            };
-                                            
-                                            const handleMouseUp = () => {
-                                                document.removeEventListener('mousemove', handleMouseMove);
-                                                document.removeEventListener('mouseup', handleMouseUp);
-                                            };
-                                            
-                                            document.addEventListener('mousemove', handleMouseMove);
-                                            document.addEventListener('mouseup', handleMouseUp);
-                                        }}
-                                        title="Drag to adjust bottom margin"
-                                    />
-                                    
-                                    <div 
-                                        className="absolute left-[-7px] top-1/2 transform -translate-y-1/2 w-3.5 h-3.5 bg-amber-100 border-2 border-orange-400 rounded-full cursor-ew-resize opacity-0 group-hover:opacity-100 transition-all duration-200 hover:scale-110 hover:border-orange-500 hover:bg-amber-200 hover:shadow-lg z-10"
-                                        onMouseDown={(e) => {
-                                            e.preventDefault();
-                                            const startX = e.clientX;
-                                            const startMargin = selectedElement.marginLeft ?? 0;
-                                            
-                                            const handleMouseMove = (e: MouseEvent) => {
-                                                const deltaX = e.clientX - startX;
-                                                // Use actual element constraints
-                                                const currentConstraints = getActualConstraints();
-                                                const maxMarginLeft = Math.floor(currentConstraints.maxMarginX / 2); // Half the width for margin
-                                                const newMargin = Math.max(0, Math.min(maxMarginLeft, startMargin + Math.round(deltaX / 4))); // More sensitive dragging
-                                                updateElement(selectedElement.id, { marginLeft: newMargin });
-                                            };
-                                            
-                                            const handleMouseUp = () => {
-                                                document.removeEventListener('mousemove', handleMouseMove);
-                                                document.removeEventListener('mouseup', handleMouseUp);
-                                            };
-                                            
-                                            document.addEventListener('mousemove', handleMouseMove);
-                                            document.addEventListener('mouseup', handleMouseUp);
-                                        }}
-                                        title="Drag to adjust left margin"
-                                    />
-                                </div>
-                                
-                                {/* Padding Layer */}
-                                <div 
-                                    className="absolute bg-gradient-to-br from-blue-100 to-blue-200 border-2 border-dashed border-blue-400 rounded-md opacity-90 transition-all duration-200 hover:opacity-100"
-                                    style={{
-                                        top: `${(selectedElement.marginTop ?? 0) * 2 + 20}px`,
-                                        left: `${(selectedElement.marginLeft ?? 0) * 2 + 20}px`,
-                                        right: `${(selectedElement.marginRight ?? 0) * 2 + 20}px`,
-                                        bottom: `${(selectedElement.marginBottom ?? 0) * 2 + 20}px`,
-                                        borderColor: '#3b82f6'
-                                    }}
-                                >
-                                    {/* Padding Handles */}
-                                    <div 
-                                        className="absolute top-[-7px] left-1/2 transform -translate-x-1/2 w-3.5 h-3.5 bg-blue-100 border-2 border-blue-400 rounded-full cursor-ns-resize opacity-0 group-hover:opacity-100 transition-all duration-200 hover:scale-110 hover:border-blue-500 hover:bg-blue-200 hover:shadow-lg z-10"
-                                        onMouseDown={(e) => {
-                                            e.preventDefault();
-                                            const startY = e.clientY;
-                                            const startPadding = selectedElement.paddingTop ?? 0;
-                                            
-                                            const handleMouseMove = (e: MouseEvent) => {
-                                                const deltaY = e.clientY - startY;
-                                                // Use actual element constraints, padding should be more conservative
-                                                const currentConstraints = getActualConstraints();
-                                                const maxPaddingTop = Math.floor(currentConstraints.maxMarginY / 4); // Quarter the height for padding
-                                                const newPadding = Math.max(0, Math.min(maxPaddingTop, startPadding + Math.round(deltaY / 4))); // More sensitive dragging
-                                                updateElement(selectedElement.id, { paddingTop: newPadding });
-                                            };
-                                            
-                                            const handleMouseUp = () => {
-                                                document.removeEventListener('mousemove', handleMouseMove);
-                                                document.removeEventListener('mouseup', handleMouseUp);
-                                            };
-                                            
-                                            document.addEventListener('mousemove', handleMouseMove);
-                                            document.addEventListener('mouseup', handleMouseUp);
-                                        }}
-                                        title="Drag to adjust top padding"
-                                    />
-                                    
-                                    <div 
-                                        className="absolute right-[-7px] top-1/2 transform -translate-y-1/2 w-3.5 h-3.5 bg-blue-100 border-2 border-blue-400 rounded-full cursor-ew-resize opacity-0 group-hover:opacity-100 transition-all duration-200 hover:scale-110 hover:border-blue-500 hover:bg-blue-200 hover:shadow-lg z-10"
-                                        onMouseDown={(e) => {
-                                            e.preventDefault();
-                                            const startX = e.clientX;
-                                            const startPadding = selectedElement.paddingRight ?? 0;
-                                            
-                                            const handleMouseMove = (e: MouseEvent) => {
-                                                const deltaX = startX - e.clientX;
-                                                // Use actual element constraints, padding should be more conservative
-                                                const currentConstraints = getActualConstraints();
-                                                const maxPaddingRight = Math.floor(currentConstraints.maxMarginX / 4); // Quarter the width for padding
-                                                const newPadding = Math.max(0, Math.min(maxPaddingRight, startPadding + Math.round(deltaX / 4))); // More sensitive dragging
-                                                updateElement(selectedElement.id, { paddingRight: newPadding });
-                                            };
-                                            
-                                            const handleMouseUp = () => {
-                                                document.removeEventListener('mousemove', handleMouseMove);
-                                                document.removeEventListener('mouseup', handleMouseUp);
-                                            };
-                                            
-                                            document.addEventListener('mousemove', handleMouseMove);
-                                            document.addEventListener('mouseup', handleMouseUp);
-                                        }}
-                                        title="Drag to adjust right padding"
-                                    />
-                                    
-                                    <div 
-                                        className="absolute bottom-[-7px] left-1/2 transform -translate-x-1/2 w-3.5 h-3.5 bg-blue-100 border-2 border-blue-400 rounded-full cursor-ns-resize opacity-0 group-hover:opacity-100 transition-all duration-200 hover:scale-110 hover:border-blue-500 hover:bg-blue-200 hover:shadow-lg z-10"
-                                        onMouseDown={(e) => {
-                                            e.preventDefault();
-                                            const startY = e.clientY;
-                                            const startPadding = selectedElement.paddingBottom ?? 0;
-                                            
-                                            const handleMouseMove = (e: MouseEvent) => {
-                                                const deltaY = startY - e.clientY;
-                                                // Use actual element constraints, padding should be more conservative
-                                                const currentConstraints = getActualConstraints();
-                                                const maxPaddingBottom = Math.floor(currentConstraints.maxMarginY / 4); // Quarter the height for padding
-                                                // Much more sensitive - allow fractional changes and round to integer
-                                                const rawChange = deltaY / 2; // Very sensitive
-                                                const newPadding = Math.max(0, Math.min(maxPaddingBottom, Math.round(startPadding + rawChange)));
-                                                updateElement(selectedElement.id, { paddingBottom: newPadding });
-                                            };
-                                            
-                                            const handleMouseUp = () => {
-                                                document.removeEventListener('mousemove', handleMouseMove);
-                                                document.removeEventListener('mouseup', handleMouseUp);
-                                            };
-                                            
-                                            document.addEventListener('mousemove', handleMouseMove);
-                                            document.addEventListener('mouseup', handleMouseUp);
-                                        }}
-                                        title="Drag to adjust bottom padding"
-                                    />
-                                    
-                                    <div 
-                                        className="absolute left-[-7px] top-1/2 transform -translate-y-1/2 w-3.5 h-3.5 bg-blue-100 border-2 border-blue-400 rounded-full cursor-ew-resize opacity-0 group-hover:opacity-100 transition-all duration-200 hover:scale-110 hover:border-blue-500 hover:bg-blue-200 hover:shadow-lg z-10"
-                                        onMouseDown={(e) => {
-                                            e.preventDefault();
-                                            const startX = e.clientX;
-                                            const startPadding = selectedElement.paddingLeft ?? 0;
-                                            
-                                            const handleMouseMove = (e: MouseEvent) => {
-                                                const deltaX = e.clientX - startX;
-                                                // Use actual element constraints, padding should be more conservative
-                                                const currentConstraints = getActualConstraints();
-                                                const maxPaddingLeft = Math.floor(currentConstraints.maxMarginX / 4); // Quarter the width for padding
-                                                const newPadding = Math.max(0, Math.min(maxPaddingLeft, startPadding + Math.round(deltaX / 4))); // More sensitive dragging
-                                                updateElement(selectedElement.id, { paddingLeft: newPadding });
-                                            };
-                                            
-                                            const handleMouseUp = () => {
-                                                document.removeEventListener('mousemove', handleMouseMove);
-                                                document.removeEventListener('mouseup', handleMouseUp);
-                                            };
-                                            
-                                            document.addEventListener('mousemove', handleMouseMove);
-                                            document.addEventListener('mouseup', handleMouseUp);
-                                        }}
-                                        title="Drag to adjust left padding"
-                                    />
-                                </div>
-                                
-                                {/* Content Layer */}
-                                <div 
-                                    className="absolute bg-white border-2 border-gray-300 rounded flex items-center justify-center shadow-sm"
-                                    style={{
-                                        top: `${(selectedElement.marginTop ?? 0) * 2 + (selectedElement.paddingTop ?? 0) * 2 + 36}px`,
-                                        left: `${(selectedElement.marginLeft ?? 0) * 2 + (selectedElement.paddingLeft ?? 0) * 2 + 36}px`,
-                                        right: `${(selectedElement.marginRight ?? 0) * 2 + (selectedElement.paddingRight ?? 0) * 2 + 36}px`,
-                                        bottom: `${(selectedElement.marginBottom ?? 0) * 2 + (selectedElement.paddingBottom ?? 0) * 2 + 36}px`
-                                    }}
-                                >
-                                    <div className="text-xs text-slate-500 font-medium select-none text-center px-2">
-                                        Component
-                                    </div>
-                                </div>
-                            </div>
-                            
-                            <div className="text-xs text-slate-400 text-center mt-3 italic">
-                                Hover to reveal handles • Drag to adjust spacing
-                            </div>
-
-                            {/* Direct Input Controls for Precise Values */}
-                            <div className="mt-4 pt-4 border-t border-slate-200">
-                                <div className="text-xs font-semibold text-slate-500 uppercase tracking-wider mb-3">
-                                    Precise Values
-                                </div>
-                                <div className="grid grid-cols-2 gap-4">
-                                    <div className="space-y-3">
-                                        <div className="text-xs font-medium text-amber-600 mb-2">Margin</div>
-                                        <div className="space-y-2">
-                                            <div className="flex items-center gap-2">
-                                                <label className="text-xs text-slate-500 w-8">Top</label>
-                                                <input
-                                                    type="number"
-                                                    min="0"
-                                                    max="50"
-                                                    value={selectedElement.marginTop ?? 0}
-                                                    onChange={(e) => updateElement(selectedElement.id, { marginTop: parseInt(e.target.value) || 0 })}
-                                                    className="w-full p-1 text-xs border border-slate-200 rounded"
-                                                />
-                                            </div>
-                                            <div className="flex items-center gap-2">
-                                                <label className="text-xs text-slate-500 w-8">Bottom</label>
-                                                <input
-                                                    type="number"
-                                                    min="0"
-                                                    max="50"
-                                                    value={selectedElement.marginBottom ?? 0}
-                                                    onChange={(e) => updateElement(selectedElement.id, { marginBottom: parseInt(e.target.value) || 0 })}
-                                                    className="w-full p-1 text-xs border border-slate-200 rounded"
-                                                />
-                                            </div>
-                                            <div className="flex items-center gap-2">
-                                                <label className="text-xs text-slate-500 w-8">Left</label>
-                                                <input
-                                                    type="number"
-                                                    min="0"
-                                                    max="50"
-                                                    value={selectedElement.marginLeft ?? 0}
-                                                    onChange={(e) => updateElement(selectedElement.id, { marginLeft: parseInt(e.target.value) || 0 })}
-                                                    className="w-full p-1 text-xs border border-slate-200 rounded"
-                                                />
-                                            </div>
-                                            <div className="flex items-center gap-2">
-                                                <label className="text-xs text-slate-500 w-8">Right</label>
-                                                <input
-                                                    type="number"
-                                                    min="0"
-                                                    max="50"
-                                                    value={selectedElement.marginRight ?? 0}
-                                                    onChange={(e) => updateElement(selectedElement.id, { marginRight: parseInt(e.target.value) || 0 })}
-                                                    className="w-full p-1 text-xs border border-slate-200 rounded"
-                                                />
-                                            </div>
-                                        </div>
-                                    </div>
-                                    <div className="space-y-3">
-                                        <div className="text-xs font-medium text-blue-600 mb-2">Padding</div>
-                                        <div className="space-y-2">
-                                            <div className="flex items-center gap-2">
-                                                <label className="text-xs text-slate-500 w-8">Top</label>
-                                                <input
-                                                    type="number"
-                                                    min="0"
-                                                    max="50"
-                                                    value={selectedElement.paddingTop ?? 0}
-                                                    onChange={(e) => updateElement(selectedElement.id, { paddingTop: parseInt(e.target.value) || 0 })}
-                                                    className="w-full p-1 text-xs border border-slate-200 rounded"
-                                                />
-                                            </div>
-                                            <div className="flex items-center gap-2">
-                                                <label className="text-xs text-slate-500 w-8">Bottom</label>
-                                                <input
-                                                    type="number"
-                                                    min="0"
-                                                    max="50"
-                                                    value={selectedElement.paddingBottom ?? 0}
-                                                    onChange={(e) => updateElement(selectedElement.id, { paddingBottom: parseInt(e.target.value) || 0 })}
-                                                    className="w-full p-1 text-xs border border-slate-200 rounded"
-                                                />
-                                            </div>
-                                            <div className="flex items-center gap-2">
-                                                <label className="text-xs text-slate-500 w-8">Left</label>
-                                                <input
-                                                    type="number"
-                                                    min="0"
-                                                    max="50"
-                                                    value={selectedElement.paddingLeft ?? 0}
-                                                    onChange={(e) => updateElement(selectedElement.id, { paddingLeft: parseInt(e.target.value) || 0 })}
-                                                    className="w-full p-1 text-xs border border-slate-200 rounded"
-                                                />
-                                            </div>
-                                            <div className="flex items-center gap-2">
-                                                <label className="text-xs text-slate-500 w-8">Right</label>
-                                                <input
-                                                    type="number"
-                                                    min="0"
-                                                    max="50"
-                                                    value={selectedElement.paddingRight ?? 0}
-                                                    onChange={(e) => updateElement(selectedElement.id, { paddingRight: parseInt(e.target.value) || 0 })}
-                                                    className="w-full p-1 text-xs border border-slate-200 rounded"
-                                                />
-                                            </div>
-                                        </div>
-                                    </div>
-                                </div>
-                            </div>
-                        </div>
-                    </div>
-                    );
-                })()}
 
                 {selectedElement.type === 'container' && (
                     <div className="pt-4 border-t border-slate-100">
@@ -1971,25 +1572,25 @@ export default MyForm;`;
                 {selectedElement.type === 'button' && (
                     <div className="space-y-4">
                         <div>
-                            <label className="block text-xs font-semibold text-slate-500 uppercase tracking-wider mb-2">
+                            <label className="block text-xs font-semibold text-slate-500 dark:text-gray-400 uppercase tracking-wider mb-2">
                                 Button Text
                             </label>
                             <input
                                 type="text"
                                 value={selectedElement.buttonText || ''}
                                 onChange={(e) => updateElement(selectedElement.id, { buttonText: e.target.value })}
-                                className="w-full p-3 bg-slate-50 border border-slate-200 rounded-lg text-sm text-slate-700 focus:ring-2 focus:ring-brand-500 focus:border-transparent transition-all outline-none"
+                                className="w-full p-3 bg-slate-50 dark:bg-gray-800 border border-slate-200 dark:border-gray-700 rounded-lg text-sm text-slate-700 dark:text-gray-200 focus:ring-2 focus:ring-brand-500 focus:border-transparent transition-all outline-none"
                                 placeholder="Button text"
                             />
                         </div>
                         <div>
-                            <label className="block text-xs font-semibold text-slate-500 uppercase tracking-wider mb-2">
+                            <label className="block text-xs font-semibold text-slate-500 dark:text-gray-400 uppercase tracking-wider mb-2">
                                 Button Type
                             </label>
                             <select
                                 value={selectedElement.buttonType || 'button'}
                                 onChange={(e) => updateElement(selectedElement.id, { buttonType: e.target.value as 'button' | 'submit' | 'reset' })}
-                                className="w-full p-3 bg-slate-50 border border-slate-200 rounded-lg text-sm text-slate-700 focus:ring-2 focus:ring-brand-500 focus:border-transparent transition-all outline-none"
+                                className="w-full p-3 bg-slate-50 dark:bg-gray-800 border border-slate-200 dark:border-gray-700 rounded-lg text-sm text-slate-700 dark:text-gray-200 focus:ring-2 focus:ring-brand-500 focus:border-transparent transition-all outline-none"
                             >
                                 <option value="button">Button</option>
                                 <option value="submit">Submit</option>
@@ -1997,13 +1598,13 @@ export default MyForm;`;
                             </select>
                         </div>
                         <div>
-                            <label className="block text-xs font-semibold text-slate-500 uppercase tracking-wider mb-2">
+                            <label className="block text-xs font-semibold text-slate-500 dark:text-gray-400 uppercase tracking-wider mb-2">
                                 Button Style
                             </label>
                             <select
                                 value={selectedElement.buttonStyle || 'primary'}
                                 onChange={(e) => updateElement(selectedElement.id, { buttonStyle: e.target.value as 'primary' | 'secondary' | 'outline' | 'text' })}
-                                className="w-full p-3 bg-slate-50 border border-slate-200 rounded-lg text-sm text-slate-700 focus:ring-2 focus:ring-brand-500 focus:border-transparent transition-all outline-none"
+                                className="w-full p-3 bg-slate-50 dark:bg-gray-800 border border-slate-200 dark:border-gray-700 rounded-lg text-sm text-slate-700 dark:text-gray-200 focus:ring-2 focus:ring-brand-500 focus:border-transparent transition-all outline-none"
                             >
                                 <option value="primary">Primary</option>
                                 <option value="secondary">Secondary</option>
@@ -2012,13 +1613,13 @@ export default MyForm;`;
                             </select>
                         </div>
                         <div>
-                            <label className="block text-xs font-semibold text-slate-500 uppercase tracking-wider mb-2">
+                            <label className="block text-xs font-semibold text-slate-500 dark:text-gray-400 uppercase tracking-wider mb-2">
                                 Button Size
                             </label>
                             <select
                                 value={selectedElement.buttonSize || 'md'}
                                 onChange={(e) => updateElement(selectedElement.id, { buttonSize: e.target.value as 'sm' | 'md' | 'lg' })}
-                                className="w-full p-3 bg-slate-50 border border-slate-200 rounded-lg text-sm text-slate-700 focus:ring-2 focus:ring-brand-500 focus:border-transparent transition-all outline-none"
+                                className="w-full p-3 bg-slate-50 dark:bg-gray-800 border border-slate-200 dark:border-gray-700 rounded-lg text-sm text-slate-700 dark:text-gray-200 focus:ring-2 focus:ring-brand-500 focus:border-transparent transition-all outline-none"
                             >
                                 <option value="sm">Small</option>
                                 <option value="md">Medium</option>
@@ -2028,14 +1629,14 @@ export default MyForm;`;
                         {selectedElement.buttonType === 'submit' && (
                             <>
                                 <div>
-                                    <label className="block text-xs font-semibold text-slate-500 uppercase tracking-wider mb-2">
+                                    <label className="block text-xs font-semibold text-slate-500 dark:text-gray-400 uppercase tracking-wider mb-2">
                                         URL
                                     </label>
                                     <input
                                         type="url"
                                         value={selectedElement.buttonUrl || ''}
                                         onChange={(e) => updateElement(selectedElement.id, { buttonUrl: e.target.value })}
-                                        className="w-full p-3 bg-slate-50 border border-slate-200 rounded-lg text-sm text-slate-700 focus:ring-2 focus:ring-brand-500 focus:border-transparent transition-all outline-none"
+                                        className="w-full p-3 bg-slate-50 dark:bg-gray-800 border border-slate-200 dark:border-gray-700 rounded-lg text-sm text-slate-700 dark:text-gray-200 focus:ring-2 focus:ring-brand-500 focus:border-transparent transition-all outline-none"
                                         placeholder="https://example.com"
                                     />
                                 </div>
@@ -2046,7 +1647,7 @@ export default MyForm;`;
                                     <select
                                         value={selectedElement.buttonTarget || '_self'}
                                         onChange={(e) => updateElement(selectedElement.id, { buttonTarget: e.target.value as '_blank' | '_self' })}
-                                        className="w-full p-3 bg-slate-50 border border-slate-200 rounded-lg text-sm text-slate-700 focus:ring-2 focus:ring-brand-500 focus:border-transparent transition-all outline-none"
+                                        className="w-full p-3 bg-slate-50 dark:bg-gray-800 border border-slate-200 dark:border-gray-700 rounded-lg text-sm text-slate-700 dark:text-gray-200 focus:ring-2 focus:ring-brand-500 focus:border-transparent transition-all outline-none"
                                     >
                                         <option value="_self">Same Tab</option>
                                         <option value="_blank">New Tab</option>
@@ -2079,7 +1680,7 @@ export default MyForm;`;
                             />
                             <p className="text-xs text-slate-400 mt-1">Number of columns (1-4). Note: On mobile, columns stack vertically.</p>
                         </div>
-                        
+
                         {/* Column Cell Backgrounds */}
                         <div className="pt-4 border-t border-slate-100">
                             <label className="block text-xs font-semibold text-slate-500 uppercase tracking-wider mb-3">
@@ -2172,12 +1773,12 @@ export default MyForm;`;
                 )}
 
                 {selectedElement.type === 'image' && (
-                    <div className="pt-4 border-t border-slate-100 space-y-4">
-                        <h3 className="text-xs font-semibold text-slate-500 uppercase tracking-wider">Image Properties</h3>
-                        
+                    <div className="pt-4 border-t border-slate-100 dark:border-gray-800 space-y-4">
+                        <h3 className="text-xs font-semibold text-slate-500 dark:text-gray-400 uppercase tracking-wider">Image Properties</h3>
+
                         {/* Image Selection */}
                         <div>
-                            <label className="block text-xs font-medium text-gray-600 mb-2">
+                            <label className="block text-xs font-medium text-gray-600 dark:text-gray-400 mb-2">
                                 Image
                             </label>
                             <div className="space-y-3">
@@ -2185,7 +1786,7 @@ export default MyForm;`;
                                 <ImagePicker
                                     selectedImageUrl={selectedElement.imageUrl}
                                     onImageSelect={(imageUrl, image) => {
-                                        updateElement(selectedElement.id, { 
+                                        updateElement(selectedElement.id, {
                                             imageUrl: imageUrl,
                                             imageAlt: image?.alt || selectedElement.imageAlt || 'Image',
                                             imageWidth: image?.width || selectedElement.imageWidth,
@@ -2194,10 +1795,10 @@ export default MyForm;`;
                                     }}
                                     className="w-full h-32"
                                 />
-                                
+
                                 {/* Manual URL input */}
                                 <div>
-                                    <label className="block text-xs font-medium text-gray-500 mb-1">
+                                    <label className="block text-xs font-medium text-gray-500 dark:text-gray-400 mb-1">
                                         Or enter URL manually
                                     </label>
                                     <input
@@ -2205,15 +1806,15 @@ export default MyForm;`;
                                         value={selectedElement.imageUrl || ''}
                                         onChange={(e) => updateElement(selectedElement.id, { imageUrl: e.target.value })}
                                         placeholder="https://example.com/image.jpg"
-                                        className="w-full p-2 bg-slate-50 border border-slate-200 rounded text-sm text-slate-700 focus:ring-1 focus:ring-blue-500 focus:border-blue-500 transition-all outline-none"
+                                        className="w-full p-2 bg-slate-50 dark:bg-gray-800 border border-slate-200 dark:border-gray-700 rounded text-sm text-slate-700 dark:text-gray-200 focus:ring-1 focus:ring-blue-500 focus:border-blue-500 transition-all outline-none"
                                     />
                                 </div>
                             </div>
                         </div>
-                        
+
                         {/* Alt Text */}
                         <div>
-                            <label className="block text-xs font-medium text-gray-600 mb-2">
+                            <label className="block text-xs font-medium text-gray-600 dark:text-gray-400 mb-2">
                                 Alt Text
                             </label>
                             <input
@@ -2221,15 +1822,15 @@ export default MyForm;`;
                                 value={selectedElement.imageAlt || ''}
                                 onChange={(e) => updateElement(selectedElement.id, { imageAlt: e.target.value })}
                                 placeholder="Description of the image"
-                                className="w-full p-3 bg-slate-50 border border-slate-200 rounded-lg text-sm text-slate-700 focus:ring-2 focus:ring-brand-500 focus:border-transparent transition-all outline-none"
+                                className="w-full p-3 bg-slate-50 dark:bg-gray-800 border border-slate-200 dark:border-gray-700 rounded-lg text-sm text-slate-700 dark:text-gray-200 focus:ring-2 focus:ring-brand-500 focus:border-transparent transition-all outline-none"
                             />
                             <p className="text-xs text-slate-400 mt-1">Describe the image for accessibility and SEO.</p>
                         </div>
-                        
+
                         {/* Image Dimensions */}
                         <div className="grid grid-cols-2 gap-3">
                             <div>
-                                <label className="block text-xs font-medium text-gray-600 mb-2">
+                                <label className="block text-xs font-medium text-gray-600 dark:text-gray-400 mb-2">
                                     Width (px)
                                 </label>
                                 <input
@@ -2239,11 +1840,11 @@ export default MyForm;`;
                                     value={selectedElement.imageWidth || ''}
                                     onChange={(e) => updateElement(selectedElement.id, { imageWidth: parseInt(e.target.value) || undefined })}
                                     placeholder="400"
-                                    className="w-full p-3 bg-slate-50 border border-slate-200 rounded-lg text-sm text-slate-700 focus:ring-2 focus:ring-brand-500 focus:border-transparent transition-all outline-none"
+                                    className="w-full p-3 bg-slate-50 dark:bg-gray-800 border border-slate-200 dark:border-gray-700 rounded-lg text-sm text-slate-700 dark:text-gray-200 focus:ring-2 focus:ring-brand-500 focus:border-transparent transition-all outline-none"
                                 />
                             </div>
                             <div>
-                                <label className="block text-xs font-medium text-gray-600 mb-2">
+                                <label className="block text-xs font-medium text-gray-600 dark:text-gray-400 mb-2">
                                     Height (px)
                                 </label>
                                 <input
@@ -2253,7 +1854,7 @@ export default MyForm;`;
                                     value={selectedElement.imageHeight || ''}
                                     onChange={(e) => updateElement(selectedElement.id, { imageHeight: parseInt(e.target.value) || undefined })}
                                     placeholder="200"
-                                    className="w-full p-3 bg-slate-50 border border-slate-200 rounded-lg text-sm text-slate-700 focus:ring-2 focus:ring-brand-500 focus:border-transparent transition-all outline-none"
+                                    className="w-full p-3 bg-slate-50 dark:bg-gray-800 border border-slate-200 dark:border-gray-700 rounded-lg text-sm text-slate-700 dark:text-gray-200 focus:ring-2 focus:ring-brand-500 focus:border-transparent transition-all outline-none"
                                 />
                             </div>
                         </div>
@@ -2262,8 +1863,8 @@ export default MyForm;`;
                 )}
 
                 {selectedElement.type === 'select' && (
-                    <div className="pt-4 border-t border-slate-100">
-                        <label className="block text-xs font-semibold text-slate-500 uppercase tracking-wider mb-3">
+                    <div className="pt-4 border-t border-slate-100 dark:border-gray-800">
+                        <label className="block text-xs font-semibold text-slate-500 dark:text-gray-400 uppercase tracking-wider mb-3">
                             Options
                         </label>
                         <div className="space-y-2">
@@ -2277,7 +1878,7 @@ export default MyForm;`;
                                             newOptions[index] = { ...option, label: e.target.value, value: e.target.value };
                                             updateElement(selectedElement.id, { options: newOptions });
                                         }}
-                                        className="flex-1 p-2 bg-slate-50 border border-slate-200 rounded-md text-sm focus:ring-2 focus:ring-brand-500 focus:border-transparent outline-none"
+                                        className="flex-1 p-2 bg-slate-50 dark:bg-gray-800 border border-slate-200 dark:border-gray-700 rounded-md text-sm text-slate-700 dark:text-gray-200 focus:ring-2 focus:ring-brand-500 focus:border-transparent outline-none"
                                         placeholder="Option Label"
                                     />
                                     <button
@@ -2285,7 +1886,7 @@ export default MyForm;`;
                                             const newOptions = selectedElement.options?.filter((_, i) => i !== index);
                                             updateElement(selectedElement.id, { options: newOptions });
                                         }}
-                                        className="p-2 text-slate-400 hover:text-red-500 hover:bg-red-50 rounded-md transition-colors"
+                                        className="p-2 text-slate-400 hover:text-red-500 hover:bg-red-50 dark:text-gray-500 dark:hover:text-red-400 dark:hover:bg-red-900/20 rounded-md transition-colors"
                                     >
                                         <Trash size={16} />
                                     </button>
@@ -2296,7 +1897,7 @@ export default MyForm;`;
                                     const newOptions = [...(selectedElement.options || []), { label: 'New Option', value: 'new_option' }];
                                     updateElement(selectedElement.id, { options: newOptions });
                                 }}
-                                className="w-full flex items-center justify-center gap-2 p-2 mt-2 text-sm font-medium text-brand-600 bg-brand-50 hover:bg-brand-100 rounded-lg transition-colors border border-brand-200"
+                                className="w-full flex items-center justify-center gap-2 p-2 mt-2 text-sm font-medium text-brand-600 bg-brand-50 hover:bg-brand-100 dark:bg-brand-900/20 dark:hover:bg-brand-900/30 dark:text-brand-400 rounded-lg transition-colors border border-brand-200 dark:border-brand-800"
                             >
                                 <Plus size={16} /> Add Option
                             </button>
@@ -2305,8 +1906,8 @@ export default MyForm;`;
                 )}
 
                 {selectedElement.type === 'radio' && (
-                    <div className="pt-4 border-t border-slate-100">
-                        <label className="block text-xs font-semibold text-slate-500 uppercase tracking-wider mb-3">
+                    <div className="pt-4 border-t border-slate-100 dark:border-gray-800">
+                        <label className="block text-xs font-semibold text-slate-500 dark:text-gray-400 uppercase tracking-wider mb-3">
                             Options
                         </label>
                         <div className="space-y-2">
@@ -2320,7 +1921,7 @@ export default MyForm;`;
                                             newOptions[index] = { ...option, label: e.target.value, value: e.target.value };
                                             updateElement(selectedElement.id, { options: newOptions });
                                         }}
-                                        className="flex-1 p-2 bg-slate-50 border border-slate-200 rounded-md text-sm focus:ring-2 focus:ring-brand-500 focus:border-transparent outline-none"
+                                        className="flex-1 p-2 bg-slate-50 dark:bg-gray-800 border border-slate-200 dark:border-gray-700 rounded-md text-sm text-slate-700 dark:text-gray-200 focus:ring-2 focus:ring-brand-500 focus:border-transparent outline-none"
                                         placeholder="Option Label"
                                     />
                                     <button
@@ -2328,7 +1929,7 @@ export default MyForm;`;
                                             const newOptions = selectedElement.options?.filter((_, i) => i !== index);
                                             updateElement(selectedElement.id, { options: newOptions });
                                         }}
-                                        className="p-2 text-slate-400 hover:text-red-500 hover:bg-red-50 rounded-md transition-colors"
+                                        className="p-2 text-slate-400 hover:text-red-500 hover:bg-red-50 dark:text-gray-500 dark:hover:text-red-400 dark:hover:bg-red-900/20 rounded-md transition-colors"
                                     >
                                         <Trash size={16} />
                                     </button>
@@ -2339,7 +1940,7 @@ export default MyForm;`;
                                     const newOptions = [...(selectedElement.options || []), { label: 'New Option', value: 'new_option' }];
                                     updateElement(selectedElement.id, { options: newOptions });
                                 }}
-                                className="w-full flex items-center justify-center gap-2 p-2 mt-2 text-sm font-medium text-brand-600 bg-brand-50 hover:bg-brand-100 rounded-lg transition-colors border border-brand-200"
+                                className="w-full flex items-center justify-center gap-2 p-2 mt-2 text-sm font-medium text-brand-600 bg-brand-50 hover:bg-brand-100 dark:bg-brand-900/20 dark:hover:bg-brand-900/30 dark:text-brand-400 rounded-lg transition-colors border border-brand-200 dark:border-brand-800"
                             >
                                 <Plus size={16} /> Add Option
                             </button>
@@ -2354,7 +1955,7 @@ export default MyForm;`;
                         </label>
                         <div className="space-y-2">
                             {selectedElement.menuItems?.map((item, index) => (
-                                <div key={index} className="space-y-2 p-3 bg-slate-50 border border-slate-200 rounded-lg group">
+                                <div key={index} className="space-y-2 p-3 bg-slate-50 dark:bg-gray-800 border border-slate-200 dark:border-gray-700 rounded-lg group">
                                     <div className="flex gap-2">
                                         <input
                                             type="text"
@@ -2364,7 +1965,7 @@ export default MyForm;`;
                                                 newItems[index] = { ...item, label: e.target.value };
                                                 updateElement(selectedElement.id, { menuItems: newItems });
                                             }}
-                                            className="flex-1 p-2 bg-white border border-slate-200 rounded-md text-sm focus:ring-2 focus:ring-brand-500 focus:border-transparent outline-none"
+                                            className="flex-1 p-2 bg-white dark:bg-gray-900 border border-slate-200 dark:border-gray-700 rounded-md text-sm text-slate-700 dark:text-gray-200 focus:ring-2 focus:ring-brand-500 focus:border-transparent outline-none"
                                             placeholder="Menu Label"
                                         />
                                         <button
@@ -2386,7 +1987,7 @@ export default MyForm;`;
                                                 newItems[index] = { ...item, href: e.target.value };
                                                 updateElement(selectedElement.id, { menuItems: newItems });
                                             }}
-                                            className="flex-1 p-2 bg-white border border-slate-200 rounded-md text-sm focus:ring-2 focus:ring-brand-500 focus:border-transparent outline-none"
+                                            className="flex-1 p-2 bg-white dark:bg-gray-900 border border-slate-200 dark:border-gray-700 rounded-md text-sm text-slate-700 dark:text-gray-200 focus:ring-2 focus:ring-brand-500 focus:border-transparent outline-none"
                                             placeholder="URL or path (e.g., /about, https://example.com)"
                                         />
                                         <select
@@ -2396,7 +1997,7 @@ export default MyForm;`;
                                                 newItems[index] = { ...item, target: e.target.value as '_blank' | '_self' };
                                                 updateElement(selectedElement.id, { menuItems: newItems });
                                             }}
-                                            className="p-2 bg-white border border-slate-200 rounded-md text-sm focus:ring-2 focus:ring-brand-500 focus:border-transparent outline-none"
+                                            className="p-2 bg-white dark:bg-gray-900 border border-slate-200 dark:border-gray-700 rounded-md text-sm text-slate-700 dark:text-gray-200 focus:ring-2 focus:ring-brand-500 focus:border-transparent outline-none"
                                         >
                                             <option value="_self">Same Tab</option>
                                             <option value="_blank">New Tab</option>

@@ -15,17 +15,19 @@ import { Canvas } from './Canvas';
 import { SidePanel } from './SidePanel';
 import { useStore } from '../store/useStore';
 import type { FormElementType, FormElement } from '../types';
-import { Eye, Layout, Share2, Monitor, Tablet, Smartphone, ArrowLeft, Save, FileText, Mail, Globe, Edit2, Image as ImageIcon } from 'lucide-react';
+import { clsx } from 'clsx';
+import { Eye, Share2, ArrowLeft, Save, FileText, Mail, Globe, Edit2, Image as ImageIcon } from 'lucide-react';
 import { Preview } from './Preview';
 import { ImageGallery } from './ImageGallery';
+import { DarkModeToggle } from './DarkModeToggle';
 
 export const FormBuilder: React.FC = () => {
-    const { 
-        elements, 
-        addElement, 
+    const {
+        elements,
+        addElement,
         addElementAtStart,
-        reorderElements, 
-        moveElementToContainer, 
+        reorderElements,
+        moveElementToContainer,
         moveElementToColumnPosition,
         moveElementToRowPosition,
         insertElementBefore,
@@ -34,7 +36,7 @@ export const FormBuilder: React.FC = () => {
         addElementAfter,
         addElementToColumnPosition,
         removeElementFromContainer,
-        updateElement, 
+        updateElement,
         settings,
         currentProject,
         saveCurrentProject,
@@ -89,13 +91,13 @@ export const FormBuilder: React.FC = () => {
     const formatTimeAgo = (date: Date) => {
         const now = new Date();
         const diffInSeconds = Math.floor((now.getTime() - date.getTime()) / 1000);
-        
+
         if (diffInSeconds < 60) return 'just now';
         if (diffInSeconds < 3600) return `${Math.floor(diffInSeconds / 60)}m ago`;
         if (diffInSeconds < 86400) return `${Math.floor(diffInSeconds / 3600)}h ago`;
         return `${Math.floor(diffInSeconds / 86400)}d ago`;
     };
-    
+
     // Helper function to find element recursively
     const findElementById = (elements: FormElement[], id: string): FormElement | undefined => {
         for (const element of elements) {
@@ -127,9 +129,8 @@ export const FormBuilder: React.FC = () => {
     };
     const [activeDragType, setActiveDragType] = useState<FormElementType | null>(null);
     const [isPreviewMode, setIsPreviewMode] = useState(false);
-    const [previewDevice, setPreviewDevice] = useState<'desktop' | 'tablet' | 'mobile'>('desktop');
     const [showImageGallery, setShowImageGallery] = useState(false);
-    
+
     // State to track original position for drag cancellation
     const [dragStartSnapshot, setDragStartSnapshot] = useState<{
         elements: FormElement[];
@@ -152,7 +153,7 @@ export const FormBuilder: React.FC = () => {
             isSidebar: active.data.current?.isSidebar,
             element: active.data.current?.element
         });
-        
+
         if (active.data.current?.isSidebar) {
             setActiveDragType(active.data.current.type as FormElementType);
             setDragStartSnapshot(null); // Clear snapshot for sidebar items
@@ -173,18 +174,18 @@ export const FormBuilder: React.FC = () => {
 
         if (!over) {
             console.log('No drop target found - drag operation cancelled');
-            
+
             // If we have a drag start snapshot for an existing component, restore it
             if (dragStartSnapshot) {
                 console.log('Restoring element position from snapshot for element:', dragStartSnapshot.draggedElementId);
                 reorderElements(dragStartSnapshot.elements);
             }
-            
+
             // Clear the snapshot
             setDragStartSnapshot(null);
             return;
         }
-        
+
         console.log('=== DRAG END DEBUG ===');
         console.log('Drop target ID:', over.id);
         console.log('Drop target data:', over.data.current);
@@ -198,7 +199,7 @@ export const FormBuilder: React.FC = () => {
         // Dropping a sidebar item into the canvas
         if (active.data.current?.isSidebar && (over.id === 'canvas' || over.id === 'canvas-end' || over.id === 'canvas-start')) {
             const type = active.data.current.type as FormElementType;
-            
+
             if (over.id === 'canvas-start') {
                 // Use the dedicated function to add at start
                 addElementAtStart(type);
@@ -222,14 +223,14 @@ export const FormBuilder: React.FC = () => {
             const targetElement = over.data.current?.element;
             const targetParentId = over.data.current?.parentId;
             const insertPosition = over.data.current?.insertPosition;
-            
-            console.log('Dropping sidebar item on drop zone:', { 
-                type, 
-                targetElementId: targetElement?.id, 
-                targetParentId, 
-                insertPosition 
+
+            console.log('Dropping sidebar item on drop zone:', {
+                type,
+                targetElementId: targetElement?.id,
+                targetParentId,
+                insertPosition
             });
-            
+
             if (targetElement) {
                 if (insertPosition === 'before') {
                     console.log('Adding sidebar element before target');
@@ -255,7 +256,7 @@ export const FormBuilder: React.FC = () => {
             const type = active.data.current.type as FormElementType;
             const containerId = over.data.current.containerId;
             const columnIndex = over.data.current.columnIndex;
-            
+
             if (columnIndex !== undefined) {
                 // Use the dedicated function for adding to specific column position
                 addElementToColumnPosition(type, containerId, columnIndex);
@@ -271,11 +272,11 @@ export const FormBuilder: React.FC = () => {
             const type = active.data.current.type as FormElementType;
             const containerId = over.data.current.containerId;
             const rowIndex = over.data.current.rowIndex;
-            
+
             if (rowIndex !== undefined) {
                 // Add to container first, then move to specific row position
                 addElement(type, containerId);
-                
+
                 // Get the newly added element and move it to the correct row position
                 setTimeout(() => {
                     const state = useStore.getState();
@@ -309,30 +310,30 @@ export const FormBuilder: React.FC = () => {
             const draggedElement = active.data.current.element;
             const draggedElementId = draggedElement.id;
             const originalParentId = active.data.current.parentId;
-            
-            console.log('Component details:', { 
-                draggedElement: draggedElement.type, 
-                draggedElementId, 
+
+            console.log('Component details:', {
+                draggedElement: draggedElement.type,
+                draggedElementId,
                 originalParentId,
-                overId: over.id 
+                overId: over.id
             });
-            
+
             // Dropping onto canvas (root level) - check this FIRST
             if (over.id === 'canvas' || over.id === 'canvas-end' || over.id === 'canvas-start') {
                 console.log('✓ Canvas drop detected:', { draggedElementId, originalParentId, elementType: draggedElement.type });
-                
+
                 if (originalParentId) {
                     console.log('Moving from container to root');
                     // Create a copy of the element for root level with full width
                     const elementToAdd = { ...draggedElement, width: 12 };
-                    
+
                     // Remove from container first
                     removeElementFromContainer(draggedElementId, originalParentId);
-                    
+
                     // Add to root level
                     const state = useStore.getState();
                     const currentElements = [...state.elements];
-                    
+
                     if (over.id === 'canvas-end') {
                         // Add to end
                         currentElements.push(elementToAdd);
@@ -343,7 +344,7 @@ export const FormBuilder: React.FC = () => {
                         // Add to end by default for now
                         currentElements.push(elementToAdd);
                     }
-                    
+
                     reorderElements(currentElements);
                 } else {
                     console.log('Element already at root level');
@@ -352,7 +353,7 @@ export const FormBuilder: React.FC = () => {
                         const state = useStore.getState();
                         const currentElements = [...state.elements];
                         const elementIndex = currentElements.findIndex(el => el.id === draggedElementId);
-                        
+
                         if (elementIndex !== -1) {
                             const [elementToMove] = currentElements.splice(elementIndex, 1);
                             if (over.id === 'canvas-start') {
@@ -366,14 +367,14 @@ export const FormBuilder: React.FC = () => {
                 }
                 return;
             }
-            
+
             // Dropping into a column cell
             if (over.data.current?.type === 'columns') {
-                console.log('✓ Dropping into column cell', { 
-                    containerId: over.data.current.containerId, 
-                    columnIndex: over.data.current.columnIndex 
+                console.log('✓ Dropping into column cell', {
+                    containerId: over.data.current.containerId,
+                    columnIndex: over.data.current.columnIndex
                 });
-                
+
                 if (over.data.current.columnIndex !== undefined) {
                     // Drop into specific column position
                     moveElementToColumnPosition(draggedElementId, over.data.current.containerId, over.data.current.columnIndex);
@@ -383,14 +384,14 @@ export const FormBuilder: React.FC = () => {
                 }
                 return;
             }
-            
+
             // Dropping into a row cell
             if (over.data.current?.type === 'rows') {
-                console.log('✓ Dropping into row cell', { 
-                    containerId: over.data.current.containerId, 
-                    rowIndex: over.data.current.rowIndex 
+                console.log('✓ Dropping into row cell', {
+                    containerId: over.data.current.containerId,
+                    rowIndex: over.data.current.rowIndex
                 });
-                
+
                 if (over.data.current.rowIndex !== undefined) {
                     // Drop into specific row position
                     moveElementToRowPosition(draggedElementId, over.data.current.containerId, over.data.current.rowIndex);
@@ -400,27 +401,27 @@ export const FormBuilder: React.FC = () => {
                 }
                 return;
             }
-            
+
             // Dropping into other containers
             if (over.data.current?.type === 'container' || over.data.current?.type === 'grid') {
                 console.log('✓ Dropping into container');
                 moveElementToContainer(draggedElementId, over.data.current.containerId);
                 return;
             }
-            
+
             // Handle dropping on drop zones (elements with "drop-before-" or "drop-after-" prefix)
             if (over.id.toString().startsWith('drop-before-') || over.id.toString().startsWith('drop-after-')) {
                 console.log('✓ Dropping on drop zone:', over.id);
                 const targetElement = over.data.current?.element;
                 const targetParentId = over.data.current?.parentId;
                 const insertPosition = over.data.current?.insertPosition;
-                
-                console.log('Dropping on drop zone:', { 
-                    targetElementId: targetElement?.id, 
-                    targetParentId, 
-                    insertPosition 
+
+                console.log('Dropping on drop zone:', {
+                    targetElementId: targetElement?.id,
+                    targetParentId,
+                    insertPosition
                 });
-                
+
                 if (targetElement && targetElement.type !== 'columns') {
                     if (insertPosition === 'before') {
                         console.log('Inserting element before target');
@@ -432,25 +433,25 @@ export const FormBuilder: React.FC = () => {
                     return;
                 }
             }
-            
+
             // Dropping after another element (non-column) - legacy support
             if (over.data.current?.element && over.data.current?.element.type !== 'columns') {
                 console.log('✓ Legacy drop on element');
                 const targetElement = over.data.current.element;
                 const targetParentId = over.data.current?.parentId;
-                
+
                 // Insert after the target element using the new function
-                console.log('Legacy: Inserting element after target:', { 
-                    draggedElementId, 
-                    targetElementId: targetElement.id, 
-                    targetParentId 
+                console.log('Legacy: Inserting element after target:', {
+                    draggedElementId,
+                    targetElementId: targetElement.id,
+                    targetParentId
                 });
                 insertElementBefore(draggedElementId, targetElement.id, targetParentId);
                 return;
             }
-            
+
             console.log('⚠️ No drop condition matched for existing component');
-            
+
             // If we have a snapshot and no condition was matched, restore the original state
             if (dragStartSnapshot) {
                 console.log('No valid drop target found, restoring original state');
@@ -480,7 +481,7 @@ export const FormBuilder: React.FC = () => {
                     // Moving into a container
                     if (over.data.current?.type === 'container' && activeId !== over.data.current.containerId) {
                         moveElementToContainer(activeId, over.data.current.containerId);
-                    } 
+                    }
                     // Moving into columns
                     else if (over.data.current?.type === 'columns' && activeId !== over.data.current.containerId) {
                         moveElementToContainer(activeId, over.data.current.containerId);
@@ -492,7 +493,7 @@ export const FormBuilder: React.FC = () => {
                             const containerChildren = activeParent.children || [];
                             const oldIndex = containerChildren.findIndex((el) => el.id === activeId);
                             const newIndex = containerChildren.findIndex((el) => el.id === overId);
-                            
+
                             if (oldIndex !== -1 && newIndex !== -1) {
                                 const newChildren = arrayMove(containerChildren, oldIndex, newIndex);
                                 updateElement(activeParent.id, { children: newChildren });
@@ -501,7 +502,7 @@ export const FormBuilder: React.FC = () => {
                             // Reordering at root level
                             const oldIndex = elements.findIndex((el) => el.id === activeId);
                             const newIndex = elements.findIndex((el) => el.id === overId);
-                            
+
                             if (oldIndex !== -1 && newIndex !== -1) {
                                 reorderElements(arrayMove(elements, oldIndex, newIndex));
                             }
@@ -510,7 +511,7 @@ export const FormBuilder: React.FC = () => {
                 }
             }
         }
-        
+
         // Clear the drag start snapshot after successful operations
         setDragStartSnapshot(null);
     };
@@ -556,45 +557,48 @@ export const FormBuilder: React.FC = () => {
 
     return (
         <>
-        <DndContext
-            sensors={sensors}
-            onDragStart={handleDragStart}
-            onDragEnd={handleDragEnd}
-        >
-            <div className="h-screen flex flex-col bg-gray-50">
-                {/* Header Bar */}
-                <div className="bg-white border-b border-slate-200 px-6 py-4 flex items-center justify-between shadow-sm">
-                    <div className="flex items-center gap-3">
-                        <button
-                            onClick={clearCurrentProject}
-                            className="p-2 text-gray-400 hover:text-gray-600 hover:bg-gray-100 rounded-lg transition-colors"
-                            title="Back to projects"
-                        >
-                            <ArrowLeft size={20} />
-                        </button>
-                        <div className="w-8 h-8 bg-blue-600 rounded-lg flex items-center justify-center">
-                            {currentProject?.type === 'form' && <FileText className="w-4 h-4 text-white" />}
-                            {currentProject?.type === 'email' && <Mail className="w-4 h-4 text-white" />}
-                            {currentProject?.type === 'website' && <Globe className="w-4 h-4 text-white" />}
-                        </div>
-                        <div>
-                            <div className="flex items-center gap-2">
-                                {isEditingName ? (
-                                    <input
-                                        type="text"
-                                        value={editingName}
-                                        onChange={(e) => setEditingName(e.target.value)}
-                                        onBlur={() => {
-                                            if (editingName.trim()) {
-                                                updateProjectName(editingName.trim());
-                                                setLastSaved(new Date());
-                                            } else {
-                                                setEditingName(currentProject?.name || '');
-                                            }
-                                            setIsEditingName(false);
-                                        }}
-                                        onKeyDown={(e) => {
-                                            if (e.key === 'Enter') {
+            <DndContext
+                sensors={sensors}
+                onDragStart={handleDragStart}
+                onDragEnd={handleDragEnd}
+            >
+                <div className={clsx(
+                    "h-screen flex flex-col",
+                    settings.theme === 'dark' ? 'bg-gray-900' : 'bg-gray-50'
+                )}>
+                    {/* Header Bar */}
+                    <div className={clsx(
+                        "border-b px-6 py-4 flex items-center justify-between shadow-sm",
+                        settings.theme === 'dark'
+                            ? 'bg-gray-800 border-gray-700'
+                            : 'bg-white border-slate-200'
+                    )}>
+                        <div className="flex items-center gap-3">
+                            <button
+                                onClick={clearCurrentProject}
+                                className={clsx(
+                                    "p-2 rounded-lg transition-colors",
+                                    settings.theme === 'dark'
+                                        ? "text-gray-400 hover:text-gray-200 hover:bg-gray-700"
+                                        : "text-gray-400 hover:text-gray-600 hover:bg-gray-100"
+                                )}
+                                title="Back to projects"
+                            >
+                                <ArrowLeft size={20} />
+                            </button>
+                            <div className="w-8 h-8 bg-blue-600 rounded-lg flex items-center justify-center">
+                                {currentProject?.type === 'form' && <FileText className="w-4 h-4 text-white" />}
+                                {currentProject?.type === 'email' && <Mail className="w-4 h-4 text-white" />}
+                                {currentProject?.type === 'website' && <Globe className="w-4 h-4 text-white" />}
+                            </div>
+                            <div>
+                                <div className="flex items-center gap-2">
+                                    {isEditingName ? (
+                                        <input
+                                            type="text"
+                                            value={editingName}
+                                            onChange={(e) => setEditingName(e.target.value)}
+                                            onBlur={() => {
                                                 if (editingName.trim()) {
                                                     updateProjectName(editingName.trim());
                                                     setLastSaved(new Date());
@@ -602,114 +606,146 @@ export const FormBuilder: React.FC = () => {
                                                     setEditingName(currentProject?.name || '');
                                                 }
                                                 setIsEditingName(false);
-                                            }
-                                            if (e.key === 'Escape') {
+                                            }}
+                                            onKeyDown={(e) => {
+                                                if (e.key === 'Enter') {
+                                                    if (editingName.trim()) {
+                                                        updateProjectName(editingName.trim());
+                                                        setLastSaved(new Date());
+                                                    } else {
+                                                        setEditingName(currentProject?.name || '');
+                                                    }
+                                                    setIsEditingName(false);
+                                                }
+                                                if (e.key === 'Escape') {
+                                                    setEditingName(currentProject?.name || '');
+                                                    setIsEditingName(false);
+                                                }
+                                            }}
+                                            className={clsx(
+                                                "text-lg font-semibold bg-transparent border rounded px-2 py-1 min-w-0",
+                                                settings.theme === 'dark' ? "text-gray-100 border-gray-600" : "text-slate-900 border-gray-300"
+                                            )}
+                                            autoFocus
+                                        />
+                                    ) : (
+                                        <h1
+                                            className={clsx(
+                                                "text-lg font-semibold cursor-pointer hover:text-blue-600 transition-colors",
+                                                settings.theme === 'dark' ? 'text-gray-100' : 'text-slate-900'
+                                            )}
+                                            onClick={() => {
                                                 setEditingName(currentProject?.name || '');
-                                                setIsEditingName(false);
-                                            }
-                                        }}
-                                        className="text-lg font-semibold text-slate-900 bg-transparent border border-gray-300 rounded px-2 py-1 min-w-0"
-                                        autoFocus
-                                    />
-                                ) : (
-                                    <h1 
-                                        className="text-lg font-semibold text-slate-900 cursor-pointer hover:text-blue-600 transition-colors"
+                                                setIsEditingName(true);
+                                            }}
+                                            title="Click to edit project name"
+                                        >
+                                            {currentProject?.name || 'Untitled Project'}
+                                        </h1>
+                                    )}
+                                    <button
                                         onClick={() => {
                                             setEditingName(currentProject?.name || '');
                                             setIsEditingName(true);
                                         }}
-                                        title="Click to edit project name"
+                                        className="p-1 text-gray-400 hover:text-gray-600 rounded transition-colors"
+                                        title="Edit project name"
                                     >
-                                        {currentProject?.name || 'Untitled Project'}
-                                    </h1>
+                                        <Edit2 size={14} />
+                                    </button>
+                                </div>
+                                <div className={clsx("flex items-center gap-1 text-xs", settings.theme === 'dark' ? "text-gray-400" : "text-slate-500")}>
+                                    <div className={`w-2 h-2 rounded-full ${isSaving ? 'bg-yellow-500' : 'bg-green-500'}`}></div>
+                                    {isSaving ? 'Saving...' : lastSaved ? `Saved ${formatTimeAgo(lastSaved)}` : 'Not saved'} •
+                                    {currentProject?.type ? (currentProject.type.charAt(0).toUpperCase() + currentProject.type.slice(1)) : 'Project'} •
+                                    {elements.length} elements
+                                </div>
+                            </div>
+                        </div>
+                        <div className="flex items-center gap-3">
+                            <button
+                                onClick={handleManualSave}
+                                disabled={isSaving}
+                                className={clsx(
+                                    "btn flex items-center gap-2",
+                                    settings.theme === 'dark'
+                                        ? "bg-transparent border border-gray-600 text-gray-300 hover:bg-gray-800"
+                                        : "bg-white text-slate-700 border border-slate-300 hover:bg-slate-50"
                                 )}
-                                <button
-                                    onClick={() => {
-                                        setEditingName(currentProject?.name || '');
-                                        setIsEditingName(true);
-                                    }}
-                                    className="p-1 text-gray-400 hover:text-gray-600 rounded transition-colors"
-                                    title="Edit project name"
-                                >
-                                    <Edit2 size={14} />
-                                </button>
-                            </div>
-                            <div className="flex items-center gap-1 text-xs text-slate-500">
-                                <div className={`w-2 h-2 rounded-full ${isSaving ? 'bg-yellow-500' : 'bg-green-500'}`}></div>
-                                {isSaving ? 'Saving...' : lastSaved ? `Saved ${formatTimeAgo(lastSaved)}` : 'Not saved'} •
-                                {currentProject?.type?.charAt(0).toUpperCase() + currentProject?.type?.slice(1)} • 
-                                {elements.length} elements
-                            </div>
+                            >
+                                <Save size={16} />
+                                {isSaving ? 'Saving...' : 'Save'}
+                            </button>
+                            <DarkModeToggle variant="button" size="md" showLabel />
+                            <button
+                                onClick={() => setShowImageGallery(true)}
+                                className={clsx(
+                                    "btn flex items-center gap-2",
+                                    settings.theme === 'dark'
+                                        ? "bg-gray-800 border border-gray-600 text-gray-300 hover:bg-gray-700 hover:text-white"
+                                        : "bg-white text-slate-700 border border-slate-300 hover:bg-slate-50"
+                                )}
+                            >
+                                <ImageIcon size={16} />
+                                Gallery
+                            </button>
+                            <button
+                                onClick={() => setIsPreviewMode(true)}
+                                className={clsx(
+                                    "btn flex items-center gap-2",
+                                    settings.theme === 'dark'
+                                        ? "bg-gray-800 border border-gray-600 text-gray-300 hover:bg-gray-700 hover:text-white"
+                                        : "bg-white text-slate-700 border border-slate-300 hover:bg-slate-50"
+                                )}
+                            >
+                                <Eye size={16} />
+                                Preview
+                            </button>
+                            <button className="btn btn-primary">
+                                <Share2 size={16} />
+                                Publish
+                            </button>
                         </div>
                     </div>
-                    <div className="flex items-center gap-3">
-                        <button 
-                            onClick={handleManualSave}
-                            disabled={isSaving}
-                            className="btn btn-outline"
-                        >
-                            <Save size={16} />
-                            {isSaving ? 'Saving...' : 'Save'}
-                        </button>
-                        <button 
-                            onClick={() => setShowImageGallery(true)}
-                            className="btn btn-secondary"
-                        >
-                            <ImageIcon size={16} />
-                            Gallery
-                        </button>
-                        <button 
-                            onClick={() => setIsPreviewMode(true)}
-                            className="btn btn-secondary"
-                        >
-                            <Eye size={16} />
-                            Preview
-                        </button>
-                        <button className="btn btn-primary">
-                            <Share2 size={16} />
-                            Publish
-                        </button>
-                    </div>
-                </div>
 
-                {/* Main 2-panel layout */}
-                <div className="flex h-full">
-                    <div className="flex-1 overflow-hidden">
-                        <Canvas />
-                    </div>
-                    <SidePanel />
-                </div>
-
-                {/* Drag Overlay */}
-                <DragOverlay dropAnimation={dropAnimation}>
-                    {activeDragType ? (
-                        <div style={{ 
-                            padding: '16px', 
-                            backgroundColor: 'white', 
-                            border: '1px solid var(--color-brand-500)', 
-                            borderRadius: 'var(--radius-xl)', 
-                            boxShadow: 'var(--shadow-xl)', 
-                            width: '256px', 
-                            display: 'flex', 
-                            alignItems: 'center', 
-                            gap: '12px' 
-                        }}>
-                            <div style={{ width: '8px', height: '8px', borderRadius: '50%', backgroundColor: 'var(--color-brand-500)' }}></div>
-                            <span style={{ fontWeight: 600, color: 'var(--color-slate-700)' }}>
-                                {activeDragType.charAt(0).toUpperCase() + activeDragType.slice(1)} Component
-                            </span>
+                    {/* Main 2-panel layout */}
+                    <div className="flex h-full">
+                        <div className="flex-1 overflow-hidden">
+                            <Canvas />
                         </div>
-                    ) : null}
-                </DragOverlay>
-            </div>
-        </DndContext>
-        
-        {/* Image Gallery Modal - Outside DndContext to avoid conflicts */}
-        <ImageGallery 
-            isOpen={showImageGallery}
-            onClose={() => setShowImageGallery(false)}
-            mode="manage"
-        />
+                        <SidePanel />
+                    </div>
+
+                    {/* Drag Overlay */}
+                    <DragOverlay dropAnimation={dropAnimation}>
+                        {activeDragType ? (
+                            <div style={{
+                                padding: '16px',
+                                backgroundColor: 'white',
+                                border: '1px solid var(--color-brand-500)',
+                                borderRadius: 'var(--radius-xl)',
+                                boxShadow: 'var(--shadow-xl)',
+                                width: '256px',
+                                display: 'flex',
+                                alignItems: 'center',
+                                gap: '12px'
+                            }}>
+                                <div style={{ width: '8px', height: '8px', borderRadius: '50%', backgroundColor: 'var(--color-brand-500)' }}></div>
+                                <span style={{ fontWeight: 600, color: 'var(--color-slate-700)' }}>
+                                    {activeDragType.charAt(0).toUpperCase() + activeDragType.slice(1)} Component
+                                </span>
+                            </div>
+                        ) : null}
+                    </DragOverlay>
+                </div>
+            </DndContext>
+
+            {/* Image Gallery Modal - Outside DndContext to avoid conflicts */}
+            <ImageGallery
+                isOpen={showImageGallery}
+                onClose={() => setShowImageGallery(false)}
+                mode="manage"
+            />
         </>
     );
 };

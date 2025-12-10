@@ -56,16 +56,18 @@ const SidebarItem: React.FC<SidebarItemProps> = ({ type, label, icon, descriptio
             {...listeners}
             {...attributes}
             className={`
-        relative flex flex-col items-center gap-2 p-3 bg-white border border-slate-200 rounded-xl cursor-move shadow-sm
+        relative flex flex-col items-center gap-2 p-3 border rounded-xl cursor-move shadow-sm
+        dark:bg-gray-800 dark:border-gray-700
+        bg-white border-slate-200
         ${isDragging ? 'opacity-50 ring-2 ring-brand-500 rotate-2' : ''}
       `}
         >
-            <div className="p-2 bg-slate-50 text-slate-500 rounded-lg group-hover:bg-brand-50 group-hover:text-brand-600 transition-colors">
+            <div className="p-2 rounded-lg transition-colors bg-slate-50 text-slate-500 group-hover:bg-brand-50 group-hover:text-brand-600 dark:bg-gray-700 dark:text-gray-400 dark:group-hover:bg-gray-600 dark:group-hover:text-brand-400">
                 {icon}
             </div>
             <div className="text-center">
-                <span className="block text-sm font-semibold text-slate-700 group-hover:text-brand-700">{label}</span>
-                <span className="block text-xs text-slate-400">{description}</span>
+                <span className="block text-sm font-semibold text-slate-700 group-hover:text-brand-700 dark:text-gray-300 dark:group-hover:text-brand-400">{label}</span>
+                <span className="block text-xs text-slate-400 dark:text-gray-500">{description}</span>
             </div>
             <div className="text-slate-300 opacity-0 group-hover:opacity-100 transition-opacity absolute top-2 right-2">
                 <GripVertical size={14} />
@@ -79,10 +81,10 @@ export const Sidebar: React.FC = () => {
     const projectType = currentProject?.type || 'form';
 
     return (
-        <div className="w-full bg-white flex flex-col h-full">
-            <div className="p-6 border-b border-slate-100">
-                <h2 className="text-lg font-bold text-slate-800">Components</h2>
-                <p className="text-sm text-slate-500 mt-1">Drag components to the canvas</p>
+        <div className="w-full h-full flex flex-col bg-white dark:bg-gray-900 border-r border-slate-200 dark:border-gray-800">
+            <div className="p-6 border-b border-slate-100 dark:border-gray-800">
+                <h2 className="text-lg font-bold text-slate-800 dark:text-gray-100">Components</h2>
+                <p className="text-sm text-slate-500 dark:text-gray-400 mt-1">Drag components to the canvas</p>
             </div>
 
             <div className="p-4 flex-1 overflow-y-auto overflow-x-hidden">
