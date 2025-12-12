@@ -7,6 +7,7 @@ import { Trash2, Info, Copy, Star, EyeOff, Plus, GripVertical, Bookmark, Sun, Mo
 import { clsx } from 'clsx';
 import { RichTextEditor, type RichTextEditorRef } from './RichTextEditor';
 import { CategoryModal } from './CategoryModal';
+import { registry } from './registry';
 
 const ColumnPlaceholder: React.FC<{ element: FormElement; index: number }> = ({ element, index }) => {
     const { setNodeRef, isOver } = useDroppable({
@@ -1328,7 +1329,7 @@ const SortableElement: React.FC<SortableElementProps> = ({ element, parentId }) 
                     isSelected && "ring-2 ring-brand-400 ring-opacity-50"
                 )}
                 style={{
-                    backgroundColor: element.backgroundColor || undefined,
+                    backgroundColor: element.type === 'button' ? undefined : (element.backgroundColor || undefined),
                     // Only apply padding for container, columns, rows, grid, and menu - regular elements handle their own spacing
                     paddingTop: ['container', 'columns', 'rows', 'grid', 'menu'].includes(element.type) ? `${(element.paddingTop ?? 0) * 0.25}rem` : undefined,
                     paddingRight: ['container', 'columns', 'rows', 'grid', 'menu'].includes(element.type) ? `${(element.paddingRight ?? 0) * 0.25}rem` : undefined,
@@ -1428,467 +1429,474 @@ const SortableElement: React.FC<SortableElementProps> = ({ element, parentId }) 
                         appliedPaddingTop: (!['container', 'columns', 'rows', 'button'].includes(element.type)) ? `${(element.paddingTop ?? 0)}px` : 'excluded'
                     })}
                 >
-                    {element.type === 'textarea' ? (
-                        <textarea
-                            className={clsx(
-                                "w-full rounded-lg text-slate-500 text-sm resize-none",
+                    {(() => {
+                        const RegistryComponent = registry.get(element.type)?.Component;
+                        if (RegistryComponent) {
+                            return <RegistryComponent element={element} />;
+                        }
+
+                        return element.type === 'textarea' ? (
+                            <textarea
+                                className={clsx(
+                                    "w-full rounded-lg text-slate-500 text-sm resize-none",
+                                    isFormProject && "border border-slate-200"
+                                )}
+                                style={{
+                                    backgroundColor: element.backgroundColor,
+                                    paddingTop: `${(element.paddingTop ?? 12)}px`,
+                                    paddingRight: `${(element.paddingRight ?? 12)}px`,
+                                    paddingBottom: `${(element.paddingBottom ?? 12)}px`,
+                                    paddingLeft: `${(element.paddingLeft ?? 12)}px`
+                                }}
+                                placeholder={element.placeholder}
+                                rows={3}
+                                readOnly
+                            />
+                        ) : element.type === 'select' ? (
+                            <div className="relative">
+                                <select className={clsx(
+                                    "w-full rounded-lg text-slate-500 text-sm appearance-none",
+                                    isFormProject && "border border-slate-200"
+                                )} style={{
+                                    backgroundColor: element.backgroundColor,
+                                    paddingTop: element.paddingTop !== undefined ? `${element.paddingTop}px` : '12px',
+                                    paddingRight: element.paddingRight !== undefined ? `${element.paddingRight}px` : '12px',
+                                    paddingBottom: element.paddingBottom !== undefined ? `${element.paddingBottom}px` : '12px',
+                                    paddingLeft: element.paddingLeft !== undefined ? `${element.paddingLeft}px` : '12px'
+                                }} disabled>
+                                    {element.options?.map((opt, idx) => (
+                                        <option key={idx}>{opt.label}</option>
+                                    ))}
+                                </select>
+                                <div className="absolute right-3 top-1/2 -translate-y-1/2 text-slate-400">
+                                    <svg width="10" height="6" viewBox="0 0 10 6" fill="none" xmlns="http://www.w3.org/2000/svg">
+                                        <path d="M1 1L5 5L9 1" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" />
+                                    </svg>
+                                </div>
+                            </div>
+                        ) : element.type === 'checkbox' ? (
+                            <div className={clsx(
+                                "flex items-center rounded-lg",
                                 isFormProject && "border border-slate-200"
-                            )}
-                            style={{
-                                backgroundColor: element.backgroundColor,
-                                paddingTop: `${(element.paddingTop ?? 12)}px`,
-                                paddingRight: `${(element.paddingRight ?? 12)}px`,
-                                paddingBottom: `${(element.paddingBottom ?? 12)}px`,
-                                paddingLeft: `${(element.paddingLeft ?? 12)}px`
-                            }}
-                            placeholder={element.placeholder}
-                            rows={3}
-                            readOnly
-                        />
-                    ) : element.type === 'select' ? (
-                        <div className="relative">
-                            <select className={clsx(
-                                "w-full rounded-lg text-slate-500 text-sm appearance-none",
+                            )} style={{
+                                backgroundColor: element.backgroundColor, // Remove default #f8fafc to allow transparent/dark mode
+                                paddingTop: element.paddingTop !== undefined ? `${element.paddingTop}px` : undefined,
+                                paddingRight: element.paddingRight !== undefined ? `${element.paddingRight}px` : undefined,
+                                paddingBottom: element.paddingBottom !== undefined ? `${element.paddingBottom}px` : undefined,
+                                paddingLeft: element.paddingLeft !== undefined ? `${element.paddingLeft}px` : undefined
+                            }}>
+                                <input type="checkbox" className="h-4 w-4 text-brand-600 rounded border-slate-300" disabled />
+                                <span className="ml-3 text-sm text-slate-600">{element.placeholder || 'Checkbox option'}</span>
+                            </div>
+                        ) : element.type === 'radio' ? (
+                            <div className={clsx(
+                                "space-y-2 rounded-lg",
                                 isFormProject && "border border-slate-200"
                             )} style={{
                                 backgroundColor: element.backgroundColor,
+                                paddingTop: element.paddingTop !== undefined ? `${element.paddingTop}px` : undefined,
+                                paddingRight: element.paddingRight !== undefined ? `${element.paddingRight}px` : undefined,
+                                paddingBottom: element.paddingBottom !== undefined ? `${element.paddingBottom}px` : undefined,
+                                paddingLeft: element.paddingLeft !== undefined ? `${element.paddingLeft}px` : undefined
+                            }}>
+                                {(element.options || [{ label: 'Option 1', value: 'option1' }, { label: 'Option 2', value: 'option2' }]).map((opt, idx) => (
+                                    <div key={idx} className="flex items-center">
+                                        <input type="radio" name={`radio - ${element.id}`} className="h-4 w-4 text-brand-600 border-slate-300 focus:ring-brand-500" disabled />
+                                        <span className="ml-3 text-sm text-slate-600">{opt.label}</span>
+                                    </div>
+                                ))}
+                            </div>
+                        ) : element.type === 'star-rating' ? (
+                            <div className="flex gap-1 items-center">
+                                {[...Array(element.maxStars || 5)].map((_, i) => (
+                                    <Star key={i} size={24} className="text-slate-300 fill-slate-100" />
+                                ))}
+                            </div>
+                        ) : element.type === 'container' ? (
+                            <ContainerContent element={element} />
+                        ) : element.type === 'columns' ? (
+                            <ColumnsContent element={element} />
+                        ) : element.type === 'rows' ? (
+                            <RowsContent element={element} />
+                        ) : element.type === 'grid' ? (
+                            <ContainerContent element={element} />
+                        ) : element.type === 'hidden' ? (
+                            <div className={clsx(
+                                "flex items-center bg-slate-100 rounded-lg opacity-60",
+                                isFormProject && "border border-slate-300"
+                            )} style={{
                                 paddingTop: element.paddingTop !== undefined ? `${element.paddingTop}px` : '12px',
                                 paddingRight: element.paddingRight !== undefined ? `${element.paddingRight}px` : '12px',
                                 paddingBottom: element.paddingBottom !== undefined ? `${element.paddingBottom}px` : '12px',
                                 paddingLeft: element.paddingLeft !== undefined ? `${element.paddingLeft}px` : '12px'
-                            }} disabled>
-                                {element.options?.map((opt, idx) => (
-                                    <option key={idx}>{opt.label}</option>
-                                ))}
-                            </select>
-                            <div className="absolute right-3 top-1/2 -translate-y-1/2 text-slate-400">
-                                <svg width="10" height="6" viewBox="0 0 10 6" fill="none" xmlns="http://www.w3.org/2000/svg">
-                                    <path d="M1 1L5 5L9 1" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" />
-                                </svg>
-                            </div>
-                        </div>
-                    ) : element.type === 'checkbox' ? (
-                        <div className={clsx(
-                            "flex items-center rounded-lg",
-                            isFormProject && "border border-slate-200"
-                        )} style={{
-                            backgroundColor: element.backgroundColor, // Remove default #f8fafc to allow transparent/dark mode
-                            paddingTop: element.paddingTop !== undefined ? `${element.paddingTop}px` : undefined,
-                            paddingRight: element.paddingRight !== undefined ? `${element.paddingRight}px` : undefined,
-                            paddingBottom: element.paddingBottom !== undefined ? `${element.paddingBottom}px` : undefined,
-                            paddingLeft: element.paddingLeft !== undefined ? `${element.paddingLeft}px` : undefined
-                        }}>
-                            <input type="checkbox" className="h-4 w-4 text-brand-600 rounded border-slate-300" disabled />
-                            <span className="ml-3 text-sm text-slate-600">{element.placeholder || 'Checkbox option'}</span>
-                        </div>
-                    ) : element.type === 'radio' ? (
-                        <div className={clsx(
-                            "space-y-2 rounded-lg",
-                            isFormProject && "border border-slate-200"
-                        )} style={{
-                            backgroundColor: element.backgroundColor,
-                            paddingTop: element.paddingTop !== undefined ? `${element.paddingTop}px` : undefined,
-                            paddingRight: element.paddingRight !== undefined ? `${element.paddingRight}px` : undefined,
-                            paddingBottom: element.paddingBottom !== undefined ? `${element.paddingBottom}px` : undefined,
-                            paddingLeft: element.paddingLeft !== undefined ? `${element.paddingLeft}px` : undefined
-                        }}>
-                            {(element.options || [{ label: 'Option 1', value: 'option1' }, { label: 'Option 2', value: 'option2' }]).map((opt, idx) => (
-                                <div key={idx} className="flex items-center">
-                                    <input type="radio" name={`radio - ${element.id}`} className="h-4 w-4 text-brand-600 border-slate-300 focus:ring-brand-500" disabled />
-                                    <span className="ml-3 text-sm text-slate-600">{opt.label}</span>
+                            }}>
+                                <div className="flex items-center gap-2 text-slate-500">
+                                    <EyeOff size={16} />
+                                    <span className="text-sm font-mono">Hidden: {element.value || 'No value'}</span>
                                 </div>
-                            ))}
-                        </div>
-                    ) : element.type === 'star-rating' ? (
-                        <div className="flex gap-1 items-center">
-                            {[...Array(element.maxStars || 5)].map((_, i) => (
-                                <Star key={i} size={24} className="text-slate-300 fill-slate-100" />
-                            ))}
-                        </div>
-                    ) : element.type === 'container' ? (
-                        <ContainerContent element={element} />
-                    ) : element.type === 'columns' ? (
-                        <ColumnsContent element={element} />
-                    ) : element.type === 'rows' ? (
-                        <RowsContent element={element} />
-                    ) : element.type === 'grid' ? (
-                        <ContainerContent element={element} />
-                    ) : element.type === 'hidden' ? (
-                        <div className={clsx(
-                            "flex items-center bg-slate-100 rounded-lg opacity-60",
-                            isFormProject && "border border-slate-300"
-                        )} style={{
-                            paddingTop: element.paddingTop !== undefined ? `${element.paddingTop}px` : '12px',
-                            paddingRight: element.paddingRight !== undefined ? `${element.paddingRight}px` : '12px',
-                            paddingBottom: element.paddingBottom !== undefined ? `${element.paddingBottom}px` : '12px',
-                            paddingLeft: element.paddingLeft !== undefined ? `${element.paddingLeft}px` : '12px'
-                        }}>
-                            <div className="flex items-center gap-2 text-slate-500">
-                                <EyeOff size={16} />
-                                <span className="text-sm font-mono">Hidden: {element.value || 'No value'}</span>
                             </div>
-                        </div>
-                    ) : element.type === 'rich-text' ? (
-                        <div
-                            className={clsx(
-                                "rounded-lg",
-                                isFormProject && "border border-slate-200"
-                            )}
-                            style={{
-                                backgroundColor: element.backgroundColor || 'transparent',
-                                paddingTop: element.paddingTop !== undefined ? `${element.paddingTop}px` : '0',
-                                paddingRight: element.paddingRight !== undefined ? `${element.paddingRight}px` : '0',
-                                paddingBottom: element.paddingBottom !== undefined ? `${element.paddingBottom}px` : '0',
-                                paddingLeft: element.paddingLeft !== undefined ? `${element.paddingLeft}px` : '0'
-                            }}
-                        >
-                            {isSelected ? (
-                                <RichTextEditor
-                                    selectedElement={element}
-                                    onContentChange={(content) => updateElement(element.id, { content })}
-                                    className={clsx(
-                                        "p-0 m-0 border-none", // No internal padding/margin/border
-                                        !element.textColor && "text-slate-600",
-                                        element.textAlign === 'left' && "text-left",
-                                        element.textAlign === 'center' && "text-center",
-                                        element.textAlign === 'right' && "text-right",
-                                        element.textAlign === 'justify' && "text-justify",
-                                        !element.textAlign && "text-left"
-                                    )}
-                                />
-                            ) : (
-                                <div
-                                    className={clsx(
-                                        !element.textColor && "text-slate-600",
-                                        element.textAlign === 'left' && "text-left",
-                                        element.textAlign === 'center' && "text-center",
-                                        element.textAlign === 'right' && "text-right",
-                                        element.textAlign === 'justify' && "text-justify",
-                                        !element.textAlign && "text-left"
-                                    )}
-                                    style={{
-                                        fontFamily: element.fontFamily || undefined,
-                                        fontSize: element.fontSize ? `${element.fontSize}px` : undefined,
-                                        fontWeight: element.fontWeight || undefined,
-                                        color: element.textColor || undefined,
-                                        lineHeight: element.lineHeight ? `${element.lineHeight}%` : undefined,
-                                        letterSpacing: element.letterSpacing ? `${element.letterSpacing}px` : undefined,
-                                        margin: 0 // Ensure no margins
-                                    }}
-                                    dangerouslySetInnerHTML={{ __html: element.content || '<p>Click to edit rich text...</p>' }}
-                                />
-                            )}
-                        </div>
-                    ) : element.type === 'button' ? (
-                        <div className="relative">
-                            <button
-                                type={element.buttonType || 'button'}
+                        ) : element.type === 'rich-text' ? (
+                            <div
                                 className={clsx(
-                                    "font-medium rounded-lg border",
-                                    element.buttonSize === 'sm' && "text-sm",
-                                    element.buttonSize === 'lg' && "text-lg",
-                                    (!element.buttonSize || element.buttonSize === 'md') && "text-base",
-                                    element.buttonStyle === 'primary' && "bg-blue-600 border-blue-600 text-white hover:bg-blue-700",
-                                    element.buttonStyle === 'secondary' && "bg-gray-600 border-gray-600 text-white hover:bg-gray-700",
-                                    element.buttonStyle === 'outline' && "bg-transparent border-gray-300 text-gray-700",
-                                    element.buttonStyle === 'text' && "bg-transparent border-transparent text-blue-600 hover:bg-blue-50",
-                                    element.buttonStyle === 'link' && "bg-transparent border-transparent text-blue-600 hover:text-blue-800 hover:underline",
-                                    (!element.buttonStyle || element.buttonStyle === 'primary') && "bg-blue-600 border-blue-600 text-white hover:bg-blue-700"
+                                    "rounded-lg",
+                                    isFormProject && "border border-slate-200"
                                 )}
                                 style={{
-                                    backgroundColor: element.backgroundColor && element.buttonStyle !== 'text' && element.buttonStyle !== 'outline' && element.buttonStyle !== 'link' ?
-                                        element.backgroundColor : undefined,
+                                    backgroundColor: element.backgroundColor || 'transparent',
+                                    paddingTop: element.paddingTop !== undefined ? `${element.paddingTop}px` : '0',
+                                    paddingRight: element.paddingRight !== undefined ? `${element.paddingRight}px` : '0',
+                                    paddingBottom: element.paddingBottom !== undefined ? `${element.paddingBottom}px` : '0',
+                                    paddingLeft: element.paddingLeft !== undefined ? `${element.paddingLeft}px` : '0'
+                                }}
+                            >
+                                {isSelected ? (
+                                    <RichTextEditor
+                                        selectedElement={element}
+                                        onContentChange={(content) => updateElement(element.id, { content })}
+                                        className={clsx(
+                                            "p-0 m-0 border-none", // No internal padding/margin/border
+                                            !element.textColor && "text-slate-600",
+                                            element.textAlign === 'left' && "text-left",
+                                            element.textAlign === 'center' && "text-center",
+                                            element.textAlign === 'right' && "text-right",
+                                            element.textAlign === 'justify' && "text-justify",
+                                            !element.textAlign && "text-left"
+                                        )}
+                                    />
+                                ) : (
+                                    <div
+                                        className={clsx(
+                                            !element.textColor && "text-slate-600",
+                                            element.textAlign === 'left' && "text-left",
+                                            element.textAlign === 'center' && "text-center",
+                                            element.textAlign === 'right' && "text-right",
+                                            element.textAlign === 'justify' && "text-justify",
+                                            !element.textAlign && "text-left"
+                                        )}
+                                        style={{
+                                            fontFamily: element.fontFamily || undefined,
+                                            fontSize: element.fontSize ? `${element.fontSize}px` : undefined,
+                                            fontWeight: element.fontWeight || undefined,
+                                            color: element.textColor || undefined,
+                                            lineHeight: element.lineHeight ? `${element.lineHeight}%` : undefined,
+                                            letterSpacing: element.letterSpacing ? `${element.letterSpacing}px` : undefined,
+                                            margin: 0 // Ensure no margins
+                                        }}
+                                        dangerouslySetInnerHTML={{ __html: element.content || '<p>Click to edit rich text...</p>' }}
+                                    />
+                                )}
+                            </div>
+                        ) : element.type === 'button' ? (
+                            <div className="relative">
+                                <button
+                                    type={element.buttonType || 'button'}
+                                    className={clsx(
+                                        "font-medium rounded-lg border",
+                                        element.buttonSize === 'sm' && "text-sm",
+                                        element.buttonSize === 'lg' && "text-lg",
+                                        (!element.buttonSize || element.buttonSize === 'md') && "text-base",
+                                        element.buttonStyle === 'primary' && "bg-blue-600 border-blue-600 text-white hover:bg-blue-700",
+                                        element.buttonStyle === 'secondary' && "bg-gray-600 border-gray-600 text-white hover:bg-gray-700",
+                                        element.buttonStyle === 'outline' && "bg-transparent border-gray-300 text-gray-700",
+                                        element.buttonStyle === 'text' && "bg-transparent border-transparent text-blue-600 hover:bg-blue-50",
+                                        element.buttonStyle === 'link' && "bg-transparent border-transparent text-blue-600 hover:text-blue-800 hover:underline",
+                                        (!element.buttonStyle || element.buttonStyle === 'primary') && "bg-blue-600 border-blue-600 text-white hover:bg-blue-700"
+                                    )}
+                                    style={{
+                                        backgroundColor: element.backgroundColor && element.buttonStyle !== 'text' && element.buttonStyle !== 'outline' && element.buttonStyle !== 'link' ?
+                                            element.backgroundColor : undefined,
+                                        paddingTop: element.paddingTop !== undefined ? `${element.paddingTop}px` : undefined,
+                                        paddingRight: element.paddingRight !== undefined ? `${element.paddingRight}px` : undefined,
+                                        paddingBottom: element.paddingBottom !== undefined ? `${element.paddingBottom}px` : undefined,
+                                        paddingLeft: element.paddingLeft !== undefined ? `${element.paddingLeft}px` : undefined,
+                                        marginTop: element.marginTop !== undefined ? `${element.marginTop}px` : undefined,
+                                        marginRight: element.marginRight !== undefined ? `${element.marginRight}px` : undefined,
+                                        marginBottom: element.marginBottom !== undefined ? `${element.marginBottom}px` : undefined,
+                                        marginLeft: element.marginLeft !== undefined ? `${element.marginLeft}px` : undefined,
+                                        boxSizing: 'border-box',
+                                        lineHeight: 'normal',
+                                        minHeight: 'unset',
+                                        height: 'auto'
+                                    }}
+                                    disabled
+                                >
+                                    {element.buttonText || element.label || 'Button'}
+                                </button>
+                                {element.buttonType === 'submit' && (
+                                    <div className="absolute -top-1 -right-1 w-3 h-3 bg-green-500 rounded-full flex items-center justify-center">
+                                        <span className="text-white text-xs">✓</span>
+                                    </div>
+                                )}
+                            </div>
+                        ) : element.type === 'text-block' ? (
+                            <div
+                                className={clsx(
+                                    "rounded-lg",
+                                    isFormProject && "border border-slate-200"
+                                )}
+                                style={{
+                                    backgroundColor: element.backgroundColor || 'transparent',
                                     paddingTop: element.paddingTop !== undefined ? `${element.paddingTop}px` : undefined,
                                     paddingRight: element.paddingRight !== undefined ? `${element.paddingRight}px` : undefined,
                                     paddingBottom: element.paddingBottom !== undefined ? `${element.paddingBottom}px` : undefined,
-                                    paddingLeft: element.paddingLeft !== undefined ? `${element.paddingLeft}px` : undefined,
-                                    marginTop: element.marginTop !== undefined ? `${element.marginTop}px` : undefined,
-                                    marginRight: element.marginRight !== undefined ? `${element.marginRight}px` : undefined,
-                                    marginBottom: element.marginBottom !== undefined ? `${element.marginBottom}px` : undefined,
-                                    marginLeft: element.marginLeft !== undefined ? `${element.marginLeft}px` : undefined,
-                                    boxSizing: 'border-box',
-                                    lineHeight: 'normal',
-                                    minHeight: 'unset',
-                                    height: 'auto'
+                                    paddingLeft: element.paddingLeft !== undefined ? `${element.paddingLeft}px` : undefined
                                 }}
-                                disabled
                             >
-                                {element.buttonText || element.label || 'Button'}
-                            </button>
-                            {element.buttonType === 'submit' && (
-                                <div className="absolute -top-1 -right-1 w-3 h-3 bg-green-500 rounded-full flex items-center justify-center">
-                                    <span className="text-white text-xs">✓</span>
-                                </div>
-                            )}
-                        </div>
-                    ) : element.type === 'text-block' ? (
-                        <div
-                            className={clsx(
-                                "rounded-lg",
-                                isFormProject && "border border-slate-200"
-                            )}
-                            style={{
-                                backgroundColor: element.backgroundColor || 'transparent',
-                                paddingTop: element.paddingTop !== undefined ? `${element.paddingTop}px` : undefined,
-                                paddingRight: element.paddingRight !== undefined ? `${element.paddingRight}px` : undefined,
-                                paddingBottom: element.paddingBottom !== undefined ? `${element.paddingBottom}px` : undefined,
-                                paddingLeft: element.paddingLeft !== undefined ? `${element.paddingLeft}px` : undefined
-                            }}
-                        >
-                            {isSelected ? (
-                                <RichTextEditor
-                                    ref={editorRef}
-                                    selectedElement={element}
-                                    onContentChange={(content) => updateElement(element.id, { content })}
-                                    onEditingStart={() => setIsEditingText(true)}
-                                    onEditingEnd={() => setIsEditingText(false)}
-                                    className={clsx(
-                                        "p-0 m-0 border-none", // No internal padding/margin/border
-                                        !element.textColor && "text-slate-600",
-                                        element.textAlign === 'left' && "text-left",
-                                        element.textAlign === 'center' && "text-center",
-                                        element.textAlign === 'right' && "text-right",
-                                        element.textAlign === 'justify' && "text-justify",
-                                        !element.textAlign && "text-left"
-                                    )}
-                                />
-                            ) : (
-                                <div
-                                    className={clsx(
-                                        !element.textColor && "text-slate-600",
-                                        element.textAlign === 'left' && "text-left",
-                                        element.textAlign === 'center' && "text-center",
-                                        element.textAlign === 'right' && "text-right",
-                                        element.textAlign === 'justify' && "text-justify",
-                                        !element.textAlign && "text-left"
-                                    )}
-                                    style={{
-                                        fontFamily: element.fontFamily || undefined,
-                                        fontSize: element.fontSize ? `${element.fontSize}px` : undefined,
-                                        fontWeight: element.fontWeight || undefined,
-                                        color: element.textColor || undefined,
-                                        lineHeight: element.lineHeight ? `${element.lineHeight}%` : undefined,
-                                        letterSpacing: element.letterSpacing ? `${element.letterSpacing}px` : undefined,
-                                        margin: 0
-                                    }}
-                                    dangerouslySetInnerHTML={{ __html: element.content || '<p>Click to edit this text block</p>' }}
-                                />
-                            )}
-                        </div>
-                    ) : element.type === 'heading' ? (
-                        <div
-                            className={clsx(
-                                "rounded-lg",
-                                isFormProject && "border border-slate-200"
-                            )}
-                            style={{
-                                backgroundColor: element.backgroundColor || 'transparent',
-                                paddingTop: element.paddingTop !== undefined ? `${element.paddingTop}px` : undefined,
-                                paddingRight: element.paddingRight !== undefined ? `${element.paddingRight}px` : undefined,
-                                paddingBottom: element.paddingBottom !== undefined ? `${element.paddingBottom}px` : undefined,
-                                paddingLeft: element.paddingLeft !== undefined ? `${element.paddingLeft}px` : undefined
-                            }}
-                        >
-                            {isSelected ? (
-                                <RichTextEditor
-                                    ref={editorRef}
-                                    selectedElement={element}
-                                    onContentChange={(content) => updateElement(element.id, { content })}
-                                    onEditingStart={() => setIsEditingText(true)}
-                                    onEditingEnd={() => setIsEditingText(false)}
-                                    className={clsx(
-                                        "p-0 m-0 border-none", // No internal padding/margin/border
-                                        !element.textColor && "text-slate-600",
-                                        !element.fontWeight && "font-bold",
-                                        !element.fontSize && element.headingLevel === 1 && "text-4xl",
-                                        !element.fontSize && element.headingLevel === 2 && "text-3xl",
-                                        !element.fontSize && element.headingLevel === 3 && "text-2xl",
-                                        !element.fontSize && element.headingLevel === 4 && "text-xl",
-                                        !element.fontSize && element.headingLevel === 5 && "text-lg",
-                                        !element.fontSize && element.headingLevel === 6 && "text-base",
-                                        !element.fontSize && !element.headingLevel && "text-4xl",
-                                        element.textAlign === 'left' && "text-left",
-                                        element.textAlign === 'center' && "text-center",
-                                        element.textAlign === 'right' && "text-right",
-                                        element.textAlign === 'justify' && "text-justify",
-                                        !element.textAlign && "text-left"
-                                    )}
-                                />
-                            ) : (
-                                <div
-                                    role="heading"
-                                    aria-level={element.headingLevel || 1}
-                                    className={clsx(
-                                        "p-0 m-0 border-none w-full", // Matches RichTextEditor's internal styles exactly
-                                        !element.textColor && "text-slate-600",
-                                        !element.fontWeight && "font-bold",
-                                        !element.fontSize && element.headingLevel === 1 && "text-4xl",
-                                        !element.fontSize && element.headingLevel === 2 && "text-3xl",
-                                        !element.fontSize && element.headingLevel === 3 && "text-2xl",
-                                        !element.fontSize && element.headingLevel === 4 && "text-xl",
-                                        !element.fontSize && element.headingLevel === 5 && "text-lg",
-                                        !element.fontSize && element.headingLevel === 6 && "text-base",
-                                        !element.fontSize && !element.headingLevel && "text-4xl",
-                                        element.textAlign === 'left' && "text-left",
-                                        element.textAlign === 'center' && "text-center",
-                                        element.textAlign === 'right' && "text-right",
-                                        element.textAlign === 'justify' && "text-justify",
-                                        !element.textAlign && "text-left"
-                                    )}
-                                    style={{
-                                        fontFamily: element.fontFamily || undefined,
-                                        fontSize: element.fontSize ? `${element.fontSize}px` : undefined,
-                                        fontWeight: element.fontWeight || undefined,
-                                        color: element.textColor || undefined,
-                                        lineHeight: element.lineHeight ? `${element.lineHeight}%` : undefined,
-                                        letterSpacing: element.letterSpacing ? `${element.letterSpacing}px` : undefined,
-                                        margin: 0
-                                    }}
-                                    dangerouslySetInnerHTML={{ __html: element.content || 'Heading' }}
-                                />
-                            )}
-                        </div>
-                    ) : element.type === 'menu' ? (
-                        (() => {
-                            const { setNodeRef } = useDroppable({
-                                id: `menu - ${element.id}`,
-                                data: { type: 'menu', containerId: element.id }
-                            });
-
-                            return (
-                                <div
-                                    ref={setNodeRef}
-                                    className="min-h-[40px]"
-                                    style={{
-                                        display: 'flex',
-                                        flexDirection: element.flexDirection || (element.menuLayout === 'vertical' ? 'column' : 'row'),
-                                        flexWrap: element.flexWrap || 'nowrap',
-                                        justifyContent: element.justifyContent || 'flex-start',
-                                        alignItems: element.alignItems || 'center',
-                                        alignContent: element.alignContent || 'flex-start',
-                                        gap: `${(element.gap || 0) * 0.25}rem`
-                                    }}
-                                >
-                                    {element.children && element.children.length > 0 ? (
-                                        element.children.map((child) => (
-                                            <SortableElement
-                                                key={child.id}
-                                                element={child}
-                                                parentId={element.id}
-                                            />
-                                        ))
-                                    ) : (
-                                        <div className="text-gray-400 text-sm italic">
-                                            Drop menu items here
-                                        </div>
-                                    )}
-                                </div>
-                            );
-                        })()
-                    ) : element.type === 'social' ? (
-                        <div className={clsx(
-                            "rounded-lg",
-                            isFormProject && "border border-slate-200"
-                        )} style={{
-                            backgroundColor: element.backgroundColor,
-                            paddingTop: element.paddingTop !== undefined ? `${element.paddingTop * 0.25}rem` : undefined,
-                            paddingRight: element.paddingRight !== undefined ? `${element.paddingRight * 0.25}rem` : undefined,
-                            paddingBottom: element.paddingBottom !== undefined ? `${element.paddingBottom * 0.25}rem` : undefined,
-                            paddingLeft: element.paddingLeft !== undefined ? `${element.paddingLeft * 0.25}rem` : undefined
-                        }}>
-                            <div className={clsx(
-                                "flex gap-3",
-                                element.socialLayout === 'vertical' ? "flex-col" : "flex-row"
-                            )}>
-                                {(element.socialLinks || [
-                                    { platform: 'Facebook', url: '#', icon: '📘' },
-                                    { platform: 'Twitter', url: '#', icon: '🐦' },
-                                    { platform: 'LinkedIn', url: '#', icon: '💼' }
-                                ]).map((social, index) => (
-                                    <a
-                                        key={index}
-                                        href={social.url}
-                                        target="_blank"
-                                        rel="noopener noreferrer"
-                                        className="flex items-center gap-2 text-blue-600 hover:text-blue-800 font-medium"
-                                    >
-                                        <span>{social.icon || '🔗'}</span>
-                                        {social.platform}
-                                    </a>
-                                ))}
+                                {isSelected ? (
+                                    <RichTextEditor
+                                        ref={editorRef}
+                                        selectedElement={element}
+                                        onContentChange={(content) => updateElement(element.id, { content })}
+                                        onEditingStart={() => setIsEditingText(true)}
+                                        onEditingEnd={() => setIsEditingText(false)}
+                                        className={clsx(
+                                            "p-0 m-0 border-none", // No internal padding/margin/border
+                                            !element.textColor && "text-slate-600",
+                                            element.textAlign === 'left' && "text-left",
+                                            element.textAlign === 'center' && "text-center",
+                                            element.textAlign === 'right' && "text-right",
+                                            element.textAlign === 'justify' && "text-justify",
+                                            !element.textAlign && "text-left"
+                                        )}
+                                    />
+                                ) : (
+                                    <div
+                                        className={clsx(
+                                            !element.textColor && "text-slate-600",
+                                            element.textAlign === 'left' && "text-left",
+                                            element.textAlign === 'center' && "text-center",
+                                            element.textAlign === 'right' && "text-right",
+                                            element.textAlign === 'justify' && "text-justify",
+                                            !element.textAlign && "text-left"
+                                        )}
+                                        style={{
+                                            fontFamily: element.fontFamily || undefined,
+                                            fontSize: element.fontSize ? `${element.fontSize}px` : undefined,
+                                            fontWeight: element.fontWeight || undefined,
+                                            color: element.textColor || undefined,
+                                            lineHeight: element.lineHeight ? `${element.lineHeight}%` : undefined,
+                                            letterSpacing: element.letterSpacing ? `${element.letterSpacing}px` : undefined,
+                                            margin: 0
+                                        }}
+                                        dangerouslySetInnerHTML={{ __html: element.content || '<p>Click to edit this text block</p>' }}
+                                    />
+                                )}
                             </div>
-                        </div>
-                    ) : element.type === 'image' ? (
-                        <div
-                            className={clsx(
-                                "relative group",
-                                element.imageAlign === 'center' && "flex justify-center",
-                                element.imageAlign === 'right' && "flex justify-end",
-                                element.imageAlign === 'justify' && "flex justify-center",
-                                (!element.imageAlign || element.imageAlign === 'left') && "flex justify-start"
-                            )}
-                            style={{
-                                width: `${element.imageWidthPercent || 100}%`,
-                                marginLeft: element.imageAlign === 'center' ? 'auto' : element.imageAlign === 'right' ? 'auto' : undefined,
-                                marginRight: element.imageAlign === 'center' ? 'auto' : element.imageAlign === 'right' ? undefined : element.imageAlign === 'left' ? 'auto' : undefined
-                            }}
-                        >
-                            <img
-                                src={element.imageUrl || 'https://placehold.co/400x200/e2e8f0/94a3b8?text=Image'}
-                                alt={element.imageAlt || 'Image'}
-                                className="rounded-lg block h-auto w-full"
+                        ) : element.type === 'heading' ? (
+                            <div
+                                className={clsx(
+                                    "rounded-lg",
+                                    isFormProject && "border border-slate-200"
+                                )}
                                 style={{
-                                    backgroundColor: element.backgroundColor
+                                    backgroundColor: element.backgroundColor || 'transparent',
+                                    paddingTop: element.paddingTop !== undefined ? `${element.paddingTop}px` : undefined,
+                                    paddingRight: element.paddingRight !== undefined ? `${element.paddingRight}px` : undefined,
+                                    paddingBottom: element.paddingBottom !== undefined ? `${element.paddingBottom}px` : undefined,
+                                    paddingLeft: element.paddingLeft !== undefined ? `${element.paddingLeft}px` : undefined
                                 }}
-                            />
-                            {/* Corner resize handles for professional image editing */}
-                            {isSelected && (
-                                <>
-                                    {/* Top-left corner */}
-                                    <div
-                                        className="absolute -top-2 -left-2 w-4 h-4 bg-blue-500 border-2 border-white rounded-sm cursor-nw-resize shadow-md opacity-100 z-40"
-                                        onMouseDown={(e) => handleImageResize(e, 'nw')}
-                                        title="Resize from top-left corner"
+                            >
+                                {isSelected ? (
+                                    <RichTextEditor
+                                        ref={editorRef}
+                                        selectedElement={element}
+                                        onContentChange={(content) => updateElement(element.id, { content })}
+                                        onEditingStart={() => setIsEditingText(true)}
+                                        onEditingEnd={() => setIsEditingText(false)}
+                                        className={clsx(
+                                            "p-0 m-0 border-none", // No internal padding/margin/border
+                                            !element.textColor && "text-slate-600",
+                                            !element.fontWeight && "font-bold",
+                                            !element.fontSize && element.headingLevel === 1 && "text-4xl",
+                                            !element.fontSize && element.headingLevel === 2 && "text-3xl",
+                                            !element.fontSize && element.headingLevel === 3 && "text-2xl",
+                                            !element.fontSize && element.headingLevel === 4 && "text-xl",
+                                            !element.fontSize && element.headingLevel === 5 && "text-lg",
+                                            !element.fontSize && element.headingLevel === 6 && "text-base",
+                                            !element.fontSize && !element.headingLevel && "text-4xl",
+                                            element.textAlign === 'left' && "text-left",
+                                            element.textAlign === 'center' && "text-center",
+                                            element.textAlign === 'right' && "text-right",
+                                            element.textAlign === 'justify' && "text-justify",
+                                            !element.textAlign && "text-left"
+                                        )}
                                     />
-                                    {/* Top-right corner */}
+                                ) : (
                                     <div
-                                        className="absolute -top-2 -right-2 w-4 h-4 bg-blue-500 border-2 border-white rounded-sm cursor-ne-resize shadow-md opacity-100 z-40"
-                                        onMouseDown={(e) => handleImageResize(e, 'ne')}
-                                        title="Resize from top-right corner"
+                                        role="heading"
+                                        aria-level={element.headingLevel || 1}
+                                        className={clsx(
+                                            "p-0 m-0 border-none w-full", // Matches RichTextEditor's internal styles exactly
+                                            !element.textColor && "text-slate-600",
+                                            !element.fontWeight && "font-bold",
+                                            !element.fontSize && element.headingLevel === 1 && "text-4xl",
+                                            !element.fontSize && element.headingLevel === 2 && "text-3xl",
+                                            !element.fontSize && element.headingLevel === 3 && "text-2xl",
+                                            !element.fontSize && element.headingLevel === 4 && "text-xl",
+                                            !element.fontSize && element.headingLevel === 5 && "text-lg",
+                                            !element.fontSize && element.headingLevel === 6 && "text-base",
+                                            !element.fontSize && !element.headingLevel && "text-4xl",
+                                            element.textAlign === 'left' && "text-left",
+                                            element.textAlign === 'center' && "text-center",
+                                            element.textAlign === 'right' && "text-right",
+                                            element.textAlign === 'justify' && "text-justify",
+                                            !element.textAlign && "text-left"
+                                        )}
+                                        style={{
+                                            fontFamily: element.fontFamily || undefined,
+                                            fontSize: element.fontSize ? `${element.fontSize}px` : undefined,
+                                            fontWeight: element.fontWeight || undefined,
+                                            color: element.textColor || undefined,
+                                            lineHeight: element.lineHeight ? `${element.lineHeight}%` : undefined,
+                                            letterSpacing: element.letterSpacing ? `${element.letterSpacing}px` : undefined,
+                                            margin: 0
+                                        }}
+                                        dangerouslySetInnerHTML={{ __html: element.content || 'Heading' }}
                                     />
-                                    {/* Bottom-left corner */}
+                                )}
+                            </div>
+                        ) : element.type === 'menu' ? (
+                            (() => {
+                                const { setNodeRef } = useDroppable({
+                                    id: `menu - ${element.id}`,
+                                    data: { type: 'menu', containerId: element.id }
+                                });
+
+                                return (
                                     <div
-                                        className="absolute -bottom-2 -left-2 w-4 h-4 bg-blue-500 border-2 border-white rounded-sm cursor-sw-resize shadow-md opacity-100 z-40"
-                                        onMouseDown={(e) => handleImageResize(e, 'sw')}
-                                        title="Resize from bottom-left corner"
-                                    />
-                                    {/* Bottom-right corner */}
-                                    <div
-                                        className="absolute -bottom-2 -right-2 w-4 h-4 bg-blue-500 border-2 border-white rounded-sm cursor-se-resize shadow-md opacity-100 z-40"
-                                        onMouseDown={(e) => handleImageResize(e, 'se')}
-                                        title="Resize from bottom-right corner"
-                                    />
-                                </>
-                            )}
-                        </div>
-                    ) : (
-                        <input
-                            type={element.type}
-                            className={clsx(
-                                "w-full rounded-lg text-slate-500 text-sm",
+                                        ref={setNodeRef}
+                                        className="min-h-[40px]"
+                                        style={{
+                                            display: 'flex',
+                                            flexDirection: element.flexDirection || (element.menuLayout === 'vertical' ? 'column' : 'row'),
+                                            flexWrap: element.flexWrap || 'nowrap',
+                                            justifyContent: element.justifyContent || 'flex-start',
+                                            alignItems: element.alignItems || 'center',
+                                            alignContent: element.alignContent || 'flex-start',
+                                            gap: `${(element.gap || 0) * 0.25}rem`
+                                        }}
+                                    >
+                                        {element.children && element.children.length > 0 ? (
+                                            element.children.map((child) => (
+                                                <SortableElement
+                                                    key={child.id}
+                                                    element={child}
+                                                    parentId={element.id}
+                                                />
+                                            ))
+                                        ) : (
+                                            <div className="text-gray-400 text-sm italic">
+                                                Drop menu items here
+                                            </div>
+                                        )}
+                                    </div>
+                                );
+                            })()
+                        ) : element.type === 'social' ? (
+                            <div className={clsx(
+                                "rounded-lg",
                                 isFormProject && "border border-slate-200"
-                            )}
-                            style={{
+                            )} style={{
                                 backgroundColor: element.backgroundColor,
                                 paddingTop: element.paddingTop !== undefined ? `${element.paddingTop * 0.25}rem` : undefined,
                                 paddingRight: element.paddingRight !== undefined ? `${element.paddingRight * 0.25}rem` : undefined,
                                 paddingBottom: element.paddingBottom !== undefined ? `${element.paddingBottom * 0.25}rem` : undefined,
                                 paddingLeft: element.paddingLeft !== undefined ? `${element.paddingLeft * 0.25}rem` : undefined
-                            }}
-                            placeholder={element.placeholder}
-                            readOnly
-                        />
-                    )}
+                            }}>
+                                <div className={clsx(
+                                    "flex gap-3",
+                                    element.socialLayout === 'vertical' ? "flex-col" : "flex-row"
+                                )}>
+                                    {(element.socialLinks || [
+                                        { platform: 'Facebook', url: '#', icon: '📘' },
+                                        { platform: 'Twitter', url: '#', icon: '🐦' },
+                                        { platform: 'LinkedIn', url: '#', icon: '💼' }
+                                    ]).map((social, index) => (
+                                        <a
+                                            key={index}
+                                            href={social.url}
+                                            target="_blank"
+                                            rel="noopener noreferrer"
+                                            className="flex items-center gap-2 text-blue-600 hover:text-blue-800 font-medium"
+                                        >
+                                            <span>{social.icon || '🔗'}</span>
+                                            {social.platform}
+                                        </a>
+                                    ))}
+                                </div>
+                            </div>
+                        ) : element.type === 'image' ? (
+                            <div
+                                className={clsx(
+                                    "relative group",
+                                    element.imageAlign === 'center' && "flex justify-center",
+                                    element.imageAlign === 'right' && "flex justify-end",
+                                    element.imageAlign === 'justify' && "flex justify-center",
+                                    (!element.imageAlign || element.imageAlign === 'left') && "flex justify-start"
+                                )}
+                                style={{
+                                    width: `${element.imageWidthPercent || 100}%`,
+                                    marginLeft: element.imageAlign === 'center' ? 'auto' : element.imageAlign === 'right' ? 'auto' : undefined,
+                                    marginRight: element.imageAlign === 'center' ? 'auto' : element.imageAlign === 'right' ? undefined : element.imageAlign === 'left' ? 'auto' : undefined
+                                }}
+                            >
+                                <img
+                                    src={element.imageUrl || 'https://placehold.co/400x200/e2e8f0/94a3b8?text=Image'}
+                                    alt={element.imageAlt || 'Image'}
+                                    className="rounded-lg block h-auto w-full"
+                                    style={{
+                                        backgroundColor: element.backgroundColor
+                                    }}
+                                />
+                                {/* Corner resize handles for professional image editing */}
+                                {isSelected && (
+                                    <>
+                                        {/* Top-left corner */}
+                                        <div
+                                            className="absolute -top-2 -left-2 w-4 h-4 bg-blue-500 border-2 border-white rounded-sm cursor-nw-resize shadow-md opacity-100 z-40"
+                                            onMouseDown={(e) => handleImageResize(e, 'nw')}
+                                            title="Resize from top-left corner"
+                                        />
+                                        {/* Top-right corner */}
+                                        <div
+                                            className="absolute -top-2 -right-2 w-4 h-4 bg-blue-500 border-2 border-white rounded-sm cursor-ne-resize shadow-md opacity-100 z-40"
+                                            onMouseDown={(e) => handleImageResize(e, 'ne')}
+                                            title="Resize from top-right corner"
+                                        />
+                                        {/* Bottom-left corner */}
+                                        <div
+                                            className="absolute -bottom-2 -left-2 w-4 h-4 bg-blue-500 border-2 border-white rounded-sm cursor-sw-resize shadow-md opacity-100 z-40"
+                                            onMouseDown={(e) => handleImageResize(e, 'sw')}
+                                            title="Resize from bottom-left corner"
+                                        />
+                                        {/* Bottom-right corner */}
+                                        <div
+                                            className="absolute -bottom-2 -right-2 w-4 h-4 bg-blue-500 border-2 border-white rounded-sm cursor-se-resize shadow-md opacity-100 z-40"
+                                            onMouseDown={(e) => handleImageResize(e, 'se')}
+                                            title="Resize from bottom-right corner"
+                                        />
+                                    </>
+                                )}
+                            </div>
+                        ) : (
+                            <input
+                                type={element.type}
+                                className={clsx(
+                                    "w-full rounded-lg text-slate-500 text-sm",
+                                    isFormProject && "border border-slate-200"
+                                )}
+                                style={{
+                                    backgroundColor: element.backgroundColor,
+                                    paddingTop: element.paddingTop !== undefined ? `${element.paddingTop * 0.25}rem` : undefined,
+                                    paddingRight: element.paddingRight !== undefined ? `${element.paddingRight * 0.25}rem` : undefined,
+                                    paddingBottom: element.paddingBottom !== undefined ? `${element.paddingBottom * 0.25}rem` : undefined,
+                                    paddingLeft: element.paddingLeft !== undefined ? `${element.paddingLeft * 0.25}rem` : undefined
+                                }}
+                                placeholder={element.placeholder}
+                                readOnly
+                            />
+                        )
+                    })()}
                 </div>
             </div >
 

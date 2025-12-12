@@ -96,6 +96,10 @@ export interface FormElement {
     labelItalic?: boolean;
     labelUnderline?: boolean;
     labelStrikethrough?: boolean;
+    // For Number/Date inputs
+    min?: string | number;
+    max?: string | number;
+    step?: string | number;
     // For Hidden field
     value?: string;
     // For Rich Text
@@ -108,6 +112,26 @@ export interface FormElement {
     buttonAction?: 'none' | 'submit' | 'url';
     buttonUrl?: string;
     buttonTarget?: '_blank' | '_self';
+    buttonWidthType?: 'auto' | 'custom' | 'full';
+    buttonWidth?: number;
+    // Granular Border Settings
+    borderStyleTop?: string;
+    borderWidthTop?: number;
+    borderColorTop?: string;
+    borderStyleRight?: string;
+    borderWidthRight?: number;
+    borderColorRight?: string;
+    borderStyleBottom?: string;
+    borderWidthBottom?: number;
+    borderColorBottom?: string;
+    borderStyleLeft?: string;
+    borderWidthLeft?: number;
+    borderColorLeft?: string;
+    // Border Radius
+    borderRadiusTopLeft?: number;
+    borderRadiusTopRight?: number;
+    borderRadiusBottomLeft?: number;
+    borderRadiusBottomRight?: number;
     // Background color
     backgroundColor?: string;
     // For Heading

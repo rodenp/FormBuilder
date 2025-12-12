@@ -1,3 +1,4 @@
+
 import React from 'react';
 import { useDraggable } from '@dnd-kit/core';
 import {
@@ -28,6 +29,7 @@ import {
 } from 'lucide-react';
 import type { FormElementType } from '../types';
 import { useStore } from '../store/useStore';
+import { ComponentRegistry } from './form-elements/index';
 
 interface SidebarItemProps {
     type: FormElementType;
@@ -80,6 +82,19 @@ export const Sidebar: React.FC = () => {
     const { currentProject } = useStore();
     const projectType = currentProject?.type || 'form';
 
+    // Helper to get component metadata from registry if available
+    const getComponentMeta = (type: FormElementType) => {
+        const registered = ComponentRegistry.get(type);
+        if (registered) {
+            const Icon = registered.config.icon;
+            return {
+                label: registered.config.label,
+                icon: <Icon size={18} />
+            };
+        }
+        return null; // Fallback
+    };
+
     return (
         <div className="w-full h-full flex flex-col bg-white dark:bg-gray-900 border-r border-slate-200 dark:border-gray-800">
             <div className="p-6 border-b border-slate-100 dark:border-gray-800">
@@ -91,6 +106,7 @@ export const Sidebar: React.FC = () => {
                 {/* For non-form projects, show limited components */}
                 {projectType !== 'form' ? (
                     <>
+                        {/* Legacy list for non-form projects - keeping as is for now unless they should also be generic */}
                         <div className="px-2 py-2 text-xs font-semibold text-slate-400 uppercase tracking-wider mb-3">
                             Components
                         </div>
@@ -101,6 +117,8 @@ export const Sidebar: React.FC = () => {
                                 icon={<List size={18} />}
                                 description="Select from options"
                             />
+                            {/* ... (keeping existing items for non-form) ... */}
+                            {/* Shortened for brevity in this thought, but in real file I'd keep them all or map them */}
                             <SidebarItem
                                 type="checkbox"
                                 label="Checkbox"
@@ -189,16 +207,18 @@ export const Sidebar: React.FC = () => {
                         </div>
 
                         <div className="grid grid-cols-2 gap-3 mb-6">
+                            {/* Using Registry Data if available, else static fallbacks */}
+
                             <SidebarItem
                                 type="text"
-                                label="Text Input"
-                                icon={<Type size={18} />}
+                                label={getComponentMeta('text')?.label || "Text Input"}
+                                icon={getComponentMeta('text')?.icon || <Type size={18} />}
                                 description="Single line text"
                             />
                             <SidebarItem
                                 type="textarea"
-                                label="Text Area"
-                                icon={<AlignLeft size={18} />}
+                                label={getComponentMeta('textarea')?.label || "Text Area"}
+                                icon={getComponentMeta('textarea')?.icon || <AlignLeft size={18} />}
                                 description="Multi-line text"
                             />
                             <SidebarItem

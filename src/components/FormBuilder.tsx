@@ -202,9 +202,11 @@ export const FormBuilder: React.FC = () => {
 
             if (over.id === 'canvas-start') {
                 // Use the dedicated function to add at start
+
                 addElementAtStart(type);
             } else {
                 // Regular canvas or canvas-end drops
+
                 addElement(type);
             }
             return;
@@ -709,7 +711,7 @@ export const FormBuilder: React.FC = () => {
                     </div>
 
                     {/* Main 2-panel layout */}
-                    <div className="flex h-full">
+                    <div className="flex flex-1 min-h-0">
                         <div className="flex-1 overflow-hidden">
                             <Canvas />
                         </div>

@@ -1,17 +1,33 @@
 import React from 'react';
 import type { FormElement } from '../types';
 import { useStore } from '../store/useStore';
-import { AlignLeft, AlignCenter, AlignRight, AlignJustify } from 'lucide-react';
+import { AlignLeft, AlignCenter, AlignRight, AlignJustify, ArrowRight, ArrowDown } from 'lucide-react';
+
+import { defaultSettings } from '../settings/defaultSettings';
+import { ComponentRegistry } from './form-elements/index';
 
 interface LayoutPanelProps {
     selectedElement: FormElement;
     updateElement: (id: string, updates: Partial<FormElement>) => void;
+    hideHeader?: boolean;
+    boxModelOnly?: boolean;
 }
 
 
-export const LayoutPanel: React.FC<LayoutPanelProps> = ({ selectedElement, updateElement }) => {
+export const LayoutPanel: React.FC<LayoutPanelProps> = ({ selectedElement, updateElement, hideHeader, boxModelOnly }) => {
     const { elements } = useStore();
     const isContainer = selectedElement.type === 'container' || selectedElement.type === 'columns' || selectedElement.type === 'rows' || selectedElement.type === 'grid' || selectedElement.type === 'menu' || selectedElement.type === 'social';
+
+    // Calculate effective defaults to show in the UI (instead of 0)
+    const globalDefaults = defaultSettings.global;
+    const typeDefaults = defaultSettings.types[selectedElement.type] || {};
+    const componentDefaults = ComponentRegistry.get(selectedElement.type)?.defaultSettings || {};
+
+    const effectiveDefaults = {
+        ...globalDefaults,
+        ...typeDefaults,
+        ...componentDefaults
+    };
 
     // All padding is now handled through element properties only
     // No built-in padding calculations needed
@@ -56,14 +72,7 @@ export const LayoutPanel: React.FC<LayoutPanelProps> = ({ selectedElement, updat
     const isColumnCellContainer = isColumnCell();
 
     // Debug: temporarily log what we're detecting
-    console.log('Column Cell Detection:', {
-        type: selectedElement.type,
-        name: selectedElement.name,
-        label: selectedElement.label,
-        isColumnCellContainer,
-        display: selectedElement.display,
-        flexDirection: selectedElement.flexDirection
-    });
+
 
     // Set defaults for column cells and fix any existing cells that don't have proper flex properties
     React.useEffect(() => {
@@ -90,17 +99,20 @@ export const LayoutPanel: React.FC<LayoutPanelProps> = ({ selectedElement, updat
                 .playground-number-input::-webkit-inner-spin-button {
                     -webkit-appearance: none;
                     margin: 0;
+                    margin: 0;
                 }
                 `}
             </style>
-            <div className="flex justify-between items-center mb-4">
-                <label className="block text-xs font-semibold text-slate-500 uppercase tracking-wider">
-                    Layout {isColumnCellContainer && <span className="text-purple-600">(Column Cell)</span>}
-                </label>
-                {/* Playground button hidden */}
-            </div>
+            {!hideHeader && (
+                <div className="flex justify-between items-center mb-4">
+                    <label className="block text-xs font-semibold text-slate-500 uppercase tracking-wider">
+                        Layout {isColumnCellContainer && <span className="text-purple-600">(Column Cell)</span>}
+                    </label>
+                    {/* Playground button hidden */}
+                </div>
+            )}
 
-            {isContainer && (
+            {isContainer && !boxModelOnly && (
                 <>
                     {/* Display Mode - hidden for columns, rows, grid, menu */}
                     {!['columns', 'rows', 'grid', 'menu'].includes(selectedElement.type) && (
@@ -351,6 +363,109 @@ export const LayoutPanel: React.FC<LayoutPanelProps> = ({ selectedElement, updat
                 </div>
             )}
 
+            {/* Simplified Alignment for Menu, Social, Columns */}
+            {['menu', 'social', 'columns'].includes(selectedElement.type) && (
+                <div className="mb-6 space-y-6">
+                    {/* Orientation - Menu Only */}
+                    {selectedElement.type === 'menu' && (
+                        <div>
+                            <label className="block text-xs font-semibold text-slate-500 uppercase tracking-wider mb-3">Orientation</label>
+                            <div className="flex rounded-lg border border-gray-200 dark:border-gray-700 p-1 bg-gray-50 dark:bg-gray-800">
+                                <button
+                                    type="button"
+                                    onClick={() => updateElement(selectedElement.id, { flexDirection: 'row' })}
+                                    className={`flex items-center justify-center gap-2 flex-1 h-8 rounded transition-all ${(selectedElement.flexDirection ?? 'row') === 'row'
+                                        ? 'bg-gray-800 text-white shadow-sm'
+                                        : 'text-gray-400 hover:text-gray-600 dark:hover:text-gray-200 hover:bg-gray-100 dark:hover:bg-gray-700'
+                                        }`}
+                                >
+                                    <ArrowRight size={16} />
+                                    <span className="text-xs font-medium">Horizontal</span>
+                                </button>
+                                <button
+                                    type="button"
+                                    onClick={() => updateElement(selectedElement.id, { flexDirection: 'column' })}
+                                    className={`flex items-center justify-center gap-2 flex-1 h-8 rounded transition-all ${selectedElement.flexDirection === 'column'
+                                        ? 'bg-gray-800 text-white shadow-sm'
+                                        : 'text-gray-400 hover:text-gray-600 dark:hover:text-gray-200 hover:bg-gray-100 dark:hover:bg-gray-700'
+                                        }`}
+                                >
+                                    <ArrowDown size={16} />
+                                    <span className="text-xs font-medium">Vertical</span>
+                                </button>
+                            </div>
+                        </div>
+                    )}
+
+                    <div>
+                        <label className="block text-xs font-semibold text-slate-500 uppercase tracking-wider mb-3">Alignment</label>
+                        <div className="flex rounded-lg border border-gray-200 dark:border-gray-700 p-1 bg-gray-50 dark:bg-gray-800">
+                            <button
+                                type="button"
+                                onClick={() => updateElement(selectedElement.id, { justifyContent: 'flex-start' })}
+                                className={`flex items-center justify-center flex-1 h-8 rounded transition-all ${(selectedElement.justifyContent ?? 'flex-start') === 'flex-start'
+                                    ? 'bg-gray-800 text-white shadow-sm'
+                                    : 'text-gray-400 hover:text-gray-600 dark:hover:text-gray-200 hover:bg-gray-100 dark:hover:bg-gray-700'
+                                    }`}
+                                title="Align Left"
+                            >
+                                <AlignLeft size={16} />
+                            </button>
+                            <button
+                                type="button"
+                                onClick={() => updateElement(selectedElement.id, { justifyContent: 'center' })}
+                                className={`flex items-center justify-center flex-1 h-8 rounded transition-all ${selectedElement.justifyContent === 'center'
+                                    ? 'bg-gray-800 text-white shadow-sm'
+                                    : 'text-gray-400 hover:text-gray-600 dark:hover:text-gray-200 hover:bg-gray-100 dark:hover:bg-gray-700'
+                                    }`}
+                                title="Align Center"
+                            >
+                                <AlignCenter size={16} />
+                            </button>
+                            <button
+                                type="button"
+                                onClick={() => updateElement(selectedElement.id, { justifyContent: 'flex-end' })}
+                                className={`flex items-center justify-center flex-1 h-8 rounded transition-all ${selectedElement.justifyContent === 'flex-end'
+                                    ? 'bg-gray-800 text-white shadow-sm'
+                                    : 'text-gray-400 hover:text-gray-600 dark:hover:text-gray-200 hover:bg-gray-100 dark:hover:bg-gray-700'
+                                    }`}
+                                title="Align Right"
+                            >
+                                <AlignRight size={16} />
+                            </button>
+                            <button
+                                type="button"
+                                onClick={() => updateElement(selectedElement.id, { justifyContent: 'space-between' })}
+                                className={`flex items-center justify-center flex-1 h-8 rounded transition-all ${selectedElement.justifyContent === 'space-between'
+                                    ? 'bg-gray-800 text-white shadow-sm'
+                                    : 'text-gray-400 hover:text-gray-600 dark:hover:text-gray-200 hover:bg-gray-100 dark:hover:bg-gray-700'
+                                    }`}
+                                title="Space Between"
+                            >
+                                <AlignJustify size={16} />
+                            </button>
+                        </div>
+
+                        {/* Gap Control */}
+                        <div className="pt-2">
+                            <label className="block text-xs font-semibold text-slate-500 uppercase tracking-wider mb-3 flex justify-between">
+                                <span>Gap</span>
+                                <span className="text-slate-400 font-normal">{selectedElement.gap ?? 16}px</span>
+                            </label>
+                            <input
+                                type="range"
+                                min="0"
+                                max="64"
+                                step="4"
+                                value={selectedElement.gap ?? 16}
+                                onChange={(e) => updateElement(selectedElement.id, { gap: parseInt(e.target.value) })}
+                                className="w-full h-2 bg-slate-200 dark:bg-gray-700 rounded-lg appearance-none cursor-pointer accent-blue-600"
+                            />
+                        </div>
+                    </div>
+                </div>
+            )}
+
             {/* Box Model - Margin and Padding like in mockup */}
             <div className="mt-6" style={{ padding: '20px 0', pointerEvents: 'auto' }}>
                 <div className="relative w-full" style={{ padding: '0 28px', pointerEvents: 'auto' }}>
@@ -383,10 +498,11 @@ export const LayoutPanel: React.FC<LayoutPanelProps> = ({ selectedElement, updat
                             min="0"
                             max="100"
                             step="1"
-                            value={selectedElement.marginTop ?? 0}
+                            value={selectedElement.marginTop ?? effectiveDefaults.marginTop ?? 0}
                             onChange={(e) => {
-                                const newValue = parseInt(e.target.value) || 0;
-                                updateElement(selectedElement.id, { marginTop: newValue });
+                                const newValue = parseInt(e.target.value);
+                                const valueToSet = isNaN(newValue) ? 0 : newValue;
+                                updateElement(selectedElement.id, { marginTop: valueToSet });
                             }}
                             onClick={(e) => {
                                 e.stopPropagation();
@@ -412,10 +528,11 @@ export const LayoutPanel: React.FC<LayoutPanelProps> = ({ selectedElement, updat
                             min="0"
                             max="100"
                             step="1"
-                            value={selectedElement.marginRight ?? 0}
+                            value={selectedElement.marginRight ?? effectiveDefaults.marginRight ?? 0}
                             onChange={(e) => {
-                                const newValue = parseInt(e.target.value) || 0;
-                                updateElement(selectedElement.id, { marginRight: newValue });
+                                const newValue = parseInt(e.target.value);
+                                const valueToSet = isNaN(newValue) ? 0 : newValue;
+                                updateElement(selectedElement.id, { marginRight: valueToSet });
                             }}
                             className="absolute border border-gray-300 dark:border-gray-600 rounded bg-white dark:bg-gray-800 text-gray-700 dark:text-gray-200 focus:outline-none focus:border-blue-500 focus:shadow-md"
                             style={{
@@ -437,10 +554,11 @@ export const LayoutPanel: React.FC<LayoutPanelProps> = ({ selectedElement, updat
                             min="0"
                             max="100"
                             step="1"
-                            value={selectedElement.marginBottom ?? 0}
+                            value={selectedElement.marginBottom ?? effectiveDefaults.marginBottom ?? 0}
                             onChange={(e) => {
-                                const newValue = parseInt(e.target.value) || 0;
-                                updateElement(selectedElement.id, { marginBottom: newValue });
+                                const newValue = parseInt(e.target.value);
+                                const valueToSet = isNaN(newValue) ? 0 : newValue;
+                                updateElement(selectedElement.id, { marginBottom: valueToSet });
                             }}
                             className="absolute border border-gray-300 dark:border-gray-600 rounded bg-white dark:bg-gray-800 text-gray-700 dark:text-gray-200 focus:outline-none focus:border-blue-500 focus:shadow-md"
                             style={{
@@ -462,10 +580,11 @@ export const LayoutPanel: React.FC<LayoutPanelProps> = ({ selectedElement, updat
                             min="0"
                             max="100"
                             step="1"
-                            value={selectedElement.marginLeft ?? 0}
+                            value={selectedElement.marginLeft ?? effectiveDefaults.marginLeft ?? 0}
                             onChange={(e) => {
-                                const newValue = parseInt(e.target.value) || 0;
-                                updateElement(selectedElement.id, { marginLeft: newValue });
+                                const newValue = parseInt(e.target.value);
+                                const valueToSet = isNaN(newValue) ? 0 : newValue;
+                                updateElement(selectedElement.id, { marginLeft: valueToSet });
                             }}
                             className="absolute border border-gray-300 dark:border-gray-600 rounded bg-white dark:bg-gray-800 text-gray-700 dark:text-gray-200 focus:outline-none focus:border-blue-500 focus:shadow-md"
                             style={{
@@ -511,10 +630,11 @@ export const LayoutPanel: React.FC<LayoutPanelProps> = ({ selectedElement, updat
                                 min="0"
                                 max="100"
                                 step="1"
-                                value={selectedElement.paddingTop ?? 0}
+                                value={selectedElement.paddingTop ?? effectiveDefaults.paddingTop ?? 0}
                                 onChange={(e) => {
-                                    const newValue = parseInt(e.target.value) || 0;
-                                    updateElement(selectedElement.id, { paddingTop: newValue });
+                                    const newValue = parseInt(e.target.value);
+                                    const valueToSet = isNaN(newValue) ? 0 : newValue;
+                                    updateElement(selectedElement.id, { paddingTop: valueToSet });
                                 }}
                                 onClick={(e) => {
                                     e.stopPropagation();
@@ -540,10 +660,11 @@ export const LayoutPanel: React.FC<LayoutPanelProps> = ({ selectedElement, updat
                                 min="0"
                                 max="100"
                                 step="1"
-                                value={selectedElement.paddingRight ?? 0}
+                                value={selectedElement.paddingRight ?? effectiveDefaults.paddingRight ?? 0}
                                 onChange={(e) => {
-                                    const newValue = parseInt(e.target.value) || 0;
-                                    updateElement(selectedElement.id, { paddingRight: newValue });
+                                    const newValue = parseInt(e.target.value);
+                                    const valueToSet = isNaN(newValue) ? 0 : newValue;
+                                    updateElement(selectedElement.id, { paddingRight: valueToSet });
                                 }}
                                 className="absolute border border-gray-300 dark:border-gray-600 rounded bg-white dark:bg-gray-800 text-gray-700 dark:text-gray-200 focus:outline-none focus:border-blue-500 focus:shadow-md"
                                 style={{
@@ -565,10 +686,11 @@ export const LayoutPanel: React.FC<LayoutPanelProps> = ({ selectedElement, updat
                                 min="0"
                                 max="100"
                                 step="1"
-                                value={selectedElement.paddingBottom ?? 0}
+                                value={selectedElement.paddingBottom ?? effectiveDefaults.paddingBottom ?? 0}
                                 onChange={(e) => {
-                                    const newValue = parseInt(e.target.value) || 0;
-                                    updateElement(selectedElement.id, { paddingBottom: newValue });
+                                    const newValue = parseInt(e.target.value);
+                                    const valueToSet = isNaN(newValue) ? 0 : newValue;
+                                    updateElement(selectedElement.id, { paddingBottom: valueToSet });
                                 }}
                                 className="absolute border border-gray-300 dark:border-gray-600 rounded bg-white dark:bg-gray-800 text-gray-700 dark:text-gray-200 focus:outline-none focus:border-blue-500 focus:shadow-md"
                                 style={{
@@ -590,10 +712,11 @@ export const LayoutPanel: React.FC<LayoutPanelProps> = ({ selectedElement, updat
                                 min="0"
                                 max="100"
                                 step="1"
-                                value={selectedElement.paddingLeft ?? 0}
+                                value={selectedElement.paddingLeft ?? effectiveDefaults.paddingLeft ?? 0}
                                 onChange={(e) => {
-                                    const newValue = parseInt(e.target.value) || 0;
-                                    updateElement(selectedElement.id, { paddingLeft: newValue });
+                                    const newValue = parseInt(e.target.value);
+                                    const valueToSet = isNaN(newValue) ? 0 : newValue;
+                                    updateElement(selectedElement.id, { paddingLeft: valueToSet });
                                 }}
                                 className="absolute border border-gray-300 dark:border-gray-600 rounded bg-white dark:bg-gray-800 text-gray-700 dark:text-gray-200 focus:outline-none focus:border-blue-500 focus:shadow-md"
                                 style={{

@@ -1,11 +1,12 @@
-import React, { useState, useRef, useEffect } from 'react';
+import React, { useState } from 'react';
 import { useStore } from '../store/useStore';
-import { Plus, Trash, Settings, Sliders, ExternalLink, Webhook, MessageCircle, Globe, X, Bold, Italic, Strikethrough, Underline, Code, Link, FileX, Image, Eye, Copy, AlignLeft, AlignCenter, AlignRight, AlignJustify, ChevronDown, ChevronUp, Type, Minus } from 'lucide-react';
+import { Plus, Trash, Settings, Sliders, ExternalLink, MessageCircle, Globe, X, Bold, Italic, Strikethrough, Underline, Eye, Copy, AlignLeft, AlignCenter, AlignRight, AlignJustify, ChevronDown, ChevronUp, Type, Minus, Webhook } from 'lucide-react';
 import { v4 as uuidv4 } from 'uuid';
 import { clsx } from 'clsx';
-import type { SubmissionAction, WebhookAction, FormElement, GalleryImage } from '../types';
+import type { SubmissionAction, FormElement } from '../types';
 import { LayoutPanel } from './LayoutPanel';
 import { ImagePicker } from './ImagePicker';
+import { ComponentRegistry } from './form-elements/index';
 
 
 export const PropertiesPanel: React.FC = () => {
@@ -23,6 +24,11 @@ export const PropertiesPanel: React.FC = () => {
     const [codeType, setCodeType] = useState<'html' | 'react' | 'json'>('html');
     const [copiedCode, setCopiedCode] = useState(false);
     const [textPropsOpen, setTextPropsOpen] = useState(false);
+    const [buttonOptionsOpen, setButtonOptionsOpen] = useState(true);
+    const [buttonBorderOpen, setButtonBorderOpen] = useState(false);
+    const [buttonRoundedOpen, setButtonRoundedOpen] = useState(false);
+    const [buttonActionsOpen, setButtonActionsOpen] = useState(true);
+    const [layoutOpen, setLayoutOpen] = React.useState(true);
 
     const hasUserAction = settings.submissionActions.some(action => action.type === 'redirect' || action.type === 'message');
     const hasFormAction = !!settings.formAction;
@@ -353,7 +359,7 @@ export default MyForm;`;
 
     if (!selectedElement) {
         return (
-            <div className="form-builder-properties bg-white dark:bg-gray-900 border-l border-slate-200 dark:border-gray-800">
+            <div className="form-builder-properties bg-white dark:bg-gray-900 border-l border-slate-200 dark:border-gray-800 h-full flex flex-col">
                 <div className="properties-header bg-white dark:bg-gray-900 border-b border-slate-100 dark:border-gray-800">
                     <div style={{ padding: 'var(--spacing-2)', borderRadius: 'var(--radius-lg)' }} className="bg-slate-50 text-slate-500 dark:bg-gray-800 dark:text-gray-400">
                         <Settings size={18} />
@@ -398,7 +404,7 @@ export default MyForm;`;
                     </button>
                 </div>
 
-                <div style={{ padding: '24px 32px', gap: '12px', overflowY: 'auto', display: 'flex', flexDirection: 'column' }}>
+                <div style={{ padding: '24px 32px 80px 32px', gap: '12px', overflowY: 'auto', display: 'flex', flexDirection: 'column', flex: 1 }}>
                     {activeFormTab === 'settings' && (
                         <>
                             <div>
@@ -951,7 +957,7 @@ export default MyForm;`;
     }
 
     return (
-        <div className="form-builder-properties">
+        <div className="form-builder-properties h-full flex flex-col">
             <div className="properties-header">
                 <div className="properties-header-icon">
                     <Sliders size={18} />
@@ -962,7 +968,7 @@ export default MyForm;`;
                 </div>
             </div>
 
-            <div style={{ padding: '24px 32px', gap: '12px', overflowY: 'auto', display: 'flex', flexDirection: 'column' }}>
+            <div style={{ padding: '24px 32px 80px 32px', gap: '12px', overflowY: 'auto', display: 'flex', flexDirection: 'column', flex: 1 }}>
                 {/* Define input types that need field name and placeholder */}
                 {(() => {
                     const isInputType = !['container', 'columns', 'rich-text', 'text-block', 'star-rating', 'button'].includes(selectedElement.type);
@@ -1370,45 +1376,47 @@ export default MyForm;`;
                 )}
 
                 {/* Background Color Control */}
-                <div>
-                    <label className="block text-xs font-semibold text-slate-500 dark:text-gray-400 uppercase tracking-wider mb-2">
-                        Background Color
-                    </label>
-                    <div className="relative inline-block">
-                        <div
-                            className="w-12 h-12 rounded-lg border border-slate-200 dark:border-gray-700 relative overflow-hidden cursor-pointer"
-                            style={{
-                                backgroundColor: selectedElement.backgroundColor || '#ffffff'
-                            }}
-                            onClick={() => {
-                                // Create a color input element and trigger click
-                                const colorInput = document.createElement('input');
-                                colorInput.type = 'color';
-                                colorInput.value = selectedElement.backgroundColor || '#ffffff';
-                                colorInput.onchange = (e) => {
-                                    const target = e.target as HTMLInputElement;
-                                    updateElement(selectedElement.id, { backgroundColor: target.value });
-                                };
-                                colorInput.click();
-                            }}
-                        >
-                            {!selectedElement.backgroundColor && (
-                                <svg className="absolute inset-0 w-full h-full" viewBox="0 0 48 48">
-                                    <path d="M6 42L42 6" stroke="#ef4444" strokeWidth="2" />
-                                </svg>
+                {selectedElement.type !== 'button' && (
+                    <div>
+                        <label className="block text-xs font-semibold text-slate-500 dark:text-gray-400 uppercase tracking-wider mb-2">
+                            Background Color
+                        </label>
+                        <div className="relative inline-block">
+                            <div
+                                className="w-12 h-12 rounded-lg border border-slate-200 dark:border-gray-700 relative overflow-hidden cursor-pointer"
+                                style={{
+                                    backgroundColor: selectedElement.backgroundColor || '#ffffff'
+                                }}
+                                onClick={() => {
+                                    // Create a color input element and trigger click
+                                    const colorInput = document.createElement('input');
+                                    colorInput.type = 'color';
+                                    colorInput.value = selectedElement.backgroundColor || '#ffffff';
+                                    colorInput.onchange = (e) => {
+                                        const target = e.target as HTMLInputElement;
+                                        updateElement(selectedElement.id, { backgroundColor: target.value });
+                                    };
+                                    colorInput.click();
+                                }}
+                            >
+                                {!selectedElement.backgroundColor && (
+                                    <svg className="absolute inset-0 w-full h-full" viewBox="0 0 48 48">
+                                        <path d="M6 42L42 6" stroke="#ef4444" strokeWidth="2" />
+                                    </svg>
+                                )}
+                            </div>
+                            {selectedElement.backgroundColor && (
+                                <button
+                                    onClick={() => updateElement(selectedElement.id, { backgroundColor: undefined })}
+                                    className="absolute -top-1 -right-1 w-5 h-5 bg-red-500 hover:bg-red-600 text-white rounded-full flex items-center justify-center text-xs font-bold transition-colors"
+                                    title="Remove background color"
+                                >
+                                    ×
+                                </button>
                             )}
                         </div>
-                        {selectedElement.backgroundColor && (
-                            <button
-                                onClick={() => updateElement(selectedElement.id, { backgroundColor: undefined })}
-                                className="absolute -top-1 -right-1 w-5 h-5 bg-red-500 hover:bg-red-600 text-white rounded-full flex items-center justify-center text-xs font-bold transition-colors"
-                                title="Remove background color"
-                            >
-                                ×
-                            </button>
-                        )}
                     </div>
-                </div>
+                )}
 
                 {/* Image Width and Alignment - positioned after background color */}
                 {selectedElement.type === 'image' && (
@@ -1497,12 +1505,46 @@ export default MyForm;`;
                     </div>
                 )}
 
-                {/* Layout Panel */}
-                {!['hidden'].includes(selectedElement.type) && (
-                    <LayoutPanel
-                        selectedElement={selectedElement}
-                        updateElement={updateElement}
-                    />
+                {/* Dynamic Properties from Registry (Moved for priority) */}
+                {(() => {
+                    const RegisteredProperties = ComponentRegistry.get(selectedElement.type)?.Properties;
+                    if (RegisteredProperties) {
+                        return (
+                            <div className="mb-4">
+                                <RegisteredProperties element={selectedElement} updateElement={updateElement} />
+                            </div>
+                        );
+                    }
+                    return null;
+                })()}
+
+
+
+                {/* Generic Layout Panel - Collapsible */}
+                {!['hidden', 'button'].includes(selectedElement.type) && (
+                    <div className="border border-slate-200 dark:border-gray-700 rounded-lg bg-white dark:bg-gray-800 mb-4">
+                        <button
+                            type="button"
+                            onClick={() => setLayoutOpen(!layoutOpen)}
+                            className="flex items-center justify-between w-full p-3 text-left bg-slate-50 dark:bg-gray-800 hover:bg-slate-100 dark:hover:bg-gray-700 transition-colors"
+                        >
+                            <span className="text-xs font-semibold text-slate-500 dark:text-gray-400 uppercase tracking-wider">
+                                Layout
+                            </span>
+                            {layoutOpen ? <ChevronUp size={16} className="text-slate-400" /> : <ChevronDown size={16} className="text-slate-400" />}
+                        </button>
+
+                        {layoutOpen && (
+                            <div className="p-4 border-t border-slate-200 dark:border-gray-700">
+                                <LayoutPanel
+                                    selectedElement={selectedElement}
+                                    updateElement={updateElement}
+                                    hideHeader={true}
+                                    boxModelOnly={['social', 'menu', 'columns'].includes(selectedElement.type)}
+                                />
+                            </div>
+                        )}
+                    </div>
                 )}
 
 
@@ -1569,94 +1611,549 @@ export default MyForm;`;
                     </div>
                 )}
 
+                {/* Button Actions */}
                 {selectedElement.type === 'button' && (
-                    <div className="space-y-4">
-                        <div>
-                            <label className="block text-xs font-semibold text-slate-500 dark:text-gray-400 uppercase tracking-wider mb-2">
-                                Button Text
-                            </label>
-                            <input
-                                type="text"
-                                value={selectedElement.buttonText || ''}
-                                onChange={(e) => updateElement(selectedElement.id, { buttonText: e.target.value })}
-                                className="w-full p-3 bg-slate-50 dark:bg-gray-800 border border-slate-200 dark:border-gray-700 rounded-lg text-sm text-slate-700 dark:text-gray-200 focus:ring-2 focus:ring-brand-500 focus:border-transparent transition-all outline-none"
-                                placeholder="Button text"
-                            />
-                        </div>
-                        <div>
-                            <label className="block text-xs font-semibold text-slate-500 dark:text-gray-400 uppercase tracking-wider mb-2">
-                                Button Type
-                            </label>
-                            <select
-                                value={selectedElement.buttonType || 'button'}
-                                onChange={(e) => updateElement(selectedElement.id, { buttonType: e.target.value as 'button' | 'submit' | 'reset' })}
-                                className="w-full p-3 bg-slate-50 dark:bg-gray-800 border border-slate-200 dark:border-gray-700 rounded-lg text-sm text-slate-700 dark:text-gray-200 focus:ring-2 focus:ring-brand-500 focus:border-transparent transition-all outline-none"
-                            >
-                                <option value="button">Button</option>
-                                <option value="submit">Submit</option>
-                                <option value="reset">Reset</option>
-                            </select>
-                        </div>
-                        <div>
-                            <label className="block text-xs font-semibold text-slate-500 dark:text-gray-400 uppercase tracking-wider mb-2">
-                                Button Style
-                            </label>
-                            <select
-                                value={selectedElement.buttonStyle || 'primary'}
-                                onChange={(e) => updateElement(selectedElement.id, { buttonStyle: e.target.value as 'primary' | 'secondary' | 'outline' | 'text' })}
-                                className="w-full p-3 bg-slate-50 dark:bg-gray-800 border border-slate-200 dark:border-gray-700 rounded-lg text-sm text-slate-700 dark:text-gray-200 focus:ring-2 focus:ring-brand-500 focus:border-transparent transition-all outline-none"
-                            >
-                                <option value="primary">Primary</option>
-                                <option value="secondary">Secondary</option>
-                                <option value="outline">Outline</option>
-                                <option value="text">Text</option>
-                            </select>
-                        </div>
-                        <div>
-                            <label className="block text-xs font-semibold text-slate-500 dark:text-gray-400 uppercase tracking-wider mb-2">
-                                Button Size
-                            </label>
-                            <select
-                                value={selectedElement.buttonSize || 'md'}
-                                onChange={(e) => updateElement(selectedElement.id, { buttonSize: e.target.value as 'sm' | 'md' | 'lg' })}
-                                className="w-full p-3 bg-slate-50 dark:bg-gray-800 border border-slate-200 dark:border-gray-700 rounded-lg text-sm text-slate-700 dark:text-gray-200 focus:ring-2 focus:ring-brand-500 focus:border-transparent transition-all outline-none"
-                            >
-                                <option value="sm">Small</option>
-                                <option value="md">Medium</option>
-                                <option value="lg">Large</option>
-                            </select>
-                        </div>
-                        {selectedElement.buttonType === 'submit' && (
-                            <>
+                    <div className="pt-4 border-t border-slate-100 dark:border-gray-700">
+                        <button
+                            type="button"
+                            onClick={() => setButtonActionsOpen(!buttonActionsOpen)}
+                            className="flex items-center justify-between w-full p-3 text-left bg-slate-50 dark:bg-gray-800 hover:bg-slate-100 dark:hover:bg-gray-700 border border-slate-200 dark:border-gray-700 rounded-lg transition-colors"
+                        >
+                            <div className="flex items-center gap-2">
+                                <div className="p-1 border border-slate-400 rounded-sm w-5 h-4 flex items-center justify-center">
+                                    <div className="w-3 h-0.5 bg-slate-600 dark:bg-slate-300"></div>
+                                </div>
+                                <span className="text-sm font-semibold text-slate-700 dark:text-gray-200">Button Actions</span>
+                            </div>
+                            {buttonActionsOpen ? <ChevronUp size={16} className="text-slate-500 dark:text-gray-400" /> : <ChevronDown size={16} className="text-slate-500 dark:text-gray-400" />}
+                        </button>
+
+                        {buttonActionsOpen && (
+                            <div className="mt-3 space-y-4 p-4 border border-slate-200 dark:border-gray-700 rounded-lg bg-white dark:bg-gray-800">
                                 <div>
                                     <label className="block text-xs font-semibold text-slate-500 dark:text-gray-400 uppercase tracking-wider mb-2">
-                                        URL
+                                        Button Text
                                     </label>
                                     <input
-                                        type="url"
-                                        value={selectedElement.buttonUrl || ''}
-                                        onChange={(e) => updateElement(selectedElement.id, { buttonUrl: e.target.value })}
+                                        type="text"
+                                        value={selectedElement.buttonText || ''}
+                                        onChange={(e) => updateElement(selectedElement.id, { buttonText: e.target.value })}
                                         className="w-full p-3 bg-slate-50 dark:bg-gray-800 border border-slate-200 dark:border-gray-700 rounded-lg text-sm text-slate-700 dark:text-gray-200 focus:ring-2 focus:ring-brand-500 focus:border-transparent transition-all outline-none"
-                                        placeholder="https://example.com"
+                                        placeholder="Button text"
                                     />
                                 </div>
                                 <div>
-                                    <label className="block text-xs font-semibold text-slate-500 uppercase tracking-wider mb-2">
-                                        Target
+                                    <label className="block text-xs font-semibold text-slate-500 dark:text-gray-400 uppercase tracking-wider mb-2">
+                                        Button Type
                                     </label>
                                     <select
-                                        value={selectedElement.buttonTarget || '_self'}
-                                        onChange={(e) => updateElement(selectedElement.id, { buttonTarget: e.target.value as '_blank' | '_self' })}
+                                        value={selectedElement.buttonType || 'button'}
+                                        onChange={(e) => updateElement(selectedElement.id, { buttonType: e.target.value as 'button' | 'submit' | 'reset' })}
                                         className="w-full p-3 bg-slate-50 dark:bg-gray-800 border border-slate-200 dark:border-gray-700 rounded-lg text-sm text-slate-700 dark:text-gray-200 focus:ring-2 focus:ring-brand-500 focus:border-transparent transition-all outline-none"
                                     >
-                                        <option value="_self">Same Tab</option>
-                                        <option value="_blank">New Tab</option>
+                                        <option value="button">Button</option>
+                                        <option value="submit">Submit</option>
+                                        <option value="reset">Reset</option>
                                     </select>
                                 </div>
-                            </>
+                                <div>
+                                    <label className="block text-xs font-semibold text-slate-500 dark:text-gray-400 uppercase tracking-wider mb-2">
+                                        Button Style
+                                    </label>
+                                    <select
+                                        value={selectedElement.buttonStyle || 'primary'}
+                                        onChange={(e) => updateElement(selectedElement.id, { buttonStyle: e.target.value as 'primary' | 'secondary' | 'outline' | 'text' })}
+                                        className="w-full p-3 bg-slate-50 dark:bg-gray-800 border border-slate-200 dark:border-gray-700 rounded-lg text-sm text-slate-700 dark:text-gray-200 focus:ring-2 focus:ring-brand-500 focus:border-transparent transition-all outline-none"
+                                    >
+                                        <option value="primary">Primary</option>
+                                        <option value="secondary">Secondary</option>
+                                        <option value="outline">Outline</option>
+                                        <option value="text">Text</option>
+                                    </select>
+                                </div>
+                                <div>
+                                    <label className="block text-xs font-semibold text-slate-500 dark:text-gray-400 uppercase tracking-wider mb-2">
+                                        Button Size
+                                    </label>
+                                    <select
+                                        value={selectedElement.buttonSize || 'md'}
+                                        onChange={(e) => updateElement(selectedElement.id, { buttonSize: e.target.value as 'sm' | 'md' | 'lg' })}
+                                        className="w-full p-3 bg-slate-50 dark:bg-gray-800 border border-slate-200 dark:border-gray-700 rounded-lg text-sm text-slate-700 dark:text-gray-200 focus:ring-2 focus:ring-brand-500 focus:border-transparent transition-all outline-none"
+                                    >
+                                        <option value="sm">Small</option>
+                                        <option value="md">Medium</option>
+                                        <option value="lg">Large</option>
+                                    </select>
+                                </div>
+                                {selectedElement.buttonType === 'submit' && (
+                                    <>
+                                        <div>
+                                            <label className="block text-xs font-semibold text-slate-500 dark:text-gray-400 uppercase tracking-wider mb-2">
+                                                URL
+                                            </label>
+                                            <input
+                                                type="url"
+                                                value={selectedElement.buttonUrl || ''}
+                                                onChange={(e) => updateElement(selectedElement.id, { buttonUrl: e.target.value })}
+                                                className="w-full p-3 bg-slate-50 dark:bg-gray-800 border border-slate-200 dark:border-gray-700 rounded-lg text-sm text-slate-700 dark:text-gray-200 focus:ring-2 focus:ring-brand-500 focus:border-transparent transition-all outline-none"
+                                                placeholder="https://example.com"
+                                            />
+                                        </div>
+                                        <div>
+                                            <label className="block text-xs font-semibold text-slate-500 uppercase tracking-wider mb-2">
+                                                Target
+                                            </label>
+                                            <select
+                                                value={selectedElement.buttonTarget || '_self'}
+                                                onChange={(e) => updateElement(selectedElement.id, { buttonTarget: e.target.value as '_blank' | '_self' })}
+                                                className="w-full p-3 bg-slate-50 dark:bg-gray-800 border border-slate-200 dark:border-gray-700 rounded-lg text-sm text-slate-700 dark:text-gray-200 focus:ring-2 focus:ring-brand-500 focus:border-transparent transition-all outline-none"
+                                            >
+                                                <option value="_self">Same Tab</option>
+                                                <option value="_blank">New Tab</option>
+                                            </select>
+                                        </div>
+                                    </>
+                                )}
+                            </div>
                         )}
                     </div>
                 )}
+
+                {/* Button Options */}
+                {selectedElement.type === 'button' && (
+                    <div className="pt-4 border-t border-slate-100 dark:border-gray-700 mt-4">
+                        <button
+                            type="button"
+                            onClick={() => setButtonOptionsOpen(!buttonOptionsOpen)}
+                            className="flex items-center justify-between w-full p-3 text-left bg-slate-50 dark:bg-gray-800 hover:bg-slate-100 dark:hover:bg-gray-700 border border-slate-200 dark:border-gray-700 rounded-lg transition-colors"
+                        >
+                            <div className="flex items-center gap-2">
+                                <div className="p-1 border border-slate-400 rounded-sm w-5 h-4"></div>
+                                <span className="text-sm font-semibold text-slate-700 dark:text-gray-200">Button Options</span>
+                            </div>
+                            {buttonOptionsOpen ? <ChevronUp size={16} className="text-slate-500 dark:text-gray-400" /> : <ChevronDown size={16} className="text-slate-500 dark:text-gray-400" />}
+                        </button>
+
+                        {buttonOptionsOpen && (
+                            <div className="mt-3 space-y-6 p-4 border border-slate-200 dark:border-gray-700 rounded-lg bg-white dark:bg-gray-800">
+                                {/* Background Color */}
+                                <div className="flex items-center justify-between">
+                                    <label className="text-sm font-medium text-slate-700 dark:text-gray-300">Background Color</label>
+                                    <div className="relative inline-block">
+                                        <div
+                                            className="w-10 h-10 rounded border border-slate-200 dark:border-gray-600 cursor-pointer overflow-hidden relative"
+                                            style={{ backgroundColor: (selectedElement.backgroundColor && selectedElement.backgroundColor !== 'transparent') ? selectedElement.backgroundColor : (selectedElement.backgroundColor === 'transparent' ? 'transparent' : 'var(--theme-button-bg)') }}
+                                            onClick={() => {
+                                                const colorInput = document.createElement('input');
+                                                colorInput.type = 'color';
+                                                colorInput.value = (selectedElement.backgroundColor && selectedElement.backgroundColor !== 'transparent') ? selectedElement.backgroundColor : '#0f172a';
+                                                colorInput.onchange = (e) => updateElement(selectedElement.id, { backgroundColor: (e.target as HTMLInputElement).value });
+                                                colorInput.click();
+                                            }}
+                                        >
+                                            {selectedElement.backgroundColor === 'transparent' && (
+                                                <svg className="absolute inset-0 w-full h-full" viewBox="0 0 48 48">
+                                                    <path d="M6 42L42 6" stroke="#ef4444" strokeWidth="2" />
+                                                </svg>
+                                            )}
+
+                                            {(selectedElement.backgroundColor && selectedElement.backgroundColor !== 'transparent') && (
+                                                <button
+                                                    onClick={(e) => {
+                                                        e.stopPropagation();
+                                                        updateElement(selectedElement.id, { backgroundColor: undefined });
+                                                    }}
+                                                    className="absolute -top-1 -right-1 w-4 h-4 bg-slate-700 text-white rounded-full flex items-center justify-center text-[10px]"
+                                                >
+                                                    <X size={8} />
+                                                </button>
+                                            )}
+                                        </div>
+                                    </div>
+                                </div>
+
+                                {/* Text Color */}
+                                <div className="flex items-center justify-between">
+                                    <label className="text-sm font-medium text-slate-700 dark:text-gray-300">Text Color</label>
+                                    <div className="relative inline-block">
+                                        <div
+                                            className="w-10 h-10 rounded border border-slate-200 dark:border-gray-600 cursor-pointer overflow-hidden relative"
+                                            style={{ backgroundColor: selectedElement.textColor || 'transparent' }}
+                                            onClick={() => {
+                                                const colorInput = document.createElement('input');
+                                                colorInput.type = 'color';
+                                                colorInput.value = selectedElement.textColor || '#ffffff';
+                                                colorInput.onchange = (e) => updateElement(selectedElement.id, { textColor: (e.target as HTMLInputElement).value });
+                                                colorInput.click();
+                                            }}
+                                        >
+                                            {!selectedElement.textColor && (
+                                                <svg className="absolute inset-0 w-full h-full" viewBox="0 0 48 48">
+                                                    <path d="M6 42L42 6" stroke="#ef4444" strokeWidth="2" />
+                                                </svg>
+                                            )}
+                                            {selectedElement.textColor && (
+                                                <button
+                                                    onClick={(e) => {
+                                                        e.stopPropagation();
+                                                        updateElement(selectedElement.id, { textColor: undefined });
+                                                    }}
+                                                    className="absolute -top-1 -right-1 w-4 h-4 bg-slate-700 text-white rounded-full flex items-center justify-center text-[10px]"
+                                                >
+                                                    <X size={8} />
+                                                </button>
+                                            )}
+                                        </div>
+                                    </div>
+                                </div>
+
+                                {/* Width Toggle */}
+                                <div className="flex items-center justify-between pt-2">
+                                    <label className="text-sm font-semibold text-slate-700 dark:text-gray-300">Width</label>
+                                    <div className="flex items-center gap-3">
+                                        <span className="text-xs text-slate-500 font-medium">Auto On</span>
+                                        <div className="relative inline-block w-12 align-middle select-none">
+                                            <input
+                                                type="checkbox"
+                                                checked={selectedElement.buttonWidthType === 'auto' || !selectedElement.buttonWidthType}
+                                                onChange={(e) => updateElement(selectedElement.id, { buttonWidthType: e.target.checked ? 'auto' : 'custom' })}
+                                                className="toggle-checkbox absolute block w-6 h-6 rounded-full bg-white border-4 appearance-none cursor-pointer transition-all duration-300 ease-in-out checked:right-0 checked:border-brand-600 right-6 border-slate-400"
+                                            />
+                                            <label className={`toggle-label block overflow-hidden h-6 rounded-full cursor-pointer transition-colors ${selectedElement.buttonWidthType === 'auto' || !selectedElement.buttonWidthType ? 'bg-brand-600' : 'bg-slate-400 dark:bg-gray-600'}`}></label>
+                                        </div>
+                                    </div>
+                                </div>
+                                {selectedElement.buttonWidthType === 'custom' && (
+                                    <input
+                                        type="range"
+                                        min="10"
+                                        max="100"
+                                        value={selectedElement.buttonWidth || 100}
+                                        onChange={(e) => updateElement(selectedElement.id, { buttonWidth: parseInt(e.target.value) })}
+                                        className="w-full h-2 bg-slate-200 dark:bg-gray-700 rounded-lg appearance-none cursor-pointer"
+                                    />
+                                )}
+
+                                {/* Font Family */}
+                                <div className="flex items-center justify-between pt-2">
+                                    <label className="text-sm font-medium text-slate-700 dark:text-gray-300">Font Family</label>
+                                    <div className="relative w-40">
+                                        <select
+                                            value={selectedElement.fontFamily || ''}
+                                            onChange={(e) => updateElement(selectedElement.id, { fontFamily: e.target.value })}
+                                            className="w-full p-2 pr-8 text-sm bg-white dark:bg-gray-900 border border-slate-200 dark:border-gray-600 rounded-lg outline-none focus:border-brand-500 transition-colors appearance-none text-right"
+                                        >
+                                            <option value="">Select...</option>
+                                            <option value="Arial, sans-serif">Arial</option>
+                                            <option value="Helvetica, sans-serif">Helvetica</option>
+                                            <option value="Georgia, serif">Georgia</option>
+                                            <option value="Times New Roman, serif">Times New Roman</option>
+                                            <option value="Courier New, monospace">Courier New</option>
+                                            <option value="Verdana, sans-serif">Verdana</option>
+                                            <option value="Impact, sans-serif">Impact</option>
+                                        </select>
+                                        <div className="absolute left-2 top-1/2 -translate-y-1/2 pointer-events-none text-slate-500 dark:text-gray-400">
+                                            <ChevronDown size={14} />
+                                        </div>
+                                    </div>
+                                </div>
+
+                                {/* Font Weight */}
+                                <div className="flex items-center justify-between pt-2">
+                                    <label className="text-sm font-medium text-slate-700 dark:text-gray-300">Font Weight</label>
+                                    <div className="relative w-40">
+                                        <select
+                                            value={selectedElement.fontWeight || 'normal'}
+                                            onChange={(e) => updateElement(selectedElement.id, { fontWeight: e.target.value as any })}
+                                            className="w-full p-2 pr-8 text-sm bg-white dark:bg-gray-900 border border-slate-200 dark:border-gray-600 rounded-lg outline-none focus:border-brand-500 transition-colors appearance-none text-right"
+                                        >
+                                            <option value="normal">Regular</option>
+                                            <option value="medium">Medium</option>
+                                            <option value="semibold">Semi Bold</option>
+                                            <option value="bold">Bold</option>
+                                        </select>
+                                        <div className="absolute left-2 top-1/2 -translate-y-1/2 pointer-events-none text-slate-500 dark:text-gray-400">
+                                            <ChevronDown size={14} />
+                                        </div>
+                                    </div>
+                                </div>
+
+                                {/* Font Size */}
+                                <div className="flex items-center justify-between pt-2">
+                                    <label className="text-sm font-medium text-slate-700 dark:text-gray-300">Font Size</label>
+                                    <div className="flex items-center gap-2">
+                                        <div className="flex items-center border border-slate-200 dark:border-gray-600 rounded-lg overflow-hidden bg-white dark:bg-gray-900">
+                                            <input
+                                                type="number"
+                                                value={selectedElement.fontSize || 16}
+                                                onChange={(e) => updateElement(selectedElement.id, { fontSize: parseInt(e.target.value) })}
+                                                className="w-12 p-1.5 text-center text-sm bg-transparent outline-none border-r border-slate-200 dark:border-gray-600 text-slate-700 dark:text-gray-200"
+                                            />
+                                            <div className="bg-slate-50 dark:bg-gray-800 px-3 py-1.5 text-sm text-slate-500 border-r border-slate-200 dark:border-gray-600">px</div>
+                                            <button onClick={() => updateElement(selectedElement.id, { fontSize: (selectedElement.fontSize || 16) - 1 })} className="px-3 py-1.5 hover:bg-slate-50 dark:hover:bg-gray-700 border-r border-slate-200 dark:border-gray-600 text-slate-600 dark:text-gray-300 transition-colors"><Minus size={14} /></button>
+                                            <button onClick={() => updateElement(selectedElement.id, { fontSize: (selectedElement.fontSize || 16) + 1 })} className="px-3 py-1.5 hover:bg-slate-50 dark:hover:bg-gray-700 text-slate-600 dark:text-gray-300 transition-colors"><Plus size={14} /></button>
+                                        </div>
+                                    </div>
+                                </div>
+
+                                {/* Line Height */}
+                                <div className="flex items-center justify-between pt-2">
+                                    <label className="text-sm font-medium text-slate-700 dark:text-gray-300">Line Height</label>
+                                    <div className="flex items-center gap-2">
+                                        <div className="flex items-center border border-slate-200 dark:border-gray-600 rounded overflow-hidden">
+                                            <input
+                                                type="number"
+                                                value={selectedElement.lineHeight || 120}
+                                                onChange={(e) => updateElement(selectedElement.id, { lineHeight: parseInt(e.target.value) })}
+                                                className="w-16 p-1.5 text-center text-sm bg-transparent outline-none border-r border-slate-200 dark:border-gray-600"
+                                            />
+                                            <div className="bg-slate-50 dark:bg-gray-800 px-2 py-1.5 text-sm text-slate-500">%</div>
+                                        </div>
+                                        <div className="flex border border-slate-200 dark:border-gray-600 rounded overflow-hidden">
+                                            <button onClick={() => updateElement(selectedElement.id, { lineHeight: (selectedElement.lineHeight || 120) - 10 })} className="px-2 py-1.5 hover:bg-slate-100 dark:hover:bg-gray-700 border-r border-slate-200 dark:border-gray-600"><Minus size={14} /></button>
+                                            <button onClick={() => updateElement(selectedElement.id, { lineHeight: (selectedElement.lineHeight || 120) + 10 })} className="px-2 py-1.5 hover:bg-slate-100 dark:hover:bg-gray-700"><Plus size={14} /></button>
+                                        </div>
+                                    </div>
+                                </div>
+
+                                {/* Letter Spacing */}
+                                <div className="flex items-center justify-between pt-2">
+                                    <label className="text-sm font-medium text-slate-700 dark:text-gray-300">Letter Spacing</label>
+                                    <div className="flex items-center gap-2">
+                                        <div className="flex items-center border border-slate-200 dark:border-gray-600 rounded overflow-hidden">
+                                            <input
+                                                type="number"
+                                                value={selectedElement.letterSpacing || 0}
+                                                onChange={(e) => updateElement(selectedElement.id, { letterSpacing: parseFloat(e.target.value) })}
+                                                className="w-16 p-1.5 text-center text-sm bg-transparent outline-none border-r border-slate-200 dark:border-gray-600"
+                                            />
+                                            <div className="bg-slate-50 dark:bg-gray-800 px-2 py-1.5 text-sm text-slate-500">px</div>
+                                        </div>
+                                        <div className="flex border border-slate-200 dark:border-gray-600 rounded overflow-hidden">
+                                            <button onClick={() => updateElement(selectedElement.id, { letterSpacing: (selectedElement.letterSpacing || 0) - 0.5 })} className="px-2 py-1.5 hover:bg-slate-100 dark:hover:bg-gray-700 border-r border-slate-200 dark:border-gray-600"><Minus size={14} /></button>
+                                            <button onClick={() => updateElement(selectedElement.id, { letterSpacing: (selectedElement.letterSpacing || 0) + 0.5 })} className="px-2 py-1.5 hover:bg-slate-100 dark:hover:bg-gray-700"><Plus size={14} /></button>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        )}
+                    </div>
+                )}
+
+                {/* Layout Section (Moved for Button) */}
+                {selectedElement.type === 'button' && (
+                    <div className="pt-4 border-t border-slate-100 dark:border-gray-700 mt-4">
+                        <button
+                            type="button"
+                            onClick={() => setLayoutOpen(!layoutOpen)}
+                            className="flex items-center justify-between w-full p-3 text-left bg-slate-50 dark:bg-gray-800 hover:bg-slate-100 dark:hover:bg-gray-700 border border-slate-200 dark:border-gray-700 rounded-lg transition-colors"
+                        >
+                            <div className="flex items-center gap-2">
+                                <div className="p-1 border border-slate-400 rounded-sm w-5 h-4 flex items-center justify-center">
+                                    <div className="w-3 h-3 border border-slate-600 dark:border-slate-300 border-dashed"></div>
+                                </div>
+                                <span className="text-sm font-semibold text-slate-700 dark:text-gray-200">Layout</span>
+                            </div>
+                            {layoutOpen ? <ChevronUp size={16} className="text-slate-500 dark:text-gray-400" /> : <ChevronDown size={16} className="text-slate-500 dark:text-gray-400" />}
+                        </button>
+
+                        {layoutOpen && (
+                            <div className="mt-3 p-4 border border-slate-200 dark:border-gray-700 rounded-lg bg-white dark:bg-gray-800">
+                                <LayoutPanel
+                                    selectedElement={selectedElement}
+                                    updateElement={updateElement}
+                                    hideHeader={true}
+                                />
+                            </div>
+                        )}
+                    </div>
+                )}
+
+                {/* Border Settings */}
+                {selectedElement.type === 'button' && (
+                    <div className="pt-4 border-t border-slate-100 dark:border-gray-700 mt-4">
+                        <button
+                            type="button"
+                            onClick={() => setButtonBorderOpen(!buttonBorderOpen)}
+                            className="flex items-center justify-between w-full p-3 text-left bg-slate-50 dark:bg-gray-800 hover:bg-slate-100 dark:hover:bg-gray-700 border border-slate-200 dark:border-gray-700 rounded-lg transition-colors"
+                        >
+                            <div className="flex items-center gap-2">
+                                <div className="p-1 border border-slate-400 rounded-sm w-5 h-5 flex items-center justify-center">
+                                    <div className="w-3 h-3 border border-slate-600 dark:border-slate-300"></div>
+                                </div>
+                                <span className="text-sm font-semibold text-slate-700 dark:text-gray-200">Border</span>
+                            </div>
+                            {buttonBorderOpen ? <ChevronUp size={16} className="text-slate-500 dark:text-gray-400" /> : <ChevronDown size={16} className="text-slate-500 dark:text-gray-400" />}
+                        </button>
+
+                        {buttonBorderOpen && (
+                            <div className="mt-3 p-6 border border-slate-200 dark:border-gray-700 rounded-lg bg-white dark:bg-gray-800">
+                                {/* Visual Border Editor */}
+                                <div className="relative w-full h-48 flex items-center justify-center select-none py-2">
+                                    {/* Central Box */}
+                                    <div className="relative w-14 h-9 bg-slate-100 dark:bg-gray-800 border border-slate-300 dark:border-gray-600 rounded flex items-center justify-center z-10">
+                                        <div className="w-6 h-6 border border-slate-300 dark:border-gray-500 rounded-sm opacity-50"></div>
+                                    </div>
+
+                                    {/* Controls Wrapper */}
+                                    {['Top', 'Right', 'Bottom', 'Left'].map((side) => {
+                                        const sideKey = side as 'Top' | 'Right' | 'Left' | 'Bottom';
+                                        // @ts-ignore
+                                        const width = selectedElement[`borderWidth${sideKey}`] || 0;
+                                        // @ts-ignore
+                                        const color = selectedElement[`borderColor${sideKey}`];
+                                        // @ts-ignore
+                                        const style = selectedElement[`borderStyle${sideKey}`] || 'None';
+
+                                        const positionClasses = {
+                                            Top: 'top-0 left-1/2 -translate-x-1/2 flex-col-reverse mb-1 pt-1',
+                                            Right: 'right-0 top-1/2 -translate-y-1/2 flex-row ml-1 pl-1',
+                                            Bottom: 'bottom-0 left-1/2 -translate-x-1/2 flex-col mt-1 pb-1',
+                                            Left: 'left-0 top-1/2 -translate-y-1/2 flex-row-reverse mr-1 pr-1'
+                                        }[side];
+
+                                        return (
+                                            <div key={side} className={`absolute ${positionClasses} flex items-center gap-1.5 z-20`}>
+                                                {/* Width Input */}
+                                                <div className="relative group">
+                                                    <input
+                                                        type="number"
+                                                        min="0"
+                                                        value={width}
+                                                        onChange={(e) => updateElement(selectedElement.id, { [`borderWidth${sideKey}`]: parseInt(e.target.value) || 0 })}
+                                                        className="w-10 h-6 text-center text-[10px] font-medium border border-slate-200 dark:border-gray-600 rounded bg-white dark:bg-gray-900 shadow-sm focus:border-blue-500 focus:ring-1 focus:ring-blue-500 transition-all outline-none"
+                                                        placeholder="0"
+                                                    />
+                                                </div>
+
+                                                {/* Color Picker */}
+                                                <div className="relative">
+                                                    <div
+                                                        className="w-5 h-5 rounded-full border border-slate-200 dark:border-gray-600 cursor-pointer shadow-sm hover:scale-110 transition-transform overflow-hidden relative"
+                                                        style={{ backgroundColor: color || 'transparent' }}
+                                                        onClick={() => {
+                                                            const i = document.createElement('input');
+                                                            i.type = 'color';
+                                                            i.value = color || '#000000';
+                                                            // @ts-ignore
+                                                            i.onchange = e => updateElement(selectedElement.id, { [`borderColor${sideKey}`]: (e.target as HTMLInputElement).value });
+                                                            i.click();
+                                                        }}
+                                                        title={`${side} Color`}
+                                                    >
+                                                        {!color && (
+                                                            <svg className="absolute inset-0 w-full h-full p-0.5" viewBox="0 0 48 48">
+                                                                <path d="M6 42L42 6" stroke="#ef4444" strokeWidth="4" />
+                                                            </svg>
+                                                        )}
+                                                    </div>
+                                                </div>
+
+                                                {/* Style Selector (Compact) */}
+                                                <div className="relative">
+                                                    <select
+                                                        value={style}
+                                                        // @ts-ignore
+                                                        onChange={(e) => updateElement(selectedElement.id, { [`borderStyle${sideKey}`]: e.target.value })}
+                                                        className="appearance-none w-5 h-5 p-0 border border-slate-200 dark:border-gray-600 rounded bg-white dark:bg-gray-900 cursor-pointer text-transparent focus:outline-none focus:ring-1 focus:ring-blue-500 shadow-sm hover:border-slate-300 dark:hover:border-gray-500 active:bg-slate-50 relative z-10"
+                                                        title="Border Style"
+                                                    >
+                                                        <option value="None">None</option>
+                                                        <option value="Solid">Solid</option>
+                                                        <option value="Dashed">Dash</option>
+                                                        <option value="Dotted">Dot</option>
+                                                    </select>
+                                                    {/* Custom Icon for Style */}
+                                                    <div className="absolute inset-0 flex items-center justify-center pointer-events-none z-0">
+                                                        {style === 'None' && <span className="block w-2.5 h-2.5 border border-slate-300 dark:border-gray-500 rounded-full opacity-50"></span>}
+                                                        {style === 'Solid' && <span className="block w-2.5 h-[1.5px] bg-slate-600 dark:bg-slate-300"></span>}
+                                                        {style === 'Dashed' && <span className="block w-2.5 h-[1.5px] border-b-[1.5px] border-dashed border-slate-600 dark:border-slate-300"></span>}
+                                                        {style === 'Dotted' && <span className="block w-2.5 h-[1.5px] border-b-[1.5px] border-dotted border-slate-600 dark:border-slate-300"></span>}
+                                                    </div>
+                                                </div>
+                                            </div>
+                                        );
+                                    })}
+                                </div>
+                            </div>
+                        )}
+                    </div>
+                )}
+
+                {/* Rounded Border Settings */}
+                {selectedElement.type === 'button' && (
+                    <div className="pt-4 border-t border-slate-100 dark:border-gray-700 mt-4">
+                        <button
+                            type="button"
+                            onClick={() => setButtonRoundedOpen(!buttonRoundedOpen)}
+                            className="flex items-center justify-between w-full p-3 text-left bg-slate-50 dark:bg-gray-800 hover:bg-slate-100 dark:hover:bg-gray-700 border border-slate-200 dark:border-gray-700 rounded-lg transition-colors"
+                        >
+                            <div className="flex items-center gap-2">
+                                <div className="p-1 border border-slate-400 rounded-sm w-5 h-5 flex items-center justify-center">
+                                    <div className="w-3 h-3 border border-slate-600 dark:border-slate-300 rounded-sm"></div>
+                                </div>
+                                <span className="text-sm font-semibold text-slate-700 dark:text-gray-200">Rounded Border</span>
+                            </div>
+                            {buttonRoundedOpen ? <ChevronUp size={16} className="text-slate-500 dark:text-gray-400" /> : <ChevronDown size={16} className="text-slate-500 dark:text-gray-400" />}
+                        </button>
+
+                        {buttonRoundedOpen && (
+                            <div className="mt-3 p-6 border border-slate-200 dark:border-gray-700 rounded-lg bg-white dark:bg-gray-800">
+                                {/* Visual Radius Editor */}
+                                <div className="relative w-full h-32 flex items-center justify-center bg-slate-50 dark:bg-gray-900/50 rounded-lg border border-slate-100 dark:border-gray-800/50">
+                                    <div className="w-32 h-16 border-2 border-slate-300 dark:border-gray-600 bg-white dark:bg-gray-800 rounded-lg flex items-center justify-center relative shadow-sm">
+                                        <span className="text-[10px] font-bold text-slate-400 dark:text-gray-500 uppercase tracking-wider">Radius</span>
+
+                                        {/* Top Left */}
+                                        <div className="absolute -top-3 -left-3">
+                                            <input
+                                                type="number"
+                                                min="0"
+                                                value={selectedElement.borderRadiusTopLeft || 0}
+                                                onChange={(e) => updateElement(selectedElement.id, { borderRadiusTopLeft: parseInt(e.target.value) || 0 })}
+                                                className="w-10 h-8 text-center text-xs font-medium border border-slate-200 dark:border-gray-600 rounded bg-white dark:bg-gray-900 shadow-sm focus:border-blue-500 focus:ring-1 focus:ring-blue-500 transition-all outline-none"
+                                            />
+                                        </div>
+
+                                        {/* Top Right */}
+                                        <div className="absolute -top-3 -right-3">
+                                            <input
+                                                type="number"
+                                                min="0"
+                                                value={selectedElement.borderRadiusTopRight || 0}
+                                                onChange={(e) => updateElement(selectedElement.id, { borderRadiusTopRight: parseInt(e.target.value) || 0 })}
+                                                className="w-10 h-8 text-center text-xs font-medium border border-slate-200 dark:border-gray-600 rounded bg-white dark:bg-gray-900 shadow-sm focus:border-blue-500 focus:ring-1 focus:ring-blue-500 transition-all outline-none"
+                                            />
+                                        </div>
+
+                                        {/* Bottom Left */}
+                                        <div className="absolute -bottom-3 -left-3">
+                                            <input
+                                                type="number"
+                                                min="0"
+                                                value={selectedElement.borderRadiusBottomLeft || 0}
+                                                onChange={(e) => updateElement(selectedElement.id, { borderRadiusBottomLeft: parseInt(e.target.value) || 0 })}
+                                                className="w-10 h-8 text-center text-xs font-medium border border-slate-200 dark:border-gray-600 rounded bg-white dark:bg-gray-900 shadow-sm focus:border-blue-500 focus:ring-1 focus:ring-blue-500 transition-all outline-none"
+                                            />
+                                        </div>
+
+                                        {/* Bottom Right */}
+                                        <div className="absolute -bottom-3 -right-3">
+                                            <input
+                                                type="number"
+                                                min="0"
+                                                value={selectedElement.borderRadiusBottomRight || 0}
+                                                onChange={(e) => updateElement(selectedElement.id, { borderRadiusBottomRight: parseInt(e.target.value) || 0 })}
+                                                className="w-10 h-8 text-center text-xs font-medium border border-slate-200 dark:border-gray-600 rounded bg-white dark:bg-gray-900 shadow-sm focus:border-blue-500 focus:ring-1 focus:ring-blue-500 transition-all outline-none"
+                                            />
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        )}
+                    </div>
+                )}
+
 
                 {selectedElement.type === 'columns' && (
                     <div className="space-y-4">
@@ -1772,6 +2269,8 @@ export default MyForm;`;
                     </div>
                 )}
 
+
+
                 {selectedElement.type === 'image' && (
                     <div className="pt-4 border-t border-slate-100 dark:border-gray-800 space-y-4">
                         <h3 className="text-xs font-semibold text-slate-500 dark:text-gray-400 uppercase tracking-wider">Image Properties</h3>
@@ -1862,161 +2361,11 @@ export default MyForm;`;
                     </div>
                 )}
 
-                {selectedElement.type === 'select' && (
-                    <div className="pt-4 border-t border-slate-100 dark:border-gray-800">
-                        <label className="block text-xs font-semibold text-slate-500 dark:text-gray-400 uppercase tracking-wider mb-3">
-                            Options
-                        </label>
-                        <div className="space-y-2">
-                            {selectedElement.options?.map((option, index) => (
-                                <div key={index} className="flex gap-2 group">
-                                    <input
-                                        type="text"
-                                        value={option.label}
-                                        onChange={(e) => {
-                                            const newOptions = [...(selectedElement.options || [])];
-                                            newOptions[index] = { ...option, label: e.target.value, value: e.target.value };
-                                            updateElement(selectedElement.id, { options: newOptions });
-                                        }}
-                                        className="flex-1 p-2 bg-slate-50 dark:bg-gray-800 border border-slate-200 dark:border-gray-700 rounded-md text-sm text-slate-700 dark:text-gray-200 focus:ring-2 focus:ring-brand-500 focus:border-transparent outline-none"
-                                        placeholder="Option Label"
-                                    />
-                                    <button
-                                        onClick={() => {
-                                            const newOptions = selectedElement.options?.filter((_, i) => i !== index);
-                                            updateElement(selectedElement.id, { options: newOptions });
-                                        }}
-                                        className="p-2 text-slate-400 hover:text-red-500 hover:bg-red-50 dark:text-gray-500 dark:hover:text-red-400 dark:hover:bg-red-900/20 rounded-md transition-colors"
-                                    >
-                                        <Trash size={16} />
-                                    </button>
-                                </div>
-                            ))}
-                            <button
-                                onClick={() => {
-                                    const newOptions = [...(selectedElement.options || []), { label: 'New Option', value: 'new_option' }];
-                                    updateElement(selectedElement.id, { options: newOptions });
-                                }}
-                                className="w-full flex items-center justify-center gap-2 p-2 mt-2 text-sm font-medium text-brand-600 bg-brand-50 hover:bg-brand-100 dark:bg-brand-900/20 dark:hover:bg-brand-900/30 dark:text-brand-400 rounded-lg transition-colors border border-brand-200 dark:border-brand-800"
-                            >
-                                <Plus size={16} /> Add Option
-                            </button>
-                        </div>
-                    </div>
-                )}
 
-                {selectedElement.type === 'radio' && (
-                    <div className="pt-4 border-t border-slate-100 dark:border-gray-800">
-                        <label className="block text-xs font-semibold text-slate-500 dark:text-gray-400 uppercase tracking-wider mb-3">
-                            Options
-                        </label>
-                        <div className="space-y-2">
-                            {selectedElement.options?.map((option, index) => (
-                                <div key={index} className="flex gap-2 group">
-                                    <input
-                                        type="text"
-                                        value={option.label}
-                                        onChange={(e) => {
-                                            const newOptions = [...(selectedElement.options || [])];
-                                            newOptions[index] = { ...option, label: e.target.value, value: e.target.value };
-                                            updateElement(selectedElement.id, { options: newOptions });
-                                        }}
-                                        className="flex-1 p-2 bg-slate-50 dark:bg-gray-800 border border-slate-200 dark:border-gray-700 rounded-md text-sm text-slate-700 dark:text-gray-200 focus:ring-2 focus:ring-brand-500 focus:border-transparent outline-none"
-                                        placeholder="Option Label"
-                                    />
-                                    <button
-                                        onClick={() => {
-                                            const newOptions = selectedElement.options?.filter((_, i) => i !== index);
-                                            updateElement(selectedElement.id, { options: newOptions });
-                                        }}
-                                        className="p-2 text-slate-400 hover:text-red-500 hover:bg-red-50 dark:text-gray-500 dark:hover:text-red-400 dark:hover:bg-red-900/20 rounded-md transition-colors"
-                                    >
-                                        <Trash size={16} />
-                                    </button>
-                                </div>
-                            ))}
-                            <button
-                                onClick={() => {
-                                    const newOptions = [...(selectedElement.options || []), { label: 'New Option', value: 'new_option' }];
-                                    updateElement(selectedElement.id, { options: newOptions });
-                                }}
-                                className="w-full flex items-center justify-center gap-2 p-2 mt-2 text-sm font-medium text-brand-600 bg-brand-50 hover:bg-brand-100 dark:bg-brand-900/20 dark:hover:bg-brand-900/30 dark:text-brand-400 rounded-lg transition-colors border border-brand-200 dark:border-brand-800"
-                            >
-                                <Plus size={16} /> Add Option
-                            </button>
-                        </div>
-                    </div>
-                )}
 
-                {selectedElement.type === 'menu' && (
-                    <div className="pt-4 border-t border-slate-100">
-                        <label className="block text-xs font-semibold text-slate-500 uppercase tracking-wider mb-3">
-                            Menu Items
-                        </label>
-                        <div className="space-y-2">
-                            {selectedElement.menuItems?.map((item, index) => (
-                                <div key={index} className="space-y-2 p-3 bg-slate-50 dark:bg-gray-800 border border-slate-200 dark:border-gray-700 rounded-lg group">
-                                    <div className="flex gap-2">
-                                        <input
-                                            type="text"
-                                            value={item.label}
-                                            onChange={(e) => {
-                                                const newItems = [...(selectedElement.menuItems || [])];
-                                                newItems[index] = { ...item, label: e.target.value };
-                                                updateElement(selectedElement.id, { menuItems: newItems });
-                                            }}
-                                            className="flex-1 p-2 bg-white dark:bg-gray-900 border border-slate-200 dark:border-gray-700 rounded-md text-sm text-slate-700 dark:text-gray-200 focus:ring-2 focus:ring-brand-500 focus:border-transparent outline-none"
-                                            placeholder="Menu Label"
-                                        />
-                                        <button
-                                            onClick={() => {
-                                                const newItems = selectedElement.menuItems?.filter((_, i) => i !== index);
-                                                updateElement(selectedElement.id, { menuItems: newItems });
-                                            }}
-                                            className="p-2 text-slate-400 hover:text-red-500 hover:bg-red-50 rounded-md transition-colors"
-                                        >
-                                            <Trash size={16} />
-                                        </button>
-                                    </div>
-                                    <div className="flex gap-2">
-                                        <input
-                                            type="text"
-                                            value={item.href}
-                                            onChange={(e) => {
-                                                const newItems = [...(selectedElement.menuItems || [])];
-                                                newItems[index] = { ...item, href: e.target.value };
-                                                updateElement(selectedElement.id, { menuItems: newItems });
-                                            }}
-                                            className="flex-1 p-2 bg-white dark:bg-gray-900 border border-slate-200 dark:border-gray-700 rounded-md text-sm text-slate-700 dark:text-gray-200 focus:ring-2 focus:ring-brand-500 focus:border-transparent outline-none"
-                                            placeholder="URL or path (e.g., /about, https://example.com)"
-                                        />
-                                        <select
-                                            value={item.target || '_self'}
-                                            onChange={(e) => {
-                                                const newItems = [...(selectedElement.menuItems || [])];
-                                                newItems[index] = { ...item, target: e.target.value as '_blank' | '_self' };
-                                                updateElement(selectedElement.id, { menuItems: newItems });
-                                            }}
-                                            className="p-2 bg-white dark:bg-gray-900 border border-slate-200 dark:border-gray-700 rounded-md text-sm text-slate-700 dark:text-gray-200 focus:ring-2 focus:ring-brand-500 focus:border-transparent outline-none"
-                                        >
-                                            <option value="_self">Same Tab</option>
-                                            <option value="_blank">New Tab</option>
-                                        </select>
-                                    </div>
-                                </div>
-                            ))}
-                            <button
-                                onClick={() => {
-                                    const newItems = [...(selectedElement.menuItems || []), { id: uuidv4(), label: 'New Menu Item', href: '#' }];
-                                    updateElement(selectedElement.id, { menuItems: newItems });
-                                }}
-                                className="w-full flex items-center justify-center gap-2 p-2 mt-2 text-sm font-medium text-brand-600 bg-brand-50 hover:bg-brand-100 rounded-lg transition-colors border border-brand-200"
-                            >
-                                <Plus size={16} /> Add Menu Item
-                            </button>
-                        </div>
-                    </div>
-                )}
+
+
+
             </div>
         </div>
     );

@@ -1,6 +1,7 @@
 import { create } from 'zustand';
 import { persist } from 'zustand/middleware';
 import type { FormElement, FormSettings, FormElementType, Project, ProjectType, GalleryImage } from '../types';
+import { defaultSettings } from '../settings/defaultSettings';
 import { v4 as uuidv4 } from 'uuid';
 
 interface FormStore {
@@ -65,6 +66,214 @@ interface FormStore {
     addElementFromBlock: (block: FormElement, parentId?: string) => void;
 }
 
+// Helper function to create a new form element with defaults
+const createFormElement = (type: FormElementType): FormElement => {
+    const label = type === 'rich-text' ? '' : `New ${type.charAt(0).toUpperCase() + type.slice(1)}`;
+    const name = label.toLowerCase().replace(/[^a-z0-9]/g, '_');
+
+    const newElement: FormElement = {
+        id: uuidv4(),
+        type,
+        label,
+        name,
+        placeholder: '',
+        required: false,
+        width: 12,
+        options: type === 'select' ? [{ label: 'Option 1', value: 'option1' }] :
+            type === 'radio' ? [{ label: 'Option 1', value: 'option1' }, { label: 'Option 2', value: 'option2' }] : undefined,
+        maxStars: type === 'star-rating' ? 5 : undefined,
+        children: (type === 'container' || type === 'columns' || type === 'rows' || type === 'grid' || type === 'menu') ? [] : undefined,
+        columnCount: type === 'columns' ? 2 : undefined,
+        rowCount: type === 'rows' ? 1 : undefined,
+        gap: (type === 'container' || type === 'columns' || type === 'rows' || type === 'grid') ? 0 : undefined,
+        rowGap: (type === 'rows') ? 0 : undefined,
+        labelSize: type !== 'hidden' && type !== 'rich-text' ? 'sm' : undefined,
+        labelWeight: type !== 'hidden' && type !== 'rich-text' ? 'medium' : undefined,
+        value: type === 'hidden' ? '' : undefined,
+        content: type === 'rich-text' ? '<p>Your rich text content here</p>' :
+            type === 'text-block' ? '<p>Click to edit this text block</p>' :
+                type === 'heading' ? 'Heading' : undefined,
+        buttonText: type === 'button' ? 'Click me' : undefined,
+        buttonType: type === 'button' ? 'button' : undefined,
+        buttonStyle: type === 'button' ? 'primary' : undefined,
+        buttonSize: type === 'button' ? 'md' : undefined,
+        buttonAction: type === 'button' ? 'none' : undefined,
+        buttonUrl: type === 'button' ? '' : undefined,
+        buttonTarget: type === 'button' ? '_self' : undefined,
+        // For Social Links
+        socialLinks: type === 'social' ? [
+            { platform: 'facebook', url: 'https://facebook.com', icon: 'facebook' },
+            { platform: 'twitter', url: 'https://twitter.com', icon: 'twitter' },
+            { platform: 'instagram', url: 'https://instagram.com', icon: 'instagram' },
+            { platform: 'linkedin', url: 'https://linkedin.com', icon: 'linkedin' }
+        ] : undefined,
+        // For Image
+        imageUrl: type === 'image' ? 'https://placehold.co/400x200/e2e8f0/94a3b8?text=Image' : undefined,
+        imageAlt: type === 'image' ? 'Placeholder image' : undefined,
+        imageWidth: type === 'image' ? 400 : undefined,
+        imageHeight: type === 'image' ? 200 : undefined,
+        imageWidthPercent: type === 'image' ? 100 : undefined,
+        imageAlign: type === 'image' ? 'left' : undefined,
+        // For Navigation
+        navItems: type === 'navigation' ? [
+            { label: 'Home', href: '#home' },
+            { label: 'About', href: '#about' },
+            { label: 'Contact', href: '#contact' }
+        ] : undefined,
+        // For Menu
+        menuItems: type === 'menu' ? [
+            { id: uuidv4(), label: 'Item 1', href: '#' },
+            { id: uuidv4(), label: 'Item 2', href: '#' },
+            { id: uuidv4(), label: 'Item 3', href: '#' }
+        ] : undefined,
+        // Set default layout for containers to flex
+        display: (type === 'menu' || type === 'container') ? 'flex' : undefined,
+        flexDirection: type === 'menu' ? 'row' : type === 'container' ? 'column' : undefined,
+        // For Hero
+        heroTitle: type === 'hero' ? 'Welcome to our website' : undefined,
+        heroSubtitle: type === 'hero' ? 'Create amazing experiences' : undefined,
+        heroButtonText: type === 'hero' ? 'Get Started' : undefined,
+        heroButtonUrl: type === 'hero' ? '#' : undefined,
+        // For Card
+        cardTitle: type === 'card' ? 'Card Title' : undefined,
+        cardDescription: type === 'card' ? 'Card description goes here' : undefined,
+        cardLink: type === 'card' ? '#' : undefined,
+        // Set default padding
+        paddingTop: (['columns', 'grid', 'container', 'rows'].includes(type)) ? 0 : undefined,
+        paddingRight: (['columns', 'grid', 'container', 'rows'].includes(type)) ? 0 : undefined,
+        paddingBottom: (['columns', 'grid', 'container', 'rows'].includes(type)) ? 0 : undefined,
+        paddingLeft: (['columns', 'grid', 'container', 'rows'].includes(type)) ? 0 : undefined,
+        // Add default top margin
+        marginTop: undefined,
+        // Font size for text block
+        fontSize: type === 'text-block' ? 14 : undefined,
+
+        // Apply type defaults from defaultSettings LAST to ensure they override any generic defaults above
+        ...(defaultSettings.types[type] || {})
+    };
+
+    // Post-creation logic (children initialization)
+    if (type === 'columns') {
+        const columnCount = newElement.columnCount || 2;
+        newElement.children = Array(columnCount).fill(null).map((_, index) => ({
+            id: uuidv4(),
+            type: 'container' as FormElementType,
+            label: `Column ${index + 1}`,
+            name: `column_${index + 1}`,
+            placeholder: '',
+            required: false,
+            width: 12,
+            children: [],
+            display: 'flex',
+            flexDirection: 'column',
+            gap: 0,
+            rowGap: 0,
+            paddingTop: 0,
+            paddingBottom: 0,
+            paddingLeft: 0,
+            paddingRight: 0,
+            backgroundColor: 'transparent'
+        }));
+        // Initialize columnBackgrounds array similar to menuItems
+        newElement.columnBackgrounds = Array(columnCount).fill(null);
+    } else if (type === 'rows') {
+        // Rows start with empty cells that can contain multiple elements
+        const rowCount = newElement.rowCount || 1;
+        newElement.children = Array(rowCount).fill(null).map((_, index) => ({
+            id: uuidv4(),
+            type: 'container' as FormElementType,
+            label: `Row ${index + 1}`,
+            name: `row_${index + 1}`,
+            placeholder: '',
+            required: false,
+            width: 12,
+            children: [],
+            display: 'flex',
+            flexDirection: 'column',
+            gap: 0,
+            rowGap: 0,
+            paddingTop: 0,
+            paddingBottom: 0,
+            paddingLeft: 0,
+            paddingRight: 0,
+            backgroundColor: 'transparent'
+        }));
+        // Initialize rowBackgrounds array similar to columnBackgrounds
+        newElement.rowBackgrounds = Array(rowCount).fill(null);
+    } else if (type === 'grid') {
+        newElement.children = [];
+    } else if (type === 'menu') {
+        // Add default menu items as children
+        // Use createFormElement for buttons but override properties
+        // We manually construct them to ensure they match exact expectations for now, or we could use createFormElement('button')
+        // Let's stick to the previous hardcoded logic for menu items to avoid potential regressions in menu look, 
+        // BUT they will miss the button defaults if we don't include them.
+        // For now, I'll keep the hardcoded logic but be aware.
+        newElement.children = [
+            {
+                id: uuidv4(),
+                type: 'button' as FormElementType,
+                label: '',
+                name: 'menu_item_1',
+                required: false,
+                width: 12, // Full width for flex behavior
+                buttonText: 'Item 1',
+                buttonStyle: 'primary',
+                buttonSize: 'sm',
+                // Link button padding (px-2 py-1)
+                paddingTop: 16,    // py-1 = 0.25rem = 4px ... wait, code said 16. I'll stick to code.
+                paddingBottom: 16,
+                paddingLeft: 16,   // px-2 = 0.5rem = 8px ... code said 16.
+                paddingRight: 16,
+                ...defaultSettings.types.button, // Apply defaults
+                // Override defaults that conflict with menu item specific style if needed
+                // But generally defaults shouldn't break it if padding is explicit.
+            },
+            {
+                id: uuidv4(),
+                type: 'button' as FormElementType,
+                label: '',
+                name: 'menu_item_2',
+                required: false,
+                width: 12,
+                buttonText: 'Item 2',
+                buttonStyle: 'primary',
+                buttonSize: 'sm',
+                paddingTop: 16,
+                paddingBottom: 16,
+                paddingLeft: 16,
+                paddingRight: 16,
+                ...defaultSettings.types.button
+            },
+            {
+                id: uuidv4(),
+                type: 'button' as FormElementType,
+                label: '',
+                name: 'menu_item_3',
+                required: false,
+                width: 12,
+                buttonText: 'Item 3',
+                buttonStyle: 'primary',
+                buttonSize: 'sm',
+                paddingTop: 16,
+                paddingBottom: 16,
+                paddingLeft: 16,
+                paddingRight: 16,
+                ...defaultSettings.types.button
+            }
+        ];
+        // Also initialize menuItems property to sync with children
+        // Use the SAME IDs as the children buttons to link them
+        newElement.menuItems = [
+            { id: newElement.children[0].id, label: 'Item 1', href: '#', target: '_self' },
+            { id: newElement.children[1].id, label: 'Item 2', href: '#', target: '_self' },
+            { id: newElement.children[2].id, label: 'Item 3', href: '#', target: '_self' }
+        ];
+    }
+
+    return newElement;
+};
+
 export const useStore = create<FormStore>()(
     persist(
         (set, get) => ({
@@ -90,208 +299,7 @@ export const useStore = create<FormStore>()(
             customBlocks: [],
 
             addElement: (type, parentId) => set((state) => {
-                const label = type === 'rich-text' ? '' : `New ${type.charAt(0).toUpperCase() + type.slice(1)}`;
-                const name = label.toLowerCase().replace(/[^a-z0-9]/g, '_');
-
-                const newElement: FormElement = {
-                    id: uuidv4(),
-                    type,
-                    label,
-                    name,
-                    placeholder: '',
-                    required: false,
-                    width: 12,
-                    options: type === 'select' ? [{ label: 'Option 1', value: 'option1' }] :
-                        type === 'radio' ? [{ label: 'Option 1', value: 'option1' }, { label: 'Option 2', value: 'option2' }] : undefined,
-                    maxStars: type === 'star-rating' ? 5 : undefined,
-                    children: (type === 'container' || type === 'columns' || type === 'rows' || type === 'grid' || type === 'menu') ? [] : undefined,
-                    columnCount: type === 'columns' ? 2 : undefined,
-                    rowCount: type === 'rows' ? 1 : undefined,
-                    gap: (type === 'container' || type === 'columns' || type === 'rows' || type === 'grid') ? 0 : undefined,
-                    rowGap: (type === 'rows') ? 0 : undefined,
-                    labelSize: type !== 'hidden' && type !== 'rich-text' ? 'sm' : undefined,
-                    labelWeight: type !== 'hidden' && type !== 'rich-text' ? 'medium' : undefined,
-                    value: type === 'hidden' ? '' : undefined,
-                    content: type === 'rich-text' ? '<p>Your rich text content here</p>' :
-                        type === 'text-block' ? '<p>Click to edit this text block</p>' :
-                            type === 'heading' ? 'Heading' : undefined,
-                    buttonText: type === 'button' ? 'Click me' : undefined,
-                    buttonType: type === 'button' ? 'button' : undefined,
-                    buttonStyle: type === 'button' ? 'primary' : undefined,
-                    buttonSize: type === 'button' ? 'md' : undefined,
-                    buttonAction: type === 'button' ? 'none' : undefined,
-                    buttonUrl: type === 'button' ? '' : undefined,
-                    buttonTarget: type === 'button' ? '_self' : undefined,
-                    // For Heading
-                    headingLevel: type === 'heading' ? 1 : undefined,
-                    // For Image
-                    imageUrl: type === 'image' ? 'https://placehold.co/400x200/e2e8f0/94a3b8?text=Image' : undefined,
-                    imageAlt: type === 'image' ? 'Placeholder image' : undefined,
-                    imageWidth: type === 'image' ? 400 : undefined,
-                    imageHeight: type === 'image' ? 200 : undefined,
-                    imageWidthPercent: type === 'image' ? 100 : undefined,
-                    imageAlign: type === 'image' ? 'left' : undefined,
-                    // For Navigation
-                    navItems: type === 'navigation' ? [
-                        { label: 'Home', href: '#home' },
-                        { label: 'About', href: '#about' },
-                        { label: 'Contact', href: '#contact' }
-                    ] : undefined,
-                    // For Menu
-                    menuItems: type === 'menu' ? [
-                        { id: uuidv4(), label: 'Item 1', href: '#' },
-                        { id: uuidv4(), label: 'Item 2', href: '#' },
-                        { id: uuidv4(), label: 'Item 3', href: '#' }
-                    ] : undefined,
-                    // Set default layout for containers to flex
-                    display: (type === 'menu' || type === 'container') ? 'flex' : undefined,
-                    flexDirection: type === 'menu' ? 'row' : type === 'container' ? 'column' : undefined,
-                    // For Hero
-                    heroTitle: type === 'hero' ? 'Welcome to our website' : undefined,
-                    heroSubtitle: type === 'hero' ? 'Create amazing experiences' : undefined,
-                    heroButtonText: type === 'hero' ? 'Get Started' : undefined,
-                    heroButtonUrl: type === 'hero' ? '#' : undefined,
-                    // For Card
-                    cardTitle: type === 'card' ? 'Card Title' : undefined,
-                    cardDescription: type === 'card' ? 'Card description goes here' : undefined,
-                    cardLink: type === 'card' ? '#' : undefined,
-                    // Set default padding: 0 for layout containers, 8px/16px for buttons, 16px for content elements, 12px for form inputs
-                    paddingTop: (['columns', 'grid', 'container', 'rows'].includes(type)) ? 0 :
-                        type === 'button' ? 16 :
-                            ['social'].includes(type) ? 16 :
-                                ['text', 'email', 'password', 'number', 'tel', 'url', 'date', 'time', 'datetime-local', 'textarea', 'select', 'radio', 'hidden'].includes(type) ? 12 :
-                                    ['checkbox', 'text-block', 'heading', 'rich-text'].includes(type) ? 4 : undefined,
-                    paddingRight: (['columns', 'grid', 'container', 'rows'].includes(type)) ? 0 :
-                        type === 'button' ? 16 :
-                            ['social'].includes(type) ? 16 :
-                                ['text', 'email', 'password', 'number', 'tel', 'url', 'date', 'time', 'datetime-local', 'textarea', 'select', 'radio', 'hidden'].includes(type) ? 12 :
-                                    ['checkbox', 'text-block', 'heading', 'rich-text'].includes(type) ? 4 : undefined,
-                    paddingBottom: (['columns', 'grid', 'container', 'rows'].includes(type)) ? 0 :
-                        type === 'button' ? 16 :
-                            ['social'].includes(type) ? 16 :
-                                ['text', 'email', 'password', 'number', 'tel', 'url', 'date', 'time', 'datetime-local', 'textarea', 'select', 'radio', 'hidden'].includes(type) ? 12 :
-                                    ['checkbox', 'text-block', 'heading', 'rich-text'].includes(type) ? 4 : undefined,
-                    paddingLeft: (['columns', 'grid', 'container', 'rows'].includes(type)) ? 0 :
-                        type === 'button' ? 16 :
-                            ['social'].includes(type) ? 16 :
-                                ['text', 'email', 'password', 'number', 'tel', 'url', 'date', 'time', 'datetime-local', 'textarea', 'select', 'radio', 'hidden'].includes(type) ? 12 :
-                                    ['checkbox', 'text-block', 'heading', 'rich-text'].includes(type) ? 4 : undefined,
-                    // Add default top margin for spacing between components (except when in containers or for columns/grid)
-                    // Add default top margin for spacing between components (except when in containers or for columns/grid)
-                    marginTop: !parentId && !['columns', 'grid', 'rows'].includes(type) ?
-                        (type === 'button' ? 0 : (['menu', 'checkbox', 'text-block', 'heading', 'rich-text'].includes(type) ? 4 : 32)) : 0,
-                };
-
-                // Columns start with empty cells that can contain multiple elements
-                if (type === 'columns') {
-                    const columnCount = newElement.columnCount || 2;
-                    newElement.children = Array(columnCount).fill(null).map((_, index) => ({
-                        id: uuidv4(),
-                        type: 'container' as FormElementType,
-                        label: `Column ${index + 1}`,
-                        name: `column_${index + 1}`,
-                        placeholder: '',
-                        required: false,
-                        width: 12,
-                        children: [],
-                        display: 'flex',
-                        flexDirection: 'column',
-                        gap: 0,
-                        rowGap: 0,
-                        paddingTop: 0,
-                        paddingBottom: 0,
-                        paddingLeft: 0,
-                        paddingRight: 0,
-                        backgroundColor: 'transparent'
-                    }));
-                    // Initialize columnBackgrounds array similar to menuItems
-                    newElement.columnBackgrounds = Array(columnCount).fill(null);
-                } else if (type === 'rows') {
-                    // Rows start with empty cells that can contain multiple elements
-                    const rowCount = newElement.rowCount || 1;
-                    newElement.children = Array(rowCount).fill(null).map((_, index) => ({
-                        id: uuidv4(),
-                        type: 'container' as FormElementType,
-                        label: `Row ${index + 1}`,
-                        name: `row_${index + 1}`,
-                        placeholder: '',
-                        required: false,
-                        width: 12,
-                        children: [],
-                        display: 'flex',
-                        flexDirection: 'column',
-                        gap: 0,
-                        rowGap: 0,
-                        paddingTop: 0,
-                        paddingBottom: 0,
-                        paddingLeft: 0,
-                        paddingRight: 0,
-                        backgroundColor: 'transparent'
-                    }));
-                    // Initialize rowBackgrounds array similar to columnBackgrounds
-                    newElement.rowBackgrounds = Array(rowCount).fill(null);
-                } else if (type === 'grid') {
-                    newElement.children = [];
-                } else if (type === 'menu') {
-                    // Add default menu items as children
-                    newElement.children = [
-                        {
-                            id: uuidv4(),
-                            type: 'button' as FormElementType,
-                            label: '',
-                            name: 'menu_item_1',
-                            required: false,
-                            width: 12, // Full width for flex behavior
-                            buttonText: 'Item 1',
-                            buttonStyle: 'primary',
-                            buttonSize: 'sm',
-                            // Link button padding (px-2 py-1)
-                            paddingTop: 16,    // py-1 = 0.25rem = 4px
-                            paddingBottom: 16,
-                            paddingLeft: 16,   // px-2 = 0.5rem = 8px
-                            paddingRight: 16
-                        },
-                        {
-                            id: uuidv4(),
-                            type: 'button' as FormElementType,
-                            label: '',
-                            name: 'menu_item_2',
-                            required: false,
-                            width: 12, // Full width for flex behavior
-                            buttonText: 'Item 2',
-                            buttonStyle: 'primary',
-                            buttonSize: 'sm',
-                            // Link button padding (px-2 py-1)
-                            paddingTop: 16,
-                            paddingBottom: 16,
-                            paddingLeft: 16,
-                            paddingRight: 16
-                        },
-                        {
-                            id: uuidv4(),
-                            type: 'button' as FormElementType,
-                            label: '',
-                            name: 'menu_item_3',
-                            required: false,
-                            width: 12, // Full width for flex behavior
-                            buttonText: 'Item 3',
-                            buttonStyle: 'primary',
-                            buttonSize: 'sm',
-                            // Link button padding (px-2 py-1)
-                            paddingTop: 16,
-                            paddingBottom: 16,
-                            paddingLeft: 16,
-                            paddingRight: 16
-                        }
-                    ];
-                    // Also initialize menuItems property to sync with children
-                    // Use the SAME IDs as the children buttons to link them
-                    newElement.menuItems = [
-                        { id: newElement.children[0].id, label: 'Item 1', href: '#', target: '_self' },
-                        { id: newElement.children[1].id, label: 'Item 2', href: '#', target: '_self' },
-                        { id: newElement.children[2].id, label: 'Item 3', href: '#', target: '_self' }
-                    ];
-                }
+                const newElement = createFormElement(type);
 
                 if (parentId) {
                     // Helper function to recursively add to container
@@ -334,136 +342,9 @@ export const useStore = create<FormStore>()(
                 }
             }),
 
+
             addElementAtStart: (type) => set((state) => {
-                const label = type === 'rich-text' ? '' : `New ${type.charAt(0).toUpperCase() + type.slice(1)}`;
-                const name = label.toLowerCase().replace(/[^a-z0-9]/g, '_');
-
-                const newElement: FormElement = {
-                    id: uuidv4(),
-                    type,
-                    label,
-                    name,
-                    placeholder: '',
-                    required: false,
-                    width: 12,
-                    options: type === 'select' ? [{ label: 'Option 1', value: 'option1' }] :
-                        type === 'radio' ? [{ label: 'Option 1', value: 'option1' }, { label: 'Option 2', value: 'option2' }] : undefined,
-                    maxStars: type === 'star-rating' ? 5 : undefined,
-                    children: (type === 'container' || type === 'columns' || type === 'rows' || type === 'grid' || type === 'menu') ? [] : undefined,
-                    columnCount: type === 'columns' ? 2 : undefined,
-                    gap: (type === 'container' || type === 'columns' || type === 'rows' || type === 'grid') ? 0 : undefined,
-                    labelSize: type !== 'hidden' && type !== 'rich-text' ? 'sm' : undefined,
-                    labelWeight: type !== 'hidden' && type !== 'rich-text' ? 'medium' : undefined,
-                    value: type === 'hidden' ? '' : undefined,
-                    content: type === 'rich-text' ? '<p>Your rich text content here</p>' :
-                        type === 'text-block' ? '<p>Click to edit this text block</p>' : undefined,
-                    buttonText: type === 'button' ? 'Click me' : undefined,
-                    buttonType: type === 'button' ? 'button' : undefined,
-                    buttonStyle: type === 'button' ? 'primary' : undefined,
-                    buttonSize: type === 'button' ? 'md' : undefined,
-                    buttonAction: type === 'button' ? 'none' : undefined,
-                    buttonUrl: type === 'button' ? '' : undefined,
-                    buttonTarget: type === 'button' ? '_self' : undefined,
-                    headingLevel: type === 'heading' ? 1 : undefined,
-                    imageUrl: type === 'image' ? 'https://placehold.co/400x200/e2e8f0/94a3b8?text=Image' : undefined,
-                    imageAlt: type === 'image' ? 'Placeholder image' : undefined,
-                    imageWidth: type === 'image' ? 400 : undefined,
-                    imageHeight: type === 'image' ? 200 : undefined,
-                    imageWidthPercent: type === 'image' ? 100 : undefined,
-                    imageAlign: type === 'image' ? 'left' : undefined,
-                    navItems: type === 'navigation' ? [
-                        { label: 'Home', href: '#home' },
-                        { label: 'About', href: '#about' },
-                        { label: 'Contact', href: '#contact' }
-                    ] : undefined,
-                    menuItems: type === 'menu' ? [
-                        { id: uuidv4(), label: 'Item 1', href: '#' },
-                        { id: uuidv4(), label: 'Item 2', href: '#' },
-                        { id: uuidv4(), label: 'Item 3', href: '#' }
-                    ] : undefined,
-                    socialLinks: type === 'social' ? [
-                        { platform: 'facebook', url: 'https://facebook.com', icon: 'facebook' },
-                        { platform: 'twitter', url: 'https://twitter.com', icon: 'twitter' },
-                        { platform: 'instagram', url: 'https://instagram.com', icon: 'instagram' }
-                    ] : undefined,
-                    paddingTop: (['columns', 'grid', 'container', 'rows'].includes(type)) ? 0 :
-                        type === 'button' ? 16 :
-                            ['social'].includes(type) ? 16 :
-                                ['text', 'email', 'password', 'number', 'tel', 'url', 'date', 'time', 'datetime-local', 'textarea', 'select', 'radio', 'hidden'].includes(type) ? 12 :
-                                    ['checkbox', 'text-block', 'heading', 'rich-text'].includes(type) ? 4 : undefined,
-                    paddingRight: (['columns', 'grid', 'container', 'rows'].includes(type)) ? 0 :
-                        type === 'button' ? 16 :
-                            ['social'].includes(type) ? 16 :
-                                ['text', 'email', 'password', 'number', 'tel', 'url', 'date', 'time', 'datetime-local', 'textarea', 'select', 'radio', 'hidden'].includes(type) ? 12 :
-                                    ['checkbox', 'text-block', 'heading', 'rich-text'].includes(type) ? 4 : undefined,
-                    paddingBottom: (['columns', 'grid', 'container', 'rows'].includes(type)) ? 0 :
-                        type === 'button' ? 16 :
-                            ['social'].includes(type) ? 16 :
-                                ['text', 'email', 'password', 'number', 'tel', 'url', 'date', 'time', 'datetime-local', 'textarea', 'select', 'radio', 'hidden'].includes(type) ? 12 :
-                                    ['checkbox', 'text-block', 'heading', 'rich-text'].includes(type) ? 4 : undefined,
-                    paddingLeft: (['columns', 'grid', 'container', 'rows'].includes(type)) ? 0 :
-                        type === 'button' ? 16 :
-                            ['social'].includes(type) ? 16 :
-                                ['text', 'email', 'password', 'number', 'tel', 'url', 'date', 'time', 'datetime-local', 'textarea', 'select', 'radio', 'hidden'].includes(type) ? 12 :
-                                    ['checkbox', 'text-block', 'heading', 'rich-text'].includes(type) ? 4 : undefined,
-                    marginTop: ['text-block', 'heading', 'rich-text', 'menu', 'checkbox'].includes(type) ? 4 : 32,
-                    marginRight: 0,
-                    marginBottom: 0,
-                    marginLeft: 0,
-                    fontSize: type === 'text-block' ? 14 : undefined,
-
-                };
-
-                // Handle menu component special initialization
-                if (type === 'menu') {
-                    newElement.children = [
-                        {
-                            id: uuidv4(),
-                            type: 'button' as FormElementType,
-                            label: '',
-                            name: 'menu_item_1',
-                            required: false,
-                            width: 12,
-                            buttonText: 'Item 1',
-                            buttonStyle: 'primary',
-                            buttonSize: 'sm',
-                            paddingTop: 16,
-                            paddingBottom: 16,
-                            paddingLeft: 16,
-                            paddingRight: 16
-                        },
-                        {
-                            id: uuidv4(),
-                            type: 'button' as FormElementType,
-                            label: '',
-                            name: 'menu_item_2',
-                            required: false,
-                            width: 12,
-                            buttonText: 'Item 2',
-                            buttonStyle: 'primary',
-                            buttonSize: 'sm',
-                            paddingTop: 16,
-                            paddingBottom: 16,
-                            paddingLeft: 16,
-                            paddingRight: 16
-                        },
-                        {
-                            id: uuidv4(),
-                            type: 'button' as FormElementType,
-                            label: '',
-                            name: 'menu_item_3',
-                            required: false,
-                            width: 12,
-                            buttonText: 'Item 3',
-                            buttonStyle: 'primary',
-                            buttonSize: 'sm',
-                            paddingTop: 16,
-                            paddingBottom: 16,
-                            paddingLeft: 16,
-                            paddingRight: 16
-                        }
-                    ];
-                }
+                const newElement = createFormElement(type);
 
                 // Add to beginning of root level
                 return {
@@ -1306,111 +1187,8 @@ export const useStore = create<FormStore>()(
             }),
 
             addElementBefore: (type, targetElementId, targetParentId) => set((state) => {
-                // Create new element based on the existing addElement logic
-                const label = type === 'rich-text' ? '' : `New ${type.charAt(0).toUpperCase() + type.slice(1)}`;
-                const name = label.toLowerCase().replace(/[^a-z0-9]/g, '_');
-
-                const newElement: FormElement = {
-                    id: uuidv4(),
-                    type,
-                    label,
-                    name,
-                    placeholder: '',
-                    required: false,
-                    width: 12,
-                    options: type === 'select' ? [{ label: 'Option 1', value: 'option1' }] :
-                        type === 'radio' ? [{ label: 'Option 1', value: 'option1' }, { label: 'Option 2', value: 'option2' }] : undefined,
-                    maxStars: type === 'star-rating' ? 5 : undefined,
-                    children: (type === 'container' || type === 'columns' || type === 'rows' || type === 'grid' || type === 'menu') ? [] : undefined,
-                    columnCount: type === 'columns' ? 2 : undefined,
-                    gap: (type === 'container' || type === 'columns' || type === 'rows' || type === 'grid') ? 0 : undefined,
-                    labelSize: type !== 'hidden' && type !== 'rich-text' ? 'sm' : undefined,
-                    labelWeight: type !== 'hidden' && type !== 'rich-text' ? 'medium' : undefined,
-                    value: type === 'hidden' ? '' : undefined,
-                    content: type === 'rich-text' ? '<p>Your rich text content here</p>' :
-                        type === 'text-block' ? '<p>Click to edit this text block</p>' : undefined,
-                    buttonText: type === 'button' ? 'Click me' : undefined,
-                    buttonType: type === 'button' ? 'button' : undefined,
-                    buttonStyle: type === 'button' ? 'primary' : undefined,
-                    buttonSize: type === 'button' ? 'md' : undefined,
-                    // Set default padding: 0 for layout containers, 8px/16px for buttons, 16px for content elements, 12px for form inputs
-                    paddingTop: (['columns', 'grid', 'container', 'rows'].includes(type)) ? 0 :
-                        type === 'button' ? 16 :
-                            ['text-block', 'heading', 'social'].includes(type) ? 16 :
-                                ['text', 'email', 'password', 'number', 'tel', 'url', 'date', 'time', 'datetime-local', 'textarea', 'select', 'checkbox', 'radio', 'hidden', 'rich-text'].includes(type) ? 12 : undefined,
-                    paddingRight: (['columns', 'grid', 'container', 'rows'].includes(type)) ? 0 :
-                        type === 'button' ? 16 :
-                            ['text-block', 'heading', 'social'].includes(type) ? 16 :
-                                ['text', 'email', 'password', 'number', 'tel', 'url', 'date', 'time', 'datetime-local', 'textarea', 'select', 'checkbox', 'radio', 'hidden', 'rich-text'].includes(type) ? 12 : undefined,
-                    paddingBottom: (['columns', 'grid', 'container', 'rows'].includes(type)) ? 0 :
-                        type === 'button' ? 16 :
-                            ['text-block', 'heading', 'social'].includes(type) ? 16 :
-                                ['text', 'email', 'password', 'number', 'tel', 'url', 'date', 'time', 'datetime-local', 'textarea', 'select', 'checkbox', 'radio', 'hidden', 'rich-text'].includes(type) ? 12 : undefined,
-                    paddingLeft: (['columns', 'grid', 'container', 'rows'].includes(type)) ? 0 :
-                        type === 'button' ? 16 :
-                            ['text-block', 'heading', 'social'].includes(type) ? 16 :
-                                ['text', 'email', 'password', 'number', 'tel', 'url', 'date', 'time', 'datetime-local', 'textarea', 'select', 'checkbox', 'radio', 'hidden', 'rich-text'].includes(type) ? 12 : undefined,
-                    // Add default top margin for spacing between components (except when in containers or for columns/grid)
-                    marginTop: !targetParentId && !['columns', 'grid'].includes(type) ?
-                        (type === 'text-block' ? 16 : 32) : 0,
-                };
-
-                // Handle menu component special initialization
-                if (type === 'menu') {
-                    newElement.children = [
-                        {
-                            id: uuidv4(),
-                            type: 'button' as FormElementType,
-                            label: '',
-                            name: 'menu_item_1',
-                            required: false,
-                            width: 12,
-                            buttonText: 'Item 1',
-                            buttonStyle: 'primary',
-                            buttonSize: 'sm',
-                            paddingTop: 16,
-                            paddingBottom: 16,
-                            paddingLeft: 16,
-                            paddingRight: 16
-                        },
-                        {
-                            id: uuidv4(),
-                            type: 'button' as FormElementType,
-                            label: '',
-                            name: 'menu_item_2',
-                            required: false,
-                            width: 12,
-                            buttonText: 'Item 2',
-                            buttonStyle: 'primary',
-                            buttonSize: 'sm',
-                            paddingTop: 16,
-                            paddingBottom: 16,
-                            paddingLeft: 16,
-                            paddingRight: 16
-                        },
-                        {
-                            id: uuidv4(),
-                            type: 'button' as FormElementType,
-                            label: '',
-                            name: 'menu_item_3',
-                            required: false,
-                            width: 12,
-                            buttonText: 'Item 3',
-                            buttonStyle: 'primary',
-                            buttonSize: 'sm',
-                            paddingTop: 16,
-                            paddingBottom: 16,
-                            paddingLeft: 16,
-                            paddingRight: 16
-                        }
-                    ];
-                    // Also initialize menuItems property to sync with children
-                    newElement.menuItems = [
-                        { id: newElement.children[0].id, label: 'Item 1', href: '#', target: '_self' },
-                        { id: newElement.children[1].id, label: 'Item 2', href: '#', target: '_self' },
-                        { id: newElement.children[2].id, label: 'Item 3', href: '#', target: '_self' }
-                    ];
-                }
+                // Create new element using helper
+                const newElement = createFormElement(type);
 
                 // Insert before the target element
                 const insertIntoElements = (elements: FormElement[]): FormElement[] => {
@@ -1462,111 +1240,8 @@ export const useStore = create<FormStore>()(
             }),
 
             addElementAfter: (type, targetElementId, targetParentId) => set((state) => {
-                // Create new element based on the existing addElement logic
-                const label = type === 'rich-text' ? '' : `New ${type.charAt(0).toUpperCase() + type.slice(1)}`;
-                const name = label.toLowerCase().replace(/[^a-z0-9]/g, '_');
-
-                const newElement: FormElement = {
-                    id: uuidv4(),
-                    type,
-                    label,
-                    name,
-                    placeholder: '',
-                    required: false,
-                    width: 12,
-                    options: type === 'select' ? [{ label: 'Option 1', value: 'option1' }] :
-                        type === 'radio' ? [{ label: 'Option 1', value: 'option1' }, { label: 'Option 2', value: 'option2' }] : undefined,
-                    maxStars: type === 'star-rating' ? 5 : undefined,
-                    children: (type === 'container' || type === 'columns' || type === 'rows' || type === 'grid' || type === 'menu') ? [] : undefined,
-                    columnCount: type === 'columns' ? 2 : undefined,
-                    gap: (type === 'container' || type === 'columns' || type === 'rows' || type === 'grid') ? 0 : undefined,
-                    labelSize: type !== 'hidden' && type !== 'rich-text' ? 'sm' : undefined,
-                    labelWeight: type !== 'hidden' && type !== 'rich-text' ? 'medium' : undefined,
-                    value: type === 'hidden' ? '' : undefined,
-                    content: type === 'rich-text' ? '<p>Your rich text content here</p>' :
-                        type === 'text-block' ? '<p>Click to edit this text block</p>' : undefined,
-                    buttonText: type === 'button' ? 'Click me' : undefined,
-                    buttonType: type === 'button' ? 'button' : undefined,
-                    buttonStyle: type === 'button' ? 'primary' : undefined,
-                    buttonSize: type === 'button' ? 'md' : undefined,
-                    // Set default padding: 0 for layout containers, 8px/16px for buttons, 16px for content elements, 12px for form inputs
-                    paddingTop: (['columns', 'grid', 'container', 'rows'].includes(type)) ? 0 :
-                        type === 'button' ? 16 :
-                            ['text-block', 'heading', 'social'].includes(type) ? 16 :
-                                ['text', 'email', 'password', 'number', 'tel', 'url', 'date', 'time', 'datetime-local', 'textarea', 'select', 'checkbox', 'radio', 'hidden', 'rich-text'].includes(type) ? 12 : undefined,
-                    paddingRight: (['columns', 'grid', 'container', 'rows'].includes(type)) ? 0 :
-                        type === 'button' ? 16 :
-                            ['text-block', 'heading', 'social'].includes(type) ? 16 :
-                                ['text', 'email', 'password', 'number', 'tel', 'url', 'date', 'time', 'datetime-local', 'textarea', 'select', 'checkbox', 'radio', 'hidden', 'rich-text'].includes(type) ? 12 : undefined,
-                    paddingBottom: (['columns', 'grid', 'container', 'rows'].includes(type)) ? 0 :
-                        type === 'button' ? 16 :
-                            ['text-block', 'heading', 'social'].includes(type) ? 16 :
-                                ['text', 'email', 'password', 'number', 'tel', 'url', 'date', 'time', 'datetime-local', 'textarea', 'select', 'checkbox', 'radio', 'hidden', 'rich-text'].includes(type) ? 12 : undefined,
-                    paddingLeft: (['columns', 'grid', 'container', 'rows'].includes(type)) ? 0 :
-                        type === 'button' ? 16 :
-                            ['text-block', 'heading', 'social'].includes(type) ? 16 :
-                                ['text', 'email', 'password', 'number', 'tel', 'url', 'date', 'time', 'datetime-local', 'textarea', 'select', 'checkbox', 'radio', 'hidden', 'rich-text'].includes(type) ? 12 : undefined,
-                    // Add default top margin for spacing between components (except when in containers or for columns/grid)
-                    marginTop: !targetParentId && !['columns', 'grid'].includes(type) ?
-                        (type === 'text-block' ? 16 : 32) : 0,
-                };
-
-                // Handle menu component special initialization
-                if (type === 'menu') {
-                    newElement.children = [
-                        {
-                            id: uuidv4(),
-                            type: 'button' as FormElementType,
-                            label: '',
-                            name: 'menu_item_1',
-                            required: false,
-                            width: 12,
-                            buttonText: 'Item 1',
-                            buttonStyle: 'primary',
-                            buttonSize: 'sm',
-                            paddingTop: 16,
-                            paddingBottom: 16,
-                            paddingLeft: 16,
-                            paddingRight: 16
-                        },
-                        {
-                            id: uuidv4(),
-                            type: 'button' as FormElementType,
-                            label: '',
-                            name: 'menu_item_2',
-                            required: false,
-                            width: 12,
-                            buttonText: 'Item 2',
-                            buttonStyle: 'primary',
-                            buttonSize: 'sm',
-                            paddingTop: 16,
-                            paddingBottom: 16,
-                            paddingLeft: 16,
-                            paddingRight: 16
-                        },
-                        {
-                            id: uuidv4(),
-                            type: 'button' as FormElementType,
-                            label: '',
-                            name: 'menu_item_3',
-                            required: false,
-                            width: 12,
-                            buttonText: 'Item 3',
-                            buttonStyle: 'primary',
-                            buttonSize: 'sm',
-                            paddingTop: 16,
-                            paddingBottom: 16,
-                            paddingLeft: 16,
-                            paddingRight: 16
-                        }
-                    ];
-                    // Also initialize menuItems property to sync with children
-                    newElement.menuItems = [
-                        { id: newElement.children[0].id, label: 'Item 1', href: '#', target: '_self' },
-                        { id: newElement.children[1].id, label: 'Item 2', href: '#', target: '_self' },
-                        { id: newElement.children[2].id, label: 'Item 3', href: '#', target: '_self' }
-                    ];
-                }
+                // Create new element using helper
+                const newElement = createFormElement(type);
 
                 // Insert after the target element
                 const insertIntoElements = (elements: FormElement[]): FormElement[] => {
@@ -1914,116 +1589,7 @@ export const useStore = create<FormStore>()(
 
             // Add element directly to specific column position
             addElementToColumnPosition: (type: FormElementType, containerId: string, columnIndex: number) => set((state) => {
-                console.log('addElementToColumnPosition started:', { type, containerId, columnIndex });
-                const label = type === 'rich-text' ? '' : `New ${type.charAt(0).toUpperCase() + type.slice(1)}`;
-                const name = label.toLowerCase().replace(/[^a-z0-9]/g, '_');
-
-                const newElement: FormElement = {
-                    id: uuidv4(),
-                    type,
-                    label,
-                    name,
-                    placeholder: '',
-                    required: false,
-                    width: 12, // Will be adjusted based on column count
-                    options: type === 'select' ? [{ label: 'Option 1', value: 'option1' }] :
-                        type === 'radio' ? [{ label: 'Option 1', value: 'option1' }, { label: 'Option 2', value: 'option2' }] : undefined,
-                    maxStars: type === 'star-rating' ? 5 : undefined,
-                    children: (type === 'container' || type === 'columns' || type === 'rows' || type === 'grid' || type === 'menu') ? [] : undefined,
-                    columnCount: type === 'columns' ? 2 : undefined,
-                    gap: (type === 'container' || type === 'columns' || type === 'rows' || type === 'grid') ? 0 : undefined,
-                    labelSize: type !== 'hidden' && type !== 'rich-text' ? 'sm' : undefined,
-                    labelWeight: type !== 'hidden' && type !== 'rich-text' ? 'medium' : undefined,
-                    value: type === 'hidden' ? '' : undefined,
-                    content: type === 'rich-text' ? '<p>Your rich text content here</p>' :
-                        type === 'text-block' ? '<p>Click to edit this text block</p>' : undefined,
-                    buttonText: type === 'button' ? 'Click me' : undefined,
-                    buttonType: type === 'button' ? 'button' : undefined,
-                    buttonStyle: type === 'button' ? 'primary' : undefined,
-                    buttonSize: type === 'button' ? 'md' : undefined,
-                    buttonAction: type === 'button' ? 'none' : undefined,
-                    buttonUrl: type === 'button' ? '' : undefined,
-                    buttonTarget: type === 'button' ? '_self' : undefined,
-                    headingLevel: type === 'heading' ? 1 : undefined,
-                    imageUrl: type === 'image' ? 'https://placehold.co/400x200/e2e8f0/94a3b8?text=Image' : undefined,
-                    imageAlt: type === 'image' ? 'Placeholder image' : undefined,
-                    imageWidth: type === 'image' ? 400 : undefined,
-                    imageHeight: type === 'image' ? 200 : undefined,
-                    imageWidthPercent: type === 'image' ? 100 : undefined,
-                    imageAlign: type === 'image' ? 'left' : undefined,
-                    display: (type === 'menu' || type === 'container') ? 'flex' : undefined,
-                    flexDirection: type === 'menu' ? 'row' : type === 'container' ? 'column' : undefined,
-                    // Set default padding: 0 for layout containers, 8px/16px for buttons, 16px for content elements, 12px for form inputs
-                    paddingTop: (['columns', 'grid', 'container', 'rows'].includes(type)) ? 0 :
-                        type === 'button' ? 16 :
-                            ['text-block', 'heading', 'social'].includes(type) ? 16 :
-                                ['text', 'email', 'password', 'number', 'tel', 'url', 'date', 'time', 'datetime-local', 'textarea', 'select', 'checkbox', 'radio', 'hidden', 'rich-text'].includes(type) ? 12 : undefined,
-                    paddingRight: (['columns', 'grid', 'container', 'rows'].includes(type)) ? 0 :
-                        type === 'button' ? 16 :
-                            ['text-block', 'heading', 'social'].includes(type) ? 16 :
-                                ['text', 'email', 'password', 'number', 'tel', 'url', 'date', 'time', 'datetime-local', 'textarea', 'select', 'checkbox', 'radio', 'hidden', 'rich-text'].includes(type) ? 12 : undefined,
-                    paddingBottom: (['columns', 'grid', 'container', 'rows'].includes(type)) ? 0 :
-                        type === 'button' ? 16 :
-                            ['text-block', 'heading', 'social'].includes(type) ? 16 :
-                                ['text', 'email', 'password', 'number', 'tel', 'url', 'date', 'time', 'datetime-local', 'textarea', 'select', 'checkbox', 'radio', 'hidden', 'rich-text'].includes(type) ? 12 : undefined,
-                    paddingLeft: (['columns', 'grid', 'container', 'rows'].includes(type)) ? 0 :
-                        type === 'button' ? 16 :
-                            ['text-block', 'heading', 'social'].includes(type) ? 16 :
-                                ['text', 'email', 'password', 'number', 'tel', 'url', 'date', 'time', 'datetime-local', 'textarea', 'select', 'checkbox', 'radio', 'hidden', 'rich-text'].includes(type) ? 12 : undefined,
-                    // Add default top margin for spacing between components (but 0 for column position since elements are inside containers)
-                    marginTop: type === 'text-block' ? 16 : 0,
-                };
-
-                // Handle menu component special initialization
-                if (type === 'menu') {
-                    newElement.children = [
-                        {
-                            id: uuidv4(),
-                            type: 'button' as FormElementType,
-                            label: '',
-                            name: 'menu_item_1',
-                            required: false,
-                            width: 12,
-                            buttonText: 'Item 1',
-                            buttonStyle: 'primary',
-                            buttonSize: 'sm',
-                            paddingTop: 16,
-                            paddingBottom: 16,
-                            paddingLeft: 16,
-                            paddingRight: 16
-                        },
-                        {
-                            id: uuidv4(),
-                            type: 'button' as FormElementType,
-                            label: '',
-                            name: 'menu_item_2',
-                            required: false,
-                            width: 12,
-                            buttonText: 'Item 2',
-                            buttonStyle: 'primary',
-                            buttonSize: 'sm',
-                            paddingTop: 16,
-                            paddingBottom: 16,
-                            paddingLeft: 16,
-                            paddingRight: 16
-                        },
-                        {
-                            id: uuidv4(),
-                            type: 'button' as FormElementType,
-                            label: '',
-                            name: 'menu_item_3',
-                            required: false,
-                            width: 12,
-                            buttonText: 'Item 3',
-                            buttonStyle: 'primary',
-                            buttonSize: 'sm',
-                            paddingTop: 16,
-                            paddingBottom: 16,
-                            paddingLeft: 16,
-                            paddingRight: 16
-                        }
-                    ];
-                }
+                const newElement = createFormElement(type);
 
                 // Find and update the container
                 const updateElements = (elements: FormElement[]): FormElement[] => {

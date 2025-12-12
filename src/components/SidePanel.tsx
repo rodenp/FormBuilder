@@ -358,7 +358,7 @@ export const SidePanel: React.FC = () => {
     }
 
     return (
-        <div className="flex relative">
+        <div className="flex relative h-full">
             {/* Collapse button */}
             <button
                 onClick={() => setIsCollapsed(true)}

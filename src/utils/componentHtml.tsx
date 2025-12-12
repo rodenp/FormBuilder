@@ -140,8 +140,21 @@ export const getComponentHtml = (element: FormElement, options: HtmlOptions = {}
     );
 };
 
+
+import { registry } from '../components/registry';
+
+// ... imports
+
 const getElementContentHtml = (element: FormElement, options: HtmlOptions): React.ReactElement | null => {
     const { isFormProject, showInteractiveElements, register } = options;
+
+    // CHECK REGISTRY FIRST
+    // If the component is migrated and registered, use it.
+    const registered = registry.get(element.type);
+    if (registered) {
+        const Component = registered.Component;
+        return <Component element={element} />;
+    }
 
     switch (element.type) {
         case 'textarea':
