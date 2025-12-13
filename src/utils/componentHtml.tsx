@@ -61,7 +61,7 @@ export const getComponentHtml = (element: FormElement, options: HtmlOptions = {}
                 {isFormProject && !['hidden', 'rich-text', 'container', 'columns', 'rows', 'grid', 'menu'].includes(element.type) && element.label && element.label.trim() && (
                     <div
                         className="flex justify-between items-start"
-                        style={{ marginBottom: element.labelGap !== undefined ? `${element.labelGap}px` : '3px' }}
+                        style={{ marginBottom: element.labelGap !== undefined ? `${element.labelGap}px` : 0 }}
                     >
                         <div>
                             <label className={clsx(
@@ -94,7 +94,7 @@ export const getComponentHtml = (element: FormElement, options: HtmlOptions = {}
                 {isFormProject && ['container', 'columns', 'rows', 'grid', 'menu'].includes(element.type) && element.label && element.label.trim() && (
                     <div
                         className="flex justify-between items-start"
-                        style={{ marginBottom: element.labelGap !== undefined ? `${element.labelGap}px` : '12px' }}
+                        style={{ marginBottom: element.labelGap !== undefined ? `${element.labelGap}px` : 0 }}
                     >
                         <div>
                             <label className={clsx(
@@ -494,7 +494,7 @@ const getContainerHtml = (element: FormElement, options: HtmlOptions): React.Rea
                     alignItems: element.alignItems || 'stretch',
                     alignContent: element.alignContent || 'flex-start',
                     rowGap: `${(element.rowGap ?? element.gap ?? 0)}px`,
-                    columnGap: element.display !== 'block' ? `${(element.columnGap || element.gap || 12)}px` : '12px'
+                    columnGap: `${(element.columnGap ?? element.gap ?? 0)}px`
                 }}
             >
                 {element.children && element.children.length > 0 ? (
@@ -524,7 +524,7 @@ const getColumnsHtml = (element: FormElement, options: HtmlOptions): React.React
                 style={{
                     display: 'grid',
                     gridTemplateColumns: `repeat(${element.columnCount || 2}, 1fr)`,
-                    gap: `${(element.columnGap || element.gap || 12)}px`
+                    gap: `${(element.columnGap ?? element.gap ?? 0)}px`
                 }}
             >
                 {Array.from({ length: element.columnCount || 2 }).map((_, index) => {
@@ -602,7 +602,7 @@ const getMenuHtml = (element: FormElement, options: HtmlOptions): React.ReactEle
                 alignItems: element.alignItems || 'center',
                 alignContent: element.alignContent || 'flex-start',
                 rowGap: `${(element.rowGap || element.gap || 0)}px`,
-                columnGap: `${(element.columnGap || element.gap || 16)}px`
+                columnGap: `${(element.columnGap ?? element.gap ?? 0)}px`
             }}
         >
             {element.children && element.children.length > 0 ? (

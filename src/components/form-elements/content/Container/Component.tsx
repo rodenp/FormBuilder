@@ -15,7 +15,7 @@ export const Component: React.FC<{ element: FormElement }> = ({ element }) => {
                 alignItems: element.alignItems || 'stretch',
                 alignContent: element.alignContent || 'flex-start',
                 rowGap: element.rowGap || element.gap || '0px',
-                columnGap: element.display !== 'block' ? (element.columnGap || element.gap || '12px') : '12px'
+                columnGap: element.columnGap || element.gap || '0px'
             }}
         >
             {element.children && element.children.length > 0 ? (

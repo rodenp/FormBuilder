@@ -5,7 +5,7 @@ import { getComponentHtml } from '../../../../utils/componentHtml';
 export const Component: React.FC<{ element: FormElement }> = ({ element }) => {
     // Replicating logic from componentHtml.tsx getColumnsHtml for backward compatibility
     const columnCount = element.columnCount || 2;
-    const gap = element.columnGap || element.gap || '12px';
+    const gap = element.columnGap || element.gap || '0px';
 
     return (
         <div

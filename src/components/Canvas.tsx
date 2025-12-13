@@ -1156,8 +1156,7 @@ const SortableElement: React.FC<SortableElementProps> = ({ element, parentId }) 
                 isDragging && "opacity-50",
                 // Special highlighting for column cells
                 element.type === 'container' && element.name?.startsWith('column_') && "ring-2 ring-purple-200 ring-opacity-50",
-                // Default transparent border to prevent layout shift on hover (maintained when selected to prevent jump)
-                !isDescendantOfSelected && "border border-transparent",
+                // No default border - gaps should only come from property panel settings
                 // Show border when element is descendant of selected container
                 isDescendantOfSelected && !isSelected && "border border-blue-400 border-dashed rounded-lg",
                 // Hover highlighting - dashed for nested components
@@ -1341,7 +1340,7 @@ const SortableElement: React.FC<SortableElementProps> = ({ element, parentId }) 
                 {isFormProject && !['hidden', 'rich-text', 'container', 'columns', 'rows', 'grid', 'menu'].includes(element.type) && element.label && element.label.trim() && (
                     <div
                         className="flex justify-between items-start"
-                        style={{ marginBottom: element.labelGap !== undefined ? element.labelGap : '0.75rem' }}
+                        style={{ marginBottom: element.labelGap !== undefined ? element.labelGap : 0 }}
                     >
                         <div>
                             <label className={clsx(
@@ -1373,7 +1372,7 @@ const SortableElement: React.FC<SortableElementProps> = ({ element, parentId }) 
                 {isFormProject && ['container', 'columns', 'rows', 'grid', 'menu'].includes(element.type) && element.label && element.label.trim() && (
                     <div
                         className="flex justify-between items-start"
-                        style={{ marginBottom: element.labelGap !== undefined ? element.labelGap : '0.75rem' }}
+                        style={{ marginBottom: element.labelGap !== undefined ? element.labelGap : 0 }}
                     >
                         <div>
                             <label
