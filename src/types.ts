@@ -1,4 +1,5 @@
 
+///Users/osx/Applications/AI/Form Builder/src/types.ts
 export type ProjectType = 'form' | 'email' | 'website';
 
 export type FormElementType =

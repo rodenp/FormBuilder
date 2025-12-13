@@ -1,4 +1,5 @@
 
+///Users/osx/Applications/AI/Form Builder/src/components/builder/ComponentWrapper.tsx
 import React from 'react';
 import type { FormElement } from '../../types';
 import { defaultSettings, type ComponentSettings } from '../../settings/defaultSettings';

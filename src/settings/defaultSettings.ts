@@ -1,6 +1,4 @@
-
-import type { FormElementType } from '../types';
-
+///Users/osx/Applications/AI/Form Builder/src/settings/defaultSettings.ts
 export interface ComponentSettings {
     marginTop: number;
     marginRight: number;

@@ -1,3 +1,4 @@
+///Users/osx/Applications/AI/Form Builder/src/components/LayoutPanel.tsx
 import React from 'react';
 import type { FormElement } from '../types';
 import { useStore } from '../store/useStore';

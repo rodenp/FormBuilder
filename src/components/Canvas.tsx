@@ -1,4 +1,5 @@
 
+///Users/osx/Applications/AI/Form Builder/src/components/Canvas.tsx
 import React, { useState, useEffect, useRef } from 'react';
 import { useDroppable, useDraggable } from '@dnd-kit/core';
 import { useStore } from '../store/useStore';

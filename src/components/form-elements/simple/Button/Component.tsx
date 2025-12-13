@@ -1,4 +1,4 @@
-
+//Users/osx/Applications/AI/Form Builder/src/components/form-elements/simple/Button/Component.tsx
 import React from 'react';
 import type { FormElement } from '../../../../types';
 import { ComponentWrapper } from '../../../builder/ComponentWrapper';
