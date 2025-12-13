@@ -16,8 +16,8 @@ export const Component: React.FC<{ element: FormElement }> = ({ element }) => {
                 justifyContent: element.justifyContent || 'flex-start',
                 alignItems: element.alignItems || 'stretch',
                 alignContent: element.alignContent || 'flex-start',
-                rowGap: `${(element.rowGap ?? element.gap ?? 0)}px`,
-                columnGap: `${(element.columnGap ?? element.gap ?? 0)}px`
+                rowGap: element.rowGap || element.gap || '0px',
+                columnGap: element.columnGap || element.gap || '0px'
             }}
         >
             {Array.from({ length: rowCount }).map((_, index) => {

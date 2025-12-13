@@ -539,8 +539,8 @@ export const FormBuilder: React.FC = () => {
                             <Eye size={20} />
                         </div>
                         <div>
-                            <h1 style={{ fontSize: '1.125rem', fontWeight: 700, color: 'var(--color-slate-800)', margin: 0 }}>Preview Mode</h1>
-                            <p style={{ fontSize: '0.75rem', color: 'var(--color-slate-500)', margin: 0 }}>Testing your form</p>
+                            <h1 style={{ fontSize: '18px', fontWeight: 700, color: 'var(--color-slate-800)', margin: 0 }}>Preview Mode</h1>
+                            <p style={{ fontSize: '12px', color: 'var(--color-slate-500)', margin: 0 }}>Testing your form</p>
                         </div>
                     </div>
                     <button

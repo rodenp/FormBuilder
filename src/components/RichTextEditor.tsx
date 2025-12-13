@@ -848,15 +848,15 @@ export const RichTextEditor = React.forwardRef<RichTextEditorRef, RichTextEditor
                     "focus:outline-none border-none " :
                     "focus:outline-none border-none ") + (className || "")}
                 style={{
-                    lineHeight: selectedElement.lineHeight ? `${selectedElement.lineHeight}%` : undefined,
+                    lineHeight: typeof selectedElement.lineHeight === 'string' ? selectedElement.lineHeight : selectedElement.lineHeight ? `${selectedElement.lineHeight}%` : undefined,
                     outline: '0',
                     border: '0',
                     textAlign: selectedElement.textAlign || 'left',
                     fontFamily: selectedElement.fontFamily || undefined,
-                    fontSize: selectedElement.fontSize ? `${selectedElement.fontSize}px` : undefined,
+                    fontSize: typeof selectedElement.fontSize === 'string' ? selectedElement.fontSize : selectedElement.fontSize ? `${selectedElement.fontSize}px` : undefined,
                     fontWeight: selectedElement.fontWeight || undefined,
                     color: selectedElement.textColor || undefined,
-                    letterSpacing: selectedElement.letterSpacing ? `${selectedElement.letterSpacing}px` : undefined,
+                    letterSpacing: typeof selectedElement.letterSpacing === 'string' ? selectedElement.letterSpacing : selectedElement.letterSpacing ? `${selectedElement.letterSpacing}px` : undefined,
                     WebkitUserSelect: 'text',
                     MozUserSelect: 'text',
                     msUserSelect: 'text',

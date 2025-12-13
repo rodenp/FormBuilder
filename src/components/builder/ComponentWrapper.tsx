@@ -62,14 +62,14 @@ export const ComponentWrapper: React.FC<ComponentWrapperProps> = ({
 
     const finalStyle: React.CSSProperties = {
         ...style,
-        paddingTop: !ignorePadding && finalSettings.paddingTop !== undefined ? `${finalSettings.paddingTop}px` : undefined,
-        paddingRight: !ignorePadding && finalSettings.paddingRight !== undefined ? `${finalSettings.paddingRight}px` : undefined,
-        paddingBottom: !ignorePadding && finalSettings.paddingBottom !== undefined ? `${finalSettings.paddingBottom}px` : undefined,
-        paddingLeft: !ignorePadding && finalSettings.paddingLeft !== undefined ? `${finalSettings.paddingLeft}px` : undefined,
-        marginTop: finalSettings.marginTop !== undefined ? `${finalSettings.marginTop}px` : undefined,
-        marginRight: finalSettings.marginRight !== undefined ? `${finalSettings.marginRight}px` : undefined,
-        marginBottom: finalSettings.marginBottom !== undefined ? `${finalSettings.marginBottom}px` : undefined,
-        marginLeft: finalSettings.marginLeft !== undefined ? `${finalSettings.marginLeft}px` : undefined,
+        paddingTop: !ignorePadding && finalSettings.paddingTop !== undefined ? finalSettings.paddingTop : undefined,
+        paddingRight: !ignorePadding && finalSettings.paddingRight !== undefined ? finalSettings.paddingRight : undefined,
+        paddingBottom: !ignorePadding && finalSettings.paddingBottom !== undefined ? finalSettings.paddingBottom : undefined,
+        paddingLeft: !ignorePadding && finalSettings.paddingLeft !== undefined ? finalSettings.paddingLeft : undefined,
+        marginTop: finalSettings.marginTop !== undefined ? finalSettings.marginTop : undefined,
+        marginRight: finalSettings.marginRight !== undefined ? finalSettings.marginRight : undefined,
+        marginBottom: finalSettings.marginBottom !== undefined ? finalSettings.marginBottom : undefined,
+        marginLeft: finalSettings.marginLeft !== undefined ? finalSettings.marginLeft : undefined,
     };
 
     return (

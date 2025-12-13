@@ -3,6 +3,7 @@ import React from 'react';
 import { clsx } from 'clsx';
 import { Facebook, Twitter, Instagram, Linkedin, Github, Youtube, Globe, Mail } from 'lucide-react';
 import type { FormElement } from '../../../../types';
+import { useStore } from '../../../../store/useStore';
 
 const iconMap: Record<string, React.ElementType> = {
     facebook: Facebook,
@@ -16,12 +17,16 @@ const iconMap: Record<string, React.ElementType> = {
 };
 
 export const SocialComponent: React.FC<{ element: FormElement }> = ({ element }) => {
+    const { settings } = useStore();
     const socialLinks = element.socialLinks || [];
     const alignClass =
         element.justifyContent === 'center' ? 'justify-center' :
             element.justifyContent === 'flex-end' ? 'justify-end' :
                 element.justifyContent === 'space-between' ? 'justify-between' :
                     'justify-start';
+
+    // Apply default color if no global overrides
+    const useDefaultColor = !element.textColor && !settings.textColor && !settings.formBackground;
 
     if (!socialLinks.length) {
         return (
@@ -31,11 +36,13 @@ export const SocialComponent: React.FC<{ element: FormElement }> = ({ element })
         );
     }
 
+    const useDefaultBg = !element.backgroundColor && !settings.formBackground;
+
     return (
         <div
             className={clsx("flex flex-wrap gap-4", alignClass)}
             style={{
-                gap: `${element.gap !== undefined ? element.gap : 16}px`
+                gap: element.gap || '16px'
             }}
         >
             {socialLinks.map((link, index) => {
@@ -48,13 +55,18 @@ export const SocialComponent: React.FC<{ element: FormElement }> = ({ element })
                         rel="noopener noreferrer"
                         className={clsx(
                             "flex items-center justify-center transition-colors duration-200",
-                            "text-gray-600 hover:text-blue-600",
-                            element.buttonStyle === 'primary' && "bg-blue-600 text-white p-2 rounded-full hover:bg-blue-700",
-                            element.buttonStyle === 'outline' && "border border-gray-300 p-2 rounded-full hover:border-blue-600 hover:text-blue-600",
+                            useDefaultColor && "text-gray-600 hover:text-brand-600",
+                            useDefaultBg && element.buttonStyle === 'primary' && "bg-brand-600 text-white p-2 rounded-full hover:bg-brand-700",
+                            // Outline should probably stay outline? But if BG is inherited...
+                            // Outline has bg-transparent anyway. So `useDefaultBg` doesn't change much except ignoring it?
+                            // Actually outline adds BORDER.
+                            // Does global BG imply removing Border? Likely not.
+                            // But for consistency let's stick to the Primary logic which was the main offender.
+                            element.buttonStyle === 'outline' && "border border-gray-300 p-2 rounded-full hover:border-brand-600 hover:text-brand-600",
                             !element.buttonStyle && "p-1"
                         )}
                         style={{
-                            color: element.textColor,
+                            color: element.textColor || undefined,
                             backgroundColor: element.buttonStyle === 'primary' ? element.backgroundColor : undefined,
                             borderColor: element.buttonStyle === 'outline' ? element.textColor : undefined
                         }}

@@ -7,6 +7,7 @@ import type { SubmissionAction, FormElement } from '../types';
 import { LayoutPanel } from './LayoutPanel';
 import { ImagePicker } from './ImagePicker';
 import { ComponentRegistry } from './form-elements/index';
+import { defaultSettings } from '../settings/defaultSettings';
 
 
 export const PropertiesPanel: React.FC = () => {
@@ -26,7 +27,14 @@ export const PropertiesPanel: React.FC = () => {
     const [textPropsOpen, setTextPropsOpen] = useState(false);
     const [buttonOptionsOpen, setButtonOptionsOpen] = useState(true);
     const [buttonBorderOpen, setButtonBorderOpen] = useState(false);
-    const [buttonRoundedOpen, setButtonRoundedOpen] = useState(false);
+    const [buttonRoundedOpen, setButtonRoundedOpen] = React.useState(false);
+
+    // Helper to get effective value including defaults
+    const getValue = (prop: keyof FormElement, fallback: string | number) => {
+        if (!selectedElement) return fallback; // Should not happen if selectedElement is checked before calling
+        const typeDefaults = defaultSettings.types[selectedElement.type] || {};
+        return selectedElement[prop] ?? typeDefaults[prop as keyof typeof typeDefaults] ?? fallback;
+    };
     const [buttonActionsOpen, setButtonActionsOpen] = useState(true);
     const [layoutOpen, setLayoutOpen] = React.useState(true);
 
@@ -1096,7 +1104,7 @@ export default MyForm;`;
                                 <div>
                                     <label className="block text-xs font-medium text-gray-600 dark:text-gray-400 mb-2">Font Weight</label>
                                     <select
-                                        value={selectedElement.fontWeight || 'normal'}
+                                        value={String(getValue('fontWeight', 'normal'))}
                                         onChange={(e) => updateElement(selectedElement.id, { fontWeight: e.target.value as any })}
                                         className="w-full p-2.5 bg-slate-50 dark:bg-gray-900 border border-slate-200 dark:border-gray-600 rounded-lg text-sm text-slate-700 dark:text-gray-200 focus:ring-2 focus:ring-brand-500 focus:border-transparent transition-all outline-none"
                                     >
@@ -1115,21 +1123,21 @@ export default MyForm;`;
                                             type="number"
                                             min="8"
                                             max="96"
-                                            value={selectedElement.fontSize || 16}
-                                            onChange={(e) => updateElement(selectedElement.id, { fontSize: parseInt(e.target.value) || 16 })}
+                                            value={parseInt(String(getValue('fontSize', '16px')), 10)}
+                                            onChange={(e) => updateElement(selectedElement.id, { fontSize: `${parseInt(e.target.value) || 16}px` })}
                                             className="flex-1 p-2.5 bg-slate-50 dark:bg-gray-900 border border-slate-200 dark:border-gray-600 rounded-lg text-sm text-slate-700 dark:text-gray-200 focus:ring-2 focus:ring-brand-500 focus:border-transparent transition-all outline-none"
                                         />
                                         <span className="text-sm text-slate-500 dark:text-gray-400 bg-slate-100 dark:bg-gray-700 border border-slate-200 dark:border-gray-600 rounded-lg px-3 py-2.5">px</span>
                                         <button
                                             type="button"
-                                            onClick={() => updateElement(selectedElement.id, { fontSize: Math.max(8, (selectedElement.fontSize || 16) - 1) })}
+                                            onClick={() => updateElement(selectedElement.id, { fontSize: `${Math.max(8, parseInt(String(getValue('fontSize', '16px')), 10) - 1)}px` })}
                                             className="p-2.5 bg-slate-50 dark:bg-gray-700 border border-slate-200 dark:border-gray-600 rounded-lg hover:bg-slate-100 dark:hover:bg-gray-600 text-slate-500 dark:text-gray-300 transition-colors"
                                         >
                                             <Minus size={14} />
                                         </button>
                                         <button
                                             type="button"
-                                            onClick={() => updateElement(selectedElement.id, { fontSize: Math.min(96, (selectedElement.fontSize || 16) + 1) })}
+                                            onClick={() => updateElement(selectedElement.id, { fontSize: `${Math.min(96, parseInt(String(getValue('fontSize', '16px')), 10) + 1)}px` })}
                                             className="p-2.5 bg-slate-50 dark:bg-gray-700 border border-slate-200 dark:border-gray-600 rounded-lg hover:bg-slate-100 dark:hover:bg-gray-600 text-slate-500 dark:text-gray-300 transition-colors"
                                         >
                                             <Plus size={14} />
@@ -1221,21 +1229,21 @@ export default MyForm;`;
                                             min="80"
                                             max="200"
                                             step="10"
-                                            value={selectedElement.lineHeight || 140}
-                                            onChange={(e) => updateElement(selectedElement.id, { lineHeight: parseInt(e.target.value) || 140 })}
+                                            value={parseInt(String(getValue('lineHeight', '140%')), 10)}
+                                            onChange={(e) => updateElement(selectedElement.id, { lineHeight: `${parseInt(e.target.value) || 140}%` })}
                                             className="flex-1 p-2.5 bg-slate-50 dark:bg-gray-900 border border-slate-200 dark:border-gray-600 rounded-lg text-sm text-slate-700 dark:text-gray-200 focus:ring-2 focus:ring-brand-500 focus:border-transparent transition-all outline-none"
                                         />
                                         <span className="text-sm text-slate-500 dark:text-gray-400 bg-slate-100 dark:bg-gray-700 border border-slate-200 dark:border-gray-600 rounded-lg px-3 py-2.5">%</span>
                                         <button
                                             type="button"
-                                            onClick={() => updateElement(selectedElement.id, { lineHeight: Math.max(80, (selectedElement.lineHeight || 140) - 10) })}
+                                            onClick={() => updateElement(selectedElement.id, { lineHeight: `${Math.max(80, parseInt(String(getValue('lineHeight', '140%')), 10) - 10)}%` })}
                                             className="p-2.5 bg-slate-50 dark:bg-gray-700 border border-slate-200 dark:border-gray-600 rounded-lg hover:bg-slate-100 dark:hover:bg-gray-600 text-slate-500 dark:text-gray-300 transition-colors"
                                         >
                                             <Minus size={14} />
                                         </button>
                                         <button
                                             type="button"
-                                            onClick={() => updateElement(selectedElement.id, { lineHeight: Math.min(200, (selectedElement.lineHeight || 140) + 10) })}
+                                            onClick={() => updateElement(selectedElement.id, { lineHeight: `${Math.min(200, parseInt(String(getValue('lineHeight', '140%')), 10) + 10)}%` })}
                                             className="p-2.5 bg-slate-50 dark:bg-gray-700 border border-slate-200 dark:border-gray-600 rounded-lg hover:bg-slate-100 dark:hover:bg-gray-600 text-slate-500 dark:text-gray-300 transition-colors"
                                         >
                                             <Plus size={14} />
@@ -1252,21 +1260,21 @@ export default MyForm;`;
                                             min="-5"
                                             max="10"
                                             step="0.5"
-                                            value={selectedElement.letterSpacing || 0}
-                                            onChange={(e) => updateElement(selectedElement.id, { letterSpacing: parseFloat(e.target.value) || 0 })}
+                                            value={parseFloat(String(getValue('letterSpacing', '0px')))}
+                                            onChange={(e) => updateElement(selectedElement.id, { letterSpacing: `${parseFloat(e.target.value) || 0}px` })}
                                             className="flex-1 p-2.5 bg-slate-50 dark:bg-gray-900 border border-slate-200 dark:border-gray-600 rounded-lg text-sm text-slate-700 dark:text-gray-200 focus:ring-2 focus:ring-brand-500 focus:border-transparent transition-all outline-none"
                                         />
                                         <span className="text-sm text-slate-500 dark:text-gray-400 bg-slate-100 dark:bg-gray-700 border border-slate-200 dark:border-gray-600 rounded-lg px-3 py-2.5">px</span>
                                         <button
                                             type="button"
-                                            onClick={() => updateElement(selectedElement.id, { letterSpacing: Math.max(-5, (selectedElement.letterSpacing || 0) - 0.5) })}
+                                            onClick={() => updateElement(selectedElement.id, { letterSpacing: `${Math.max(-5, parseFloat(String(getValue('letterSpacing', '0px'))) - 0.5)}px` })}
                                             className="p-2.5 bg-slate-50 dark:bg-gray-700 border border-slate-200 dark:border-gray-600 rounded-lg hover:bg-slate-100 dark:hover:bg-gray-600 text-slate-500 dark:text-gray-300 transition-colors"
                                         >
                                             <Minus size={14} />
                                         </button>
                                         <button
                                             type="button"
-                                            onClick={() => updateElement(selectedElement.id, { letterSpacing: Math.min(10, (selectedElement.letterSpacing || 0) + 0.5) })}
+                                            onClick={() => updateElement(selectedElement.id, { letterSpacing: `${Math.min(10, parseFloat(String(getValue('letterSpacing', '0px'))) + 0.5)}px` })}
                                             className="p-2.5 bg-slate-50 dark:bg-gray-700 border border-slate-200 dark:border-gray-600 rounded-lg hover:bg-slate-100 dark:hover:bg-gray-600 text-slate-500 dark:text-gray-300 transition-colors"
                                         >
                                             <Plus size={14} />
@@ -1363,7 +1371,7 @@ export default MyForm;`;
                                 min="0"
                                 max="12"
                                 value={selectedElement.labelGap ?? 3}
-                                onChange={(e) => updateElement(selectedElement.id, { labelGap: parseInt(e.target.value) })}
+                                onChange={(e) => updateElement(selectedElement.id, { labelGap: `${parseInt(e.target.value)}px` })}
                                 className="w-full h-2 bg-slate-200 rounded-lg appearance-none cursor-pointer"
                             />
                             <div className="flex justify-between text-xs text-slate-500 mt-1">
@@ -1385,7 +1393,7 @@ export default MyForm;`;
                             <div
                                 className="w-12 h-12 rounded-lg border border-slate-200 dark:border-gray-700 relative overflow-hidden cursor-pointer"
                                 style={{
-                                    backgroundColor: selectedElement.backgroundColor || '#ffffff'
+                                    backgroundColor: selectedElement.backgroundColor || settings.formBackground || 'transparent'
                                 }}
                                 onClick={() => {
                                     // Create a color input element and trigger click
@@ -1398,8 +1406,9 @@ export default MyForm;`;
                                     };
                                     colorInput.click();
                                 }}
+                                title={selectedElement.backgroundColor ? "Click to change" : "Inherited (Click to override)"}
                             >
-                                {!selectedElement.backgroundColor && (
+                                {!selectedElement.backgroundColor && !settings.formBackground && (
                                     <svg className="absolute inset-0 w-full h-full" viewBox="0 0 48 48">
                                         <path d="M6 42L42 6" stroke="#ef4444" strokeWidth="2" />
                                     </svg>
@@ -1443,7 +1452,7 @@ export default MyForm;`;
                                     step="5"
                                     value={selectedElement.imageWidthPercent || 100}
                                     onChange={(e) => updateElement(selectedElement.id, { imageWidthPercent: parseInt(e.target.value) || 100 })}
-                                    className="w-16 px-2 py-1 text-xs border border-slate-200 dark:border-gray-700 dark:bg-gray-800 dark:text-gray-200 rounded"
+                                    className="w-16 px-2 py-1 text-xs border border-slate-200 dark:border-gray-800 dark:text-gray-200 rounded"
                                 />
                             </div>
                             <div className="flex justify-between text-xs text-slate-400 mt-1">
@@ -1742,7 +1751,7 @@ export default MyForm;`;
                                     <div className="relative inline-block">
                                         <div
                                             className="w-10 h-10 rounded border border-slate-200 dark:border-gray-600 cursor-pointer overflow-hidden relative"
-                                            style={{ backgroundColor: (selectedElement.backgroundColor && selectedElement.backgroundColor !== 'transparent') ? selectedElement.backgroundColor : (selectedElement.backgroundColor === 'transparent' ? 'transparent' : 'var(--theme-button-bg)') }}
+                                            style={{ backgroundColor: selectedElement.backgroundColor || settings.formBackground || 'var(--theme-button-bg)' }}
                                             onClick={() => {
                                                 const colorInput = document.createElement('input');
                                                 colorInput.type = 'color';
@@ -1750,7 +1759,9 @@ export default MyForm;`;
                                                 colorInput.onchange = (e) => updateElement(selectedElement.id, { backgroundColor: (e.target as HTMLInputElement).value });
                                                 colorInput.click();
                                             }}
+                                            title={selectedElement.backgroundColor ? "Click to change" : "Inherited (Click to override)"}
                                         >
+                                            {/* Show transparent grid only if explicitly transparent or no color at all */}
                                             {selectedElement.backgroundColor === 'transparent' && (
                                                 <svg className="absolute inset-0 w-full h-full" viewBox="0 0 48 48">
                                                     <path d="M6 42L42 6" stroke="#ef4444" strokeWidth="2" />
@@ -1778,7 +1789,7 @@ export default MyForm;`;
                                     <div className="relative inline-block">
                                         <div
                                             className="w-10 h-10 rounded border border-slate-200 dark:border-gray-600 cursor-pointer overflow-hidden relative"
-                                            style={{ backgroundColor: selectedElement.textColor || 'transparent' }}
+                                            style={{ backgroundColor: selectedElement.textColor || settings.textColor || '#ffffff' }}
                                             onClick={() => {
                                                 const colorInput = document.createElement('input');
                                                 colorInput.type = 'color';
@@ -1786,11 +1797,14 @@ export default MyForm;`;
                                                 colorInput.onchange = (e) => updateElement(selectedElement.id, { textColor: (e.target as HTMLInputElement).value });
                                                 colorInput.click();
                                             }}
+                                            title={selectedElement.textColor ? "Click to change" : "Inherited (Click to override)"}
                                         >
-                                            {!selectedElement.textColor && (
-                                                <svg className="absolute inset-0 w-full h-full" viewBox="0 0 48 48">
-                                                    <path d="M6 42L42 6" stroke="#ef4444" strokeWidth="2" />
-                                                </svg>
+                                            {!selectedElement.textColor && !settings.textColor && (
+                                                // Only show slash if no element color AND no global inherited color (defaulting to white doesn't need slash)
+                                                // Actually if we default to white, we shouldn't show slash unless white is invalid?
+                                                // Let's assume slash is only for "Nothingness". If we default to #ffffff, we show white.
+                                                // So I'll remove the slash default if we assume buttons always have text color (white or inherited).
+                                                <span />
                                             )}
                                             {selectedElement.textColor && (
                                                 <button
@@ -1829,7 +1843,7 @@ export default MyForm;`;
                                         min="10"
                                         max="100"
                                         value={selectedElement.buttonWidth || 100}
-                                        onChange={(e) => updateElement(selectedElement.id, { buttonWidth: parseInt(e.target.value) })}
+                                        onChange={(e) => updateElement(selectedElement.id, { buttonWidth: `${parseInt(e.target.value)}px` })}
                                         className="w-full h-2 bg-slate-200 dark:bg-gray-700 rounded-lg appearance-none cursor-pointer"
                                     />
                                 )}
@@ -1839,7 +1853,7 @@ export default MyForm;`;
                                     <label className="text-sm font-medium text-slate-700 dark:text-gray-300">Font Family</label>
                                     <div className="relative w-40">
                                         <select
-                                            value={selectedElement.fontFamily || ''}
+                                            value={String(getValue('fontFamily', ''))}
                                             onChange={(e) => updateElement(selectedElement.id, { fontFamily: e.target.value })}
                                             className="w-full p-2 pr-8 text-sm bg-white dark:bg-gray-900 border border-slate-200 dark:border-gray-600 rounded-lg outline-none focus:border-brand-500 transition-colors appearance-none text-right"
                                         >
@@ -1863,7 +1877,7 @@ export default MyForm;`;
                                     <label className="text-sm font-medium text-slate-700 dark:text-gray-300">Font Weight</label>
                                     <div className="relative w-40">
                                         <select
-                                            value={selectedElement.fontWeight || 'normal'}
+                                            value={String(getValue('fontWeight', 'normal'))}
                                             onChange={(e) => updateElement(selectedElement.id, { fontWeight: e.target.value as any })}
                                             className="w-full p-2 pr-8 text-sm bg-white dark:bg-gray-900 border border-slate-200 dark:border-gray-600 rounded-lg outline-none focus:border-brand-500 transition-colors appearance-none text-right"
                                         >
@@ -1885,13 +1899,13 @@ export default MyForm;`;
                                         <div className="flex items-center border border-slate-200 dark:border-gray-600 rounded-lg overflow-hidden bg-white dark:bg-gray-900">
                                             <input
                                                 type="number"
-                                                value={selectedElement.fontSize || 16}
-                                                onChange={(e) => updateElement(selectedElement.id, { fontSize: parseInt(e.target.value) })}
+                                                value={parseInt(String(getValue('fontSize', '16px')), 10)}
+                                                onChange={(e) => updateElement(selectedElement.id, { fontSize: `${parseInt(e.target.value)}px` })}
                                                 className="w-12 p-1.5 text-center text-sm bg-transparent outline-none border-r border-slate-200 dark:border-gray-600 text-slate-700 dark:text-gray-200"
                                             />
                                             <div className="bg-slate-50 dark:bg-gray-800 px-3 py-1.5 text-sm text-slate-500 border-r border-slate-200 dark:border-gray-600">px</div>
-                                            <button onClick={() => updateElement(selectedElement.id, { fontSize: (selectedElement.fontSize || 16) - 1 })} className="px-3 py-1.5 hover:bg-slate-50 dark:hover:bg-gray-700 border-r border-slate-200 dark:border-gray-600 text-slate-600 dark:text-gray-300 transition-colors"><Minus size={14} /></button>
-                                            <button onClick={() => updateElement(selectedElement.id, { fontSize: (selectedElement.fontSize || 16) + 1 })} className="px-3 py-1.5 hover:bg-slate-50 dark:hover:bg-gray-700 text-slate-600 dark:text-gray-300 transition-colors"><Plus size={14} /></button>
+                                            <button onClick={() => updateElement(selectedElement.id, { fontSize: `${parseInt(String(getValue('fontSize', '16px')), 10) - 1}px` })} className="px-3 py-1.5 hover:bg-slate-50 dark:hover:bg-gray-700 border-r border-slate-200 dark:border-gray-600 text-slate-600 dark:text-gray-300 transition-colors"><Minus size={14} /></button>
+                                            <button onClick={() => updateElement(selectedElement.id, { fontSize: `${parseInt(String(getValue('fontSize', '16px')), 10) + 1}px` })} className="px-3 py-1.5 hover:bg-slate-50 dark:hover:bg-gray-700 text-slate-600 dark:text-gray-300 transition-colors"><Plus size={14} /></button>
                                         </div>
                                     </div>
                                 </div>
@@ -1903,15 +1917,15 @@ export default MyForm;`;
                                         <div className="flex items-center border border-slate-200 dark:border-gray-600 rounded overflow-hidden">
                                             <input
                                                 type="number"
-                                                value={selectedElement.lineHeight || 120}
-                                                onChange={(e) => updateElement(selectedElement.id, { lineHeight: parseInt(e.target.value) })}
+                                                value={parseInt(String(getValue('lineHeight', '120%')), 10)}
+                                                onChange={(e) => updateElement(selectedElement.id, { lineHeight: `${parseInt(e.target.value)}%` })}
                                                 className="w-16 p-1.5 text-center text-sm bg-transparent outline-none border-r border-slate-200 dark:border-gray-600"
                                             />
                                             <div className="bg-slate-50 dark:bg-gray-800 px-2 py-1.5 text-sm text-slate-500">%</div>
                                         </div>
                                         <div className="flex border border-slate-200 dark:border-gray-600 rounded overflow-hidden">
-                                            <button onClick={() => updateElement(selectedElement.id, { lineHeight: (selectedElement.lineHeight || 120) - 10 })} className="px-2 py-1.5 hover:bg-slate-100 dark:hover:bg-gray-700 border-r border-slate-200 dark:border-gray-600"><Minus size={14} /></button>
-                                            <button onClick={() => updateElement(selectedElement.id, { lineHeight: (selectedElement.lineHeight || 120) + 10 })} className="px-2 py-1.5 hover:bg-slate-100 dark:hover:bg-gray-700"><Plus size={14} /></button>
+                                            <button onClick={() => updateElement(selectedElement.id, { lineHeight: `${parseInt(String(getValue('lineHeight', '120%')), 10) - 10}%` })} className="px-2 py-1.5 hover:bg-slate-100 dark:hover:bg-gray-700 border-r border-slate-200 dark:border-gray-600"><Minus size={14} /></button>
+                                            <button onClick={() => updateElement(selectedElement.id, { lineHeight: `${parseInt(String(getValue('lineHeight', '120%')), 10) + 10}%` })} className="px-2 py-1.5 hover:bg-slate-100 dark:hover:bg-gray-700"><Plus size={14} /></button>
                                         </div>
                                     </div>
                                 </div>
@@ -1923,15 +1937,15 @@ export default MyForm;`;
                                         <div className="flex items-center border border-slate-200 dark:border-gray-600 rounded overflow-hidden">
                                             <input
                                                 type="number"
-                                                value={selectedElement.letterSpacing || 0}
-                                                onChange={(e) => updateElement(selectedElement.id, { letterSpacing: parseFloat(e.target.value) })}
+                                                value={parseFloat(String(getValue('letterSpacing', '0px')))}
+                                                onChange={(e) => updateElement(selectedElement.id, { letterSpacing: `${parseFloat(e.target.value)}px` })}
                                                 className="w-16 p-1.5 text-center text-sm bg-transparent outline-none border-r border-slate-200 dark:border-gray-600"
                                             />
                                             <div className="bg-slate-50 dark:bg-gray-800 px-2 py-1.5 text-sm text-slate-500">px</div>
                                         </div>
                                         <div className="flex border border-slate-200 dark:border-gray-600 rounded overflow-hidden">
-                                            <button onClick={() => updateElement(selectedElement.id, { letterSpacing: (selectedElement.letterSpacing || 0) - 0.5 })} className="px-2 py-1.5 hover:bg-slate-100 dark:hover:bg-gray-700 border-r border-slate-200 dark:border-gray-600"><Minus size={14} /></button>
-                                            <button onClick={() => updateElement(selectedElement.id, { letterSpacing: (selectedElement.letterSpacing || 0) + 0.5 })} className="px-2 py-1.5 hover:bg-slate-100 dark:hover:bg-gray-700"><Plus size={14} /></button>
+                                            <button onClick={() => updateElement(selectedElement.id, { letterSpacing: `${parseFloat(String(getValue('letterSpacing', '0px'))) - 0.5}px` })} className="px-2 py-1.5 hover:bg-slate-100 dark:hover:bg-gray-700 border-r border-slate-200 dark:border-gray-600"><Minus size={14} /></button>
+                                            <button onClick={() => updateElement(selectedElement.id, { letterSpacing: `${parseFloat(String(getValue('letterSpacing', '0px'))) + 0.5}px` })} className="px-2 py-1.5 hover:bg-slate-100 dark:hover:bg-gray-700"><Plus size={14} /></button>
                                         </div>
                                     </div>
                                 </div>
@@ -1997,13 +2011,10 @@ export default MyForm;`;
 
                                     {/* Controls Wrapper */}
                                     {['Top', 'Right', 'Bottom', 'Left'].map((side) => {
-                                        const sideKey = side as 'Top' | 'Right' | 'Left' | 'Bottom';
-                                        // @ts-ignore
-                                        const width = selectedElement[`borderWidth${sideKey}`] || 0;
-                                        // @ts-ignore
-                                        const color = selectedElement[`borderColor${sideKey}`];
-                                        // @ts-ignore
-                                        const style = selectedElement[`borderStyle${sideKey}`] || 'None';
+                                        const sideKey = side.charAt(0).toUpperCase() + side.slice(1);
+                                        const color = String(getValue(`borderColor${sideKey}` as keyof FormElement, '#e2e8f0')); // Default slate-200
+                                        const width = String(getValue(`borderWidth${sideKey}` as keyof FormElement, '0'));
+                                        const style = String(getValue(`borderStyle${sideKey}` as keyof FormElement, 'none'));
 
                                         const positionClasses = {
                                             Top: 'top-0 left-1/2 -translate-x-1/2 flex-col-reverse mb-1 pt-1',
@@ -2019,8 +2030,8 @@ export default MyForm;`;
                                                     <input
                                                         type="number"
                                                         min="0"
-                                                        value={width}
-                                                        onChange={(e) => updateElement(selectedElement.id, { [`borderWidth${sideKey}`]: parseInt(e.target.value) || 0 })}
+                                                        value={parseInt(width, 10)}
+                                                        onChange={(e) => updateElement(selectedElement.id, { [`borderWidth${sideKey}`]: `${parseInt(e.target.value) || 0}px` })}
                                                         className="w-10 h-6 text-center text-[10px] font-medium border border-slate-200 dark:border-gray-600 rounded bg-white dark:bg-gray-900 shadow-sm focus:border-blue-500 focus:ring-1 focus:ring-blue-500 transition-all outline-none"
                                                         placeholder="0"
                                                     />
@@ -2109,8 +2120,8 @@ export default MyForm;`;
                                             <input
                                                 type="number"
                                                 min="0"
-                                                value={selectedElement.borderRadiusTopLeft || 0}
-                                                onChange={(e) => updateElement(selectedElement.id, { borderRadiusTopLeft: parseInt(e.target.value) || 0 })}
+                                                value={parseInt(String(getValue('borderRadiusTopLeft', '0px')), 10)}
+                                                onChange={(e) => updateElement(selectedElement.id, { borderRadiusTopLeft: `${parseInt(e.target.value) || 0}px` })}
                                                 className="w-10 h-8 text-center text-xs font-medium border border-slate-200 dark:border-gray-600 rounded bg-white dark:bg-gray-900 shadow-sm focus:border-blue-500 focus:ring-1 focus:ring-blue-500 transition-all outline-none"
                                             />
                                         </div>
@@ -2120,8 +2131,8 @@ export default MyForm;`;
                                             <input
                                                 type="number"
                                                 min="0"
-                                                value={selectedElement.borderRadiusTopRight || 0}
-                                                onChange={(e) => updateElement(selectedElement.id, { borderRadiusTopRight: parseInt(e.target.value) || 0 })}
+                                                value={parseInt(String(getValue('borderRadiusTopRight', '0px')), 10)}
+                                                onChange={(e) => updateElement(selectedElement.id, { borderRadiusTopRight: `${parseInt(e.target.value) || 0}px` })}
                                                 className="w-10 h-8 text-center text-xs font-medium border border-slate-200 dark:border-gray-600 rounded bg-white dark:bg-gray-900 shadow-sm focus:border-blue-500 focus:ring-1 focus:ring-blue-500 transition-all outline-none"
                                             />
                                         </div>
@@ -2131,8 +2142,8 @@ export default MyForm;`;
                                             <input
                                                 type="number"
                                                 min="0"
-                                                value={selectedElement.borderRadiusBottomLeft || 0}
-                                                onChange={(e) => updateElement(selectedElement.id, { borderRadiusBottomLeft: parseInt(e.target.value) || 0 })}
+                                                value={parseInt(String(getValue('borderRadiusBottomLeft', '0px')), 10)}
+                                                onChange={(e) => updateElement(selectedElement.id, { borderRadiusBottomLeft: `${parseInt(e.target.value) || 0}px` })}
                                                 className="w-10 h-8 text-center text-xs font-medium border border-slate-200 dark:border-gray-600 rounded bg-white dark:bg-gray-900 shadow-sm focus:border-blue-500 focus:ring-1 focus:ring-blue-500 transition-all outline-none"
                                             />
                                         </div>
@@ -2142,8 +2153,8 @@ export default MyForm;`;
                                             <input
                                                 type="number"
                                                 min="0"
-                                                value={selectedElement.borderRadiusBottomRight || 0}
-                                                onChange={(e) => updateElement(selectedElement.id, { borderRadiusBottomRight: parseInt(e.target.value) || 0 })}
+                                                value={parseInt(String(getValue('borderRadiusBottomRight', '0px')), 10)}
+                                                onChange={(e) => updateElement(selectedElement.id, { borderRadiusBottomRight: `${parseInt(e.target.value) || 0}px` })}
                                                 className="w-10 h-8 text-center text-xs font-medium border border-slate-200 dark:border-gray-600 rounded bg-white dark:bg-gray-900 shadow-sm focus:border-blue-500 focus:ring-1 focus:ring-blue-500 transition-all outline-none"
                                             />
                                         </div>

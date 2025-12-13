@@ -19,9 +19,9 @@ export const defaultSettings = {
         { platform: 'instagram', url: 'https://instagram.com', icon: 'instagram' },
         { platform: 'linkedin', url: 'https://linkedin.com', icon: 'linkedin' }
     ],
-    gap: 16,
+    gap: "16px",
     justifyContent: 'center',
     buttonStyle: 'text',
-    fontSize: 24
+    fontSize: "24px"
 };
 

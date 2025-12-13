@@ -277,16 +277,16 @@ export const LayoutPanel: React.FC<LayoutPanelProps> = ({ selectedElement, updat
                                     type="range"
                                     min="0"
                                     max="40"
-                                    value={selectedElement.gap ?? 0}
-                                    onChange={(e) => updateElement(selectedElement.id, { gap: parseInt(e.target.value) })}
+                                    value={parseInt(String(selectedElement.gap || '0'), 10)}
+                                    onChange={(e) => updateElement(selectedElement.id, { gap: `${e.target.value}px` })}
                                     className="flex-1 h-1 bg-gray-200 rounded-lg appearance-none cursor-pointer"
                                 />
                                 <input
                                     type="number"
                                     min="0"
                                     max="40"
-                                    value={selectedElement.gap ?? 0}
-                                    onChange={(e) => updateElement(selectedElement.id, { gap: parseInt(e.target.value) || 0 })}
+                                    value={parseInt(String(selectedElement.gap || '0'), 10)}
+                                    onChange={(e) => updateElement(selectedElement.id, { gap: `${e.target.value}px` })}
                                     className="w-12 px-2 py-1 text-xs border border-gray-300 rounded"
                                 />
                             </div>
@@ -458,8 +458,8 @@ export const LayoutPanel: React.FC<LayoutPanelProps> = ({ selectedElement, updat
                                 min="0"
                                 max="64"
                                 step="4"
-                                value={selectedElement.gap ?? 16}
-                                onChange={(e) => updateElement(selectedElement.id, { gap: parseInt(e.target.value) })}
+                                value={parseInt(String(selectedElement.gap || '16'), 10)}
+                                onChange={(e) => updateElement(selectedElement.id, { gap: `${e.target.value}px` })}
                                 className="w-full h-2 bg-slate-200 dark:bg-gray-700 rounded-lg appearance-none cursor-pointer accent-blue-600"
                             />
                         </div>
@@ -499,11 +499,11 @@ export const LayoutPanel: React.FC<LayoutPanelProps> = ({ selectedElement, updat
                             min="0"
                             max="100"
                             step="1"
-                            value={selectedElement.marginTop ?? effectiveDefaults.marginTop ?? 0}
+                            value={parseInt(String(selectedElement.marginTop ?? effectiveDefaults.marginTop ?? '0'), 10)}
                             onChange={(e) => {
                                 const newValue = parseInt(e.target.value);
                                 const valueToSet = isNaN(newValue) ? 0 : newValue;
-                                updateElement(selectedElement.id, { marginTop: valueToSet });
+                                updateElement(selectedElement.id, { marginTop: `${valueToSet}px` });
                             }}
                             onClick={(e) => {
                                 e.stopPropagation();
@@ -529,11 +529,11 @@ export const LayoutPanel: React.FC<LayoutPanelProps> = ({ selectedElement, updat
                             min="0"
                             max="100"
                             step="1"
-                            value={selectedElement.marginRight ?? effectiveDefaults.marginRight ?? 0}
+                            value={parseInt(String(selectedElement.marginRight ?? effectiveDefaults.marginRight ?? '0'), 10)}
                             onChange={(e) => {
                                 const newValue = parseInt(e.target.value);
                                 const valueToSet = isNaN(newValue) ? 0 : newValue;
-                                updateElement(selectedElement.id, { marginRight: valueToSet });
+                                updateElement(selectedElement.id, { marginRight: `${valueToSet}px` });
                             }}
                             className="absolute border border-gray-300 dark:border-gray-600 rounded bg-white dark:bg-gray-800 text-gray-700 dark:text-gray-200 focus:outline-none focus:border-blue-500 focus:shadow-md"
                             style={{
@@ -555,11 +555,11 @@ export const LayoutPanel: React.FC<LayoutPanelProps> = ({ selectedElement, updat
                             min="0"
                             max="100"
                             step="1"
-                            value={selectedElement.marginBottom ?? effectiveDefaults.marginBottom ?? 0}
+                            value={parseInt(String(selectedElement.marginBottom ?? effectiveDefaults.marginBottom ?? '0'), 10)}
                             onChange={(e) => {
                                 const newValue = parseInt(e.target.value);
                                 const valueToSet = isNaN(newValue) ? 0 : newValue;
-                                updateElement(selectedElement.id, { marginBottom: valueToSet });
+                                updateElement(selectedElement.id, { marginBottom: `${valueToSet}px` });
                             }}
                             className="absolute border border-gray-300 dark:border-gray-600 rounded bg-white dark:bg-gray-800 text-gray-700 dark:text-gray-200 focus:outline-none focus:border-blue-500 focus:shadow-md"
                             style={{
@@ -581,11 +581,11 @@ export const LayoutPanel: React.FC<LayoutPanelProps> = ({ selectedElement, updat
                             min="0"
                             max="100"
                             step="1"
-                            value={selectedElement.marginLeft ?? effectiveDefaults.marginLeft ?? 0}
+                            value={parseInt(String(selectedElement.marginLeft ?? effectiveDefaults.marginLeft ?? '0'), 10)}
                             onChange={(e) => {
                                 const newValue = parseInt(e.target.value);
                                 const valueToSet = isNaN(newValue) ? 0 : newValue;
-                                updateElement(selectedElement.id, { marginLeft: valueToSet });
+                                updateElement(selectedElement.id, { marginLeft: `${valueToSet}px` });
                             }}
                             className="absolute border border-gray-300 dark:border-gray-600 rounded bg-white dark:bg-gray-800 text-gray-700 dark:text-gray-200 focus:outline-none focus:border-blue-500 focus:shadow-md"
                             style={{
@@ -631,11 +631,11 @@ export const LayoutPanel: React.FC<LayoutPanelProps> = ({ selectedElement, updat
                                 min="0"
                                 max="100"
                                 step="1"
-                                value={selectedElement.paddingTop ?? effectiveDefaults.paddingTop ?? 0}
+                                value={parseInt(String(selectedElement.paddingTop ?? effectiveDefaults.paddingTop ?? '0'), 10)}
                                 onChange={(e) => {
                                     const newValue = parseInt(e.target.value);
                                     const valueToSet = isNaN(newValue) ? 0 : newValue;
-                                    updateElement(selectedElement.id, { paddingTop: valueToSet });
+                                    updateElement(selectedElement.id, { paddingTop: `${valueToSet}px` });
                                 }}
                                 onClick={(e) => {
                                     e.stopPropagation();
@@ -661,11 +661,11 @@ export const LayoutPanel: React.FC<LayoutPanelProps> = ({ selectedElement, updat
                                 min="0"
                                 max="100"
                                 step="1"
-                                value={selectedElement.paddingRight ?? effectiveDefaults.paddingRight ?? 0}
+                                value={parseInt(String(selectedElement.paddingRight ?? effectiveDefaults.paddingRight ?? '0'), 10)}
                                 onChange={(e) => {
                                     const newValue = parseInt(e.target.value);
                                     const valueToSet = isNaN(newValue) ? 0 : newValue;
-                                    updateElement(selectedElement.id, { paddingRight: valueToSet });
+                                    updateElement(selectedElement.id, { paddingRight: `${valueToSet}px` });
                                 }}
                                 className="absolute border border-gray-300 dark:border-gray-600 rounded bg-white dark:bg-gray-800 text-gray-700 dark:text-gray-200 focus:outline-none focus:border-blue-500 focus:shadow-md"
                                 style={{
@@ -687,11 +687,11 @@ export const LayoutPanel: React.FC<LayoutPanelProps> = ({ selectedElement, updat
                                 min="0"
                                 max="100"
                                 step="1"
-                                value={selectedElement.paddingBottom ?? effectiveDefaults.paddingBottom ?? 0}
+                                value={parseInt(String(selectedElement.paddingBottom ?? effectiveDefaults.paddingBottom ?? '0'), 10)}
                                 onChange={(e) => {
                                     const newValue = parseInt(e.target.value);
                                     const valueToSet = isNaN(newValue) ? 0 : newValue;
-                                    updateElement(selectedElement.id, { paddingBottom: valueToSet });
+                                    updateElement(selectedElement.id, { paddingBottom: `${valueToSet}px` });
                                 }}
                                 className="absolute border border-gray-300 dark:border-gray-600 rounded bg-white dark:bg-gray-800 text-gray-700 dark:text-gray-200 focus:outline-none focus:border-blue-500 focus:shadow-md"
                                 style={{
@@ -713,11 +713,11 @@ export const LayoutPanel: React.FC<LayoutPanelProps> = ({ selectedElement, updat
                                 min="0"
                                 max="100"
                                 step="1"
-                                value={selectedElement.paddingLeft ?? effectiveDefaults.paddingLeft ?? 0}
+                                value={parseInt(String(selectedElement.paddingLeft ?? effectiveDefaults.paddingLeft ?? '0'), 10)}
                                 onChange={(e) => {
                                     const newValue = parseInt(e.target.value);
                                     const valueToSet = isNaN(newValue) ? 0 : newValue;
-                                    updateElement(selectedElement.id, { paddingLeft: valueToSet });
+                                    updateElement(selectedElement.id, { paddingLeft: `${valueToSet}px` });
                                 }}
                                 className="absolute border border-gray-300 dark:border-gray-600 rounded bg-white dark:bg-gray-800 text-gray-700 dark:text-gray-200 focus:outline-none focus:border-blue-500 focus:shadow-md"
                                 style={{

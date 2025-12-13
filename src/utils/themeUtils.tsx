@@ -46,7 +46,7 @@ export function getOptimalTextColor(
 ): string {
     const effectiveTheme = getEffectiveTheme(theme);
     const themeColors = getThemeColors(theme);
-    
+
     // If smart text colors is disabled, use semantic theme defaults
     if (!smartTextColors || !backgroundColor) {
         return effectiveTheme === 'dark' ? themeColors['text-emphasis'] : themeColors.text;
@@ -67,7 +67,7 @@ export function getOptimalTextColor(
         document.body.appendChild(div);
         const computedColor = window.getComputedStyle(div).color;
         document.body.removeChild(div);
-        
+
         // Convert rgb to hex
         const rgbMatch = computedColor.match(/rgb\((\d+),\s*(\d+),\s*(\d+)\)/);
         if (rgbMatch) {
@@ -85,7 +85,7 @@ export function getOptimalTextColor(
     const whiteContrast = getContrastRatio(bgColor, themeColors['text-emphasis']);
     const blackContrast = getContrastRatio(bgColor, '#000000');
     const themeTextContrast = getContrastRatio(bgColor, themeColors.text);
-    
+
     // Use the color with the best contrast, prioritizing semantic colors
     if (themeTextContrast >= 4.5) {
         return themeColors.text;
@@ -102,7 +102,7 @@ export function getOptimalTextColor(
 // Get theme-aware colors for UI elements using semantic color principles
 export function getThemeColors(theme: 'light' | 'dark' | 'auto') {
     const isDark = theme === 'dark' || (theme === 'auto' && window.matchMedia('(prefers-color-scheme: dark)').matches);
-    
+
     return {
         isDark,
         // Semantic background colors
@@ -110,13 +110,13 @@ export function getThemeColors(theme: 'light' | 'dark' | 'auto') {
         surface: isDark ? '#1e293b' : '#f8fafc',        // slate-800 / slate-50
         'surface-alt': isDark ? '#334155' : '#f1f5f9',  // slate-700 / slate-100
         muted: isDark ? '#475569' : '#e2e8f0',          // slate-600 / slate-200
-        
+
         // Semantic text colors
         text: isDark ? '#f8fafc' : '#0f172a',           // slate-50 / slate-900
         'text-secondary': isDark ? '#94a3b8' : '#64748b', // slate-400 / slate-500
         'text-muted': isDark ? '#64748b' : '#94a3b8',   // slate-500 / slate-400
         'text-emphasis': isDark ? '#ffffff' : '#000000', // white / black
-        
+
         // UI colors
         border: isDark ? '#475569' : '#e2e8f0',         // slate-600 / slate-200
         'border-subtle': isDark ? '#334155' : '#f1f5f9', // slate-700 / slate-100
@@ -154,13 +154,13 @@ export function getSmartBackgroundColor(
     }
 
     const effectiveTheme = getEffectiveTheme(theme);
-    
+
     // Ensure effectiveTheme is valid
     if (!effectiveTheme || (effectiveTheme !== 'light' && effectiveTheme !== 'dark')) {
         console.warn('Invalid effectiveTheme:', effectiveTheme, 'theme:', theme);
         return 'transparent';
     }
-    
+
     // Semantic background colors following Tailwind best practices
     const semanticBackgrounds = {
         light: {
@@ -238,9 +238,9 @@ export function getSmartBackgroundColor(
         console.warn('No theme backgrounds found for theme:', effectiveTheme);
         return 'transparent';
     }
-    
-    return themeBackgrounds[elementType as keyof typeof semanticBackgrounds.light] || 
-           themeBackgrounds.background;
+
+    return themeBackgrounds[elementType as keyof typeof semanticBackgrounds.light] ||
+        themeBackgrounds.background;
 }
 
 // Get smart border color based on theme using semantic colors
@@ -249,7 +249,7 @@ export function getSmartBorderColor(
     userBorderColor?: string
 ): string {
     if (userBorderColor) return userBorderColor;
-    
+
     const themeColors = getThemeColors(theme);
     return themeColors.border;
 }
@@ -264,9 +264,9 @@ export function getSemanticTextColor(
     if (userTextColor && userTextColor !== 'transparent') {
         return userTextColor;
     }
-    
+
     const themeColors = getThemeColors(theme);
-    
+
     // Element-specific text colors
     const semanticTextColors = {
         // Form elements need high contrast
@@ -274,18 +274,18 @@ export function getSemanticTextColor(
         textarea: themeColors.text,
         select: themeColors.text,
         button: themeColors.text,
-        
+
         // Text elements
         text: themeColors.text,
         heading: themeColors['text-emphasis'],
         paragraph: themeColors.text,
         'rich-text': themeColors.text,
         'text-block': themeColors.text,
-        
+
         // Default fallback
         default: themeColors.text
     };
-    
+
     return semanticTextColors[elementType as keyof typeof semanticTextColors] || semanticTextColors.default;
 }
 
@@ -301,56 +301,56 @@ export function generateElementStyling(
         console.warn('Invalid canvasTheme in generateElementStyling:', canvasTheme);
         canvasTheme = 'light'; // Default fallback
     }
-    
+
     // Use EXACT text-block inheritance logic - copied verbatim for backward compatibility
     const bodyBackground = settings?.formBackground || settings?.bodyBackground;
     const inheritedBg = getInheritedBackgroundColor(elements, element.id, bodyBackground);
     const darkModeDisabled = shouldDisableDarkMode(elements, element.id, bodyBackground, settings);
     const calculatedTextColor = getEffectiveTextColor(elements, element, bodyBackground, canvasTheme, settings);
-    
+
     // Get semantic theme colors
     const themeColors = getThemeColors(canvasTheme);
-    
+
     // Get semantic background color
     const semanticBackgroundColor = getSmartBackgroundColor(
-        canvasTheme, 
-        element.backgroundColor, 
+        canvasTheme,
+        element.backgroundColor,
         element.type
     );
-    
+
     // Get semantic text color with fallback to calculated color
     let semanticTextColor = getSemanticTextColor(
         canvasTheme,
         element.type,
         element.textColor
     );
-    
+
     // Use calculated text color if available (for inheritance logic compatibility)
     if (calculatedTextColor) {
         semanticTextColor = calculatedTextColor;
     }
-    
+
     // For elements with explicit background, calculate optimal text color
     if (element.backgroundColor && element.backgroundColor !== 'transparent') {
         semanticTextColor = getOptimalTextColor(element.backgroundColor, canvasTheme, true);
     }
-    
+
     // Get semantic border color
     const semanticBorderColor = getSmartBorderColor(canvasTheme, element.borderColor);
-    
+
     // Use inherited or element background for display (backward compatibility)
     const displayBg = element.backgroundColor || inheritedBg || 'transparent';
-    
+
     // Determine final background - prioritize semantic color unless explicitly overridden
     const finalBackgroundColor = element.backgroundColor || semanticBackgroundColor;
-    
+
     return {
         // Container styling with semantic colors
         containerStyle: {
             backgroundColor: finalBackgroundColor,
             color: semanticTextColor,
             borderColor: semanticBorderColor,
-            padding: `${(element.paddingTop ?? 3) * 0.25}rem ${(element.paddingRight ?? 3) * 0.25}rem ${(element.paddingBottom ?? 3) * 0.25}rem ${(element.paddingLeft ?? 3) * 0.25}rem`
+            padding: `${element.paddingTop || '12px'} ${element.paddingRight || '12px'} ${element.paddingBottom || '12px'} ${element.paddingLeft || '12px'}`
         },
         // Text styling
         textStyle: {
@@ -360,7 +360,7 @@ export function generateElementStyling(
         backgroundColor: finalBackgroundColor,
         textColor: semanticTextColor,
         borderColor: semanticBorderColor,
-        padding: `${(element.paddingTop ?? 3) * 0.25}rem ${(element.paddingRight ?? 3) * 0.25}rem ${(element.paddingBottom ?? 3) * 0.25}rem ${(element.paddingLeft ?? 3) * 0.25}rem`,
+        padding: `${element.paddingTop || '12px'} ${element.paddingRight || '12px'} ${element.paddingBottom || '12px'} ${element.paddingLeft || '12px'}`,
         // Semantic theme colors for advanced usage
         themeColors,
         // Raw values for debugging and backward compatibility
@@ -412,7 +412,7 @@ export function getInheritedBackgroundColor(
     };
 
     const path = findElementPath(elements, targetElementId);
-    
+
     // Walk up the path to find the first parent with a background
     for (let i = 0; i < path.length - 1; i++) {
         const parent = path[i];
@@ -463,17 +463,17 @@ export function getEffectiveTextColor(
 ): string | null {
     // Get inherited background
     const inheritedBg = getInheritedBackgroundColor(elements, element.id, bodyBackground);
-    
+
     // If element has explicit text color, use it
     if (element.textColor) {
         return element.textColor;
     }
-    
+
     // If there's an inherited background, choose optimal color for that background
     if (inheritedBg) {
         return getOptimalTextColor(inheritedBg, 'light', true); // Force light theme logic when bg is set
     }
-    
+
     // Return null to indicate that theme defaults should be used
     // This preserves theme property references instead of hardcoding colors
     return null;

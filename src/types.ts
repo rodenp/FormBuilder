@@ -43,7 +43,7 @@ export interface FormElement {
     name: string; // Unique name for data submission
     placeholder?: string;
     required: boolean;
-    width?: number; // 1-12
+    width?: string; // e.g. "100%", "50px"
     options?: { label: string; value: string }[]; // For select inputs
     category?: string; // For custom blocks
     validation?: {
@@ -59,22 +59,22 @@ export interface FormElement {
     columnCount?: number;
     // For Rows
     rowCount?: number;
-    gap?: number;
-    rowGap?: number;
-    columnGap?: number;
+    gap?: string;
+    rowGap?: string;
+    columnGap?: string;
     columnBackgrounds?: string[]; // Individual background colors for each column cell
     rowBackgrounds?: string[]; // Individual background colors for each row cell
     selectedColumnIndex?: number; // For tracking which column cell is selected
     selectedRowIndex?: number; // For tracking which row cell is selected
     // Spacing settings
-    marginTop?: number;
-    marginRight?: number;
-    marginBottom?: number;
-    marginLeft?: number;
-    paddingTop?: number;
-    paddingRight?: number;
-    paddingBottom?: number;
-    paddingLeft?: number;
+    marginTop?: string;
+    marginRight?: string;
+    marginBottom?: string;
+    marginLeft?: string;
+    paddingTop?: string;
+    paddingRight?: string;
+    paddingBottom?: string;
+    paddingLeft?: string;
     // Layout settings (for containers)
     display?: 'block' | 'flex' | 'grid';
     flexDirection?: 'row' | 'column';
@@ -91,7 +91,7 @@ export interface FormElement {
     // For Label styling
     labelSize?: 'xs' | 'sm' | 'base' | 'lg';
     labelWeight?: 'normal' | 'medium' | 'semibold' | 'bold';
-    labelGap?: number; // Gap between label and content
+    labelGap?: string; // Gap between label and content
     // For Label formatting
     labelBold?: boolean;
     labelItalic?: boolean;
@@ -114,25 +114,25 @@ export interface FormElement {
     buttonUrl?: string;
     buttonTarget?: '_blank' | '_self';
     buttonWidthType?: 'auto' | 'custom' | 'full';
-    buttonWidth?: number;
+    buttonWidth?: string;
     // Granular Border Settings
     borderStyleTop?: string;
-    borderWidthTop?: number;
+    borderWidthTop?: string;
     borderColorTop?: string;
     borderStyleRight?: string;
-    borderWidthRight?: number;
+    borderWidthRight?: string;
     borderColorRight?: string;
     borderStyleBottom?: string;
-    borderWidthBottom?: number;
+    borderWidthBottom?: string;
     borderColorBottom?: string;
     borderStyleLeft?: string;
-    borderWidthLeft?: number;
+    borderWidthLeft?: string;
     borderColorLeft?: string;
     // Border Radius
-    borderRadiusTopLeft?: number;
-    borderRadiusTopRight?: number;
-    borderRadiusBottomLeft?: number;
-    borderRadiusBottomRight?: number;
+    borderRadiusTopLeft?: string;
+    borderRadiusTopRight?: string;
+    borderRadiusBottomLeft?: string;
+    borderRadiusBottomRight?: string;
     // Background color
     backgroundColor?: string;
     // For Heading
@@ -165,11 +165,11 @@ export interface FormElement {
     socialLayout?: 'horizontal' | 'vertical';
     // For Text Styling (heading, text-block, rich-text)
     fontFamily?: string;
-    fontSize?: number;
+    fontSize?: string;
     fontWeight?: 'normal' | 'medium' | 'semibold' | 'bold';
     textColor?: string;
-    lineHeight?: number;
-    letterSpacing?: number;
+    lineHeight?: string;
+    letterSpacing?: string;
 }
 
 export interface WebhookAction {

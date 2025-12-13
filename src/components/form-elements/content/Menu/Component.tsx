@@ -38,8 +38,8 @@ export const Component: React.FC<{ element: FormElement }> = ({ element }) => {
                 justifyContent: (element.justifyContent as any) || 'flex-start',
                 alignItems: (element.alignItems as any) || 'center',
                 alignContent: (element.alignContent as any) || 'flex-start',
-                rowGap: `${(element.rowGap || element.gap || 0)}px`,
-                columnGap: `${(element.columnGap || element.gap || 16)}px`
+                rowGap: element.rowGap || element.gap || '0px',
+                columnGap: element.columnGap || element.gap || '16px'
             }}
         >
             {element.children && element.children.length > 0 ? (

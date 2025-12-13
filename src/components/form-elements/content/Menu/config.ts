@@ -16,5 +16,5 @@ export const defaultSettings: Partial<ComponentSettings> = {
     flexWrap: 'nowrap',
     justifyContent: 'flex-start',
     alignItems: 'center',
-    gap: 16
+    gap: "16px"
 };

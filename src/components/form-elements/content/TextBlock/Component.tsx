@@ -7,7 +7,7 @@ import { clsx } from 'clsx';
 import { defaultSettings } from './config';
 
 export const Component: React.FC<{ element: FormElement }> = ({ element }) => {
-    const { updateElement, selectedElementId } = useStore();
+    const { updateElement, selectedElementId, settings } = useStore();
     const isSelected = selectedElementId === element.id;
     const editorRef = useRef<RichTextEditorRef>(null);
 
@@ -16,20 +16,22 @@ export const Component: React.FC<{ element: FormElement }> = ({ element }) => {
             element.textAlign === 'justify' ? "text-justify" :
                 "text-left";
 
+    const useDefaultColor = !element.textColor && !settings.textColor && !settings.formBackground;
+
     const commonClasses = clsx(
         "p-0 m-0 border-none w-full",
-        !element.textColor && "text-slate-600", // Default paragraph color
+        useDefaultColor && "text-slate-600",
         fontSizeClass(element),
         textAlignClass
     );
 
     const commonStyles = {
         fontFamily: element.fontFamily || undefined,
-        fontSize: element.fontSize ? `${element.fontSize}px` : undefined,
+        fontSize: element.fontSize || undefined,
         fontWeight: element.fontWeight || undefined,
         color: element.textColor || undefined,
-        lineHeight: element.lineHeight ? `${element.lineHeight}%` : undefined,
-        letterSpacing: element.letterSpacing ? `${element.letterSpacing}px` : undefined,
+        lineHeight: element.lineHeight || undefined,
+        letterSpacing: element.letterSpacing || undefined,
         margin: 0
     };
 

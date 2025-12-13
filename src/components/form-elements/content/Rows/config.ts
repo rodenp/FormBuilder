@@ -8,15 +8,15 @@ export const config = {
     category: 'layout',
     defaultSettings: {
         rowCount: 2, // Default to 2 rows
-        gap: 12, // Vertical gap
-        paddingTop: 0,
-        paddingBottom: 0,
-        paddingLeft: 0,
-        paddingRight: 0,
-        marginTop: 0,
-        marginBottom: 16, // Default margin bottom for layout blocks
-        marginLeft: 0,
-        marginRight: 0,
+        gap: "12px", // Vertical gap
+        paddingTop: "0px",
+        paddingBottom: "0px",
+        paddingLeft: "0px",
+        paddingRight: "0px",
+        marginTop: "0px",
+        marginBottom: "16px", // Default margin bottom for layout blocks
+        marginLeft: "0px",
+        marginRight: "0px",
         width: '100%',
         display: 'flex',
         flexDirection: 'column'

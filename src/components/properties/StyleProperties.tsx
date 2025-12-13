@@ -5,6 +5,7 @@ import {
     AlignLeft, AlignCenter, AlignRight, AlignJustify
 } from 'lucide-react';
 import type { FormElement } from '../../types';
+import { defaultSettings } from '../../settings/defaultSettings';
 
 interface StylePropertiesProps {
     selectedElement: FormElement;
@@ -21,6 +22,12 @@ export const StyleProperties: React.FC<StylePropertiesProps> = ({
     }
 
     const [isOpen, setIsOpen] = useState(false);
+
+    // Helper to get effective value including defaults
+    const getValue = (prop: keyof FormElement, fallback: string | number) => {
+        const typeDefaults = defaultSettings.types[selectedElement.type] || {};
+        return selectedElement[prop] ?? typeDefaults[prop as keyof typeof typeDefaults] ?? fallback;
+    };
 
     return (
         <div className="pt-4 border-t border-slate-100">
@@ -42,7 +49,7 @@ export const StyleProperties: React.FC<StylePropertiesProps> = ({
                     <div>
                         <label className="block text-xs font-medium text-gray-600 dark:text-gray-400 mb-2">Font Family</label>
                         <select
-                            value={selectedElement.fontFamily || ''}
+                            value={String(getValue('fontFamily', ''))}
                             onChange={(e) => updateElement(selectedElement.id, { fontFamily: e.target.value || undefined })}
                             className="w-full p-2.5 bg-slate-50 dark:bg-gray-900 border border-slate-200 dark:border-gray-600 rounded-lg text-sm text-slate-700 dark:text-gray-200 focus:ring-2 focus:ring-brand-500 focus:border-transparent transition-all outline-none"
                         >
@@ -61,7 +68,7 @@ export const StyleProperties: React.FC<StylePropertiesProps> = ({
                     <div>
                         <label className="block text-xs font-medium text-gray-600 dark:text-gray-400 mb-2">Font Weight</label>
                         <select
-                            value={selectedElement.fontWeight || 'normal'}
+                            value={String(getValue('fontWeight', 'normal'))}
                             onChange={(e) => updateElement(selectedElement.id, { fontWeight: e.target.value as any })}
                             className="w-full p-2.5 bg-slate-50 dark:bg-gray-900 border border-slate-200 dark:border-gray-600 rounded-lg text-sm text-slate-700 dark:text-gray-200 focus:ring-2 focus:ring-brand-500 focus:border-transparent transition-all outline-none"
                         >
@@ -80,21 +87,21 @@ export const StyleProperties: React.FC<StylePropertiesProps> = ({
                                 type="number"
                                 min="8"
                                 max="96"
-                                value={selectedElement.fontSize || 16}
-                                onChange={(e) => updateElement(selectedElement.id, { fontSize: parseInt(e.target.value) || 16 })}
+                                value={parseInt(String(getValue('fontSize', '16px')), 10)}
+                                onChange={(e) => updateElement(selectedElement.id, { fontSize: `${e.target.value}px` })}
                                 className="flex-1 p-2.5 bg-slate-50 dark:bg-gray-900 border border-slate-200 dark:border-gray-600 rounded-lg text-sm text-slate-700 dark:text-gray-200 focus:ring-2 focus:ring-brand-500 focus:border-transparent transition-all outline-none"
                             />
                             <span className="text-sm text-slate-500 dark:text-gray-400 bg-slate-100 dark:bg-gray-700 border border-slate-200 dark:border-gray-600 rounded-lg px-3 py-2.5">px</span>
                             <button
                                 type="button"
-                                onClick={() => updateElement(selectedElement.id, { fontSize: Math.max(8, (selectedElement.fontSize || 16) - 1) })}
+                                onClick={() => updateElement(selectedElement.id, { fontSize: `${Math.max(8, parseInt(String(getValue('fontSize', '16px')), 10) - 1)}px` })}
                                 className="p-2.5 bg-slate-50 dark:bg-gray-700 border border-slate-200 dark:border-gray-600 rounded-lg hover:bg-slate-100 dark:hover:bg-gray-600 text-slate-500 dark:text-gray-300 transition-colors"
                             >
                                 <Minus size={14} />
                             </button>
                             <button
                                 type="button"
-                                onClick={() => updateElement(selectedElement.id, { fontSize: Math.min(96, (selectedElement.fontSize || 16) + 1) })}
+                                onClick={() => updateElement(selectedElement.id, { fontSize: `${Math.min(96, parseInt(String(getValue('fontSize', '16px')), 10) + 1)}px` })}
                                 className="p-2.5 bg-slate-50 dark:bg-gray-700 border border-slate-200 dark:border-gray-600 rounded-lg hover:bg-slate-100 dark:hover:bg-gray-600 text-slate-500 dark:text-gray-300 transition-colors"
                             >
                                 <Plus size={14} />
@@ -186,21 +193,21 @@ export const StyleProperties: React.FC<StylePropertiesProps> = ({
                                 min="80"
                                 max="200"
                                 step="10"
-                                value={selectedElement.lineHeight || 140}
-                                onChange={(e) => updateElement(selectedElement.id, { lineHeight: parseInt(e.target.value) || 140 })}
+                                value={parseInt(String(getValue('lineHeight', '140%')), 10)}
+                                onChange={(e) => updateElement(selectedElement.id, { lineHeight: `${e.target.value}%` })}
                                 className="flex-1 p-2.5 bg-slate-50 dark:bg-gray-900 border border-slate-200 dark:border-gray-600 rounded-lg text-sm text-slate-700 dark:text-gray-200 focus:ring-2 focus:ring-brand-500 focus:border-transparent transition-all outline-none"
                             />
                             <span className="text-sm text-slate-500 dark:text-gray-400 bg-slate-100 dark:bg-gray-700 border border-slate-200 dark:border-gray-600 rounded-lg px-3 py-2.5">%</span>
                             <button
                                 type="button"
-                                onClick={() => updateElement(selectedElement.id, { lineHeight: Math.max(80, (selectedElement.lineHeight || 140) - 10) })}
+                                onClick={() => updateElement(selectedElement.id, { lineHeight: `${Math.max(80, parseInt(String(getValue('lineHeight', '140%')), 10) - 10)}%` })}
                                 className="p-2.5 bg-slate-50 dark:bg-gray-700 border border-slate-200 dark:border-gray-600 rounded-lg hover:bg-slate-100 dark:hover:bg-gray-600 text-slate-500 dark:text-gray-300 transition-colors"
                             >
                                 <Minus size={14} />
                             </button>
                             <button
                                 type="button"
-                                onClick={() => updateElement(selectedElement.id, { lineHeight: Math.min(200, (selectedElement.lineHeight || 140) + 10) })}
+                                onClick={() => updateElement(selectedElement.id, { lineHeight: `${Math.min(200, parseInt(String(getValue('lineHeight', '140%')), 10) + 10)}%` })}
                                 className="p-2.5 bg-slate-50 dark:bg-gray-700 border border-slate-200 dark:border-gray-600 rounded-lg hover:bg-slate-100 dark:hover:bg-gray-600 text-slate-500 dark:text-gray-300 transition-colors"
                             >
                                 <Plus size={14} />
@@ -217,21 +224,21 @@ export const StyleProperties: React.FC<StylePropertiesProps> = ({
                                 min="-5"
                                 max="10"
                                 step="0.5"
-                                value={selectedElement.letterSpacing || 0}
-                                onChange={(e) => updateElement(selectedElement.id, { letterSpacing: parseFloat(e.target.value) || 0 })}
+                                value={parseFloat(String(getValue('letterSpacing', '0px')))}
+                                onChange={(e) => updateElement(selectedElement.id, { letterSpacing: `${e.target.value}px` })}
                                 className="flex-1 p-2.5 bg-slate-50 dark:bg-gray-900 border border-slate-200 dark:border-gray-600 rounded-lg text-sm text-slate-700 dark:text-gray-200 focus:ring-2 focus:ring-brand-500 focus:border-transparent transition-all outline-none"
                             />
                             <span className="text-sm text-slate-500 dark:text-gray-400 bg-slate-100 dark:bg-gray-700 border border-slate-200 dark:border-gray-600 rounded-lg px-3 py-2.5">px</span>
                             <button
                                 type="button"
-                                onClick={() => updateElement(selectedElement.id, { letterSpacing: Math.max(-5, (selectedElement.letterSpacing || 0) - 0.5) })}
+                                onClick={() => updateElement(selectedElement.id, { letterSpacing: `${Math.max(-5, parseFloat(String(getValue('letterSpacing', '0px'))) - 0.5)}px` })}
                                 className="p-2.5 bg-slate-50 dark:bg-gray-700 border border-slate-200 dark:border-gray-600 rounded-lg hover:bg-slate-100 dark:hover:bg-gray-600 text-slate-500 dark:text-gray-300 transition-colors"
                             >
                                 <Minus size={14} />
                             </button>
                             <button
                                 type="button"
-                                onClick={() => updateElement(selectedElement.id, { letterSpacing: Math.min(10, (selectedElement.letterSpacing || 0) + 0.5) })}
+                                onClick={() => updateElement(selectedElement.id, { letterSpacing: `${Math.min(10, parseFloat(String(getValue('letterSpacing', '0px'))) + 0.5)}px` })}
                                 className="p-2.5 bg-slate-50 dark:bg-gray-700 border border-slate-200 dark:border-gray-600 rounded-lg hover:bg-slate-100 dark:hover:bg-gray-600 text-slate-500 dark:text-gray-300 transition-colors"
                             >
                                 <Plus size={14} />

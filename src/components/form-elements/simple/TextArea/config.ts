@@ -12,9 +12,9 @@ export const config: ComponentConfig = {
 };
 
 export const defaultSettings: Partial<ComponentSettings> = {
-    marginTop: 4,
-    paddingTop: 4,
-    paddingBottom: 4,
-    paddingLeft: 4,
-    paddingRight: 4
+    marginTop: "16px",
+    paddingTop: "16px",
+    paddingBottom: "16px",
+    paddingLeft: "16px",
+    paddingRight: "16px"
 };

@@ -162,7 +162,7 @@ const RowCellEndDropZone: React.FC<{ containerId: string; gap: number }> = ({ co
                     ? "bg-blue-100 min-h-[24px]"
                     : "h-0 overflow-hidden opacity-0 hover:opacity-100 hover:h-2"
             )}
-            style={{ marginTop: isOver ? `${gap * 0.25}rem` : 0 }}
+            style={{ marginTop: isOver ? (gap || '16px') : 0 }}
         >
             {isOver ? (
                 <div className="bg-blue-500 text-white text-xs px-2 py-1 rounded font-medium shadow-lg">
@@ -306,13 +306,13 @@ const ColumnDropZone: React.FC<ColumnDropZoneProps> = ({ element, index, child, 
                     justifyContent: child && child.type === 'container' ? (child.justifyContent || 'flex-start') : 'flex-start',
                     alignItems: child && child.type === 'container' ? (child.alignItems || 'flex-start') : 'flex-start',
                     alignContent: child && child.type === 'container' ? (child.alignContent || 'flex-start') : 'flex-start',
-                    gap: child && child.type === 'container' ? `${(child.gap ?? 0) * 0.25}rem` : '0rem',
+                    gap: child && child.type === 'container' ? (child.gap || '0px') : '0px',
                     gridTemplateColumns: child && child.type === 'container' && child.display === 'grid' ?
                         `repeat(${child.gridColumns || 3}, auto)` : undefined,
-                    paddingTop: child?.paddingTop !== undefined ? `${child.paddingTop * 0.25}rem` : undefined,
-                    paddingRight: child?.paddingRight !== undefined ? `${child.paddingRight * 0.25}rem` : undefined,
-                    paddingBottom: child?.paddingBottom !== undefined ? `${child.paddingBottom * 0.25}rem` : undefined,
-                    paddingLeft: child?.paddingLeft !== undefined ? `${child.paddingLeft * 0.25}rem` : undefined
+                    paddingTop: child?.paddingTop !== undefined ? child.paddingTop : undefined,
+                    paddingRight: child?.paddingRight !== undefined ? child.paddingRight : undefined,
+                    paddingBottom: child?.paddingBottom !== undefined ? child.paddingBottom : undefined,
+                    paddingLeft: child?.paddingLeft !== undefined ? child.paddingLeft : undefined
                 }}
             >
                 {child && child.type === 'container' ? (
@@ -475,13 +475,13 @@ const RowDropZone: React.FC<RowDropZoneProps> = ({ element, index, child, cellEd
                     justifyContent: child && child.type === 'container' ? (child.justifyContent || 'flex-start') : 'flex-start',
                     alignItems: child && child.type === 'container' ? (child.alignItems || 'flex-start') : 'flex-start',
                     alignContent: child && child.type === 'container' ? (child.alignContent || 'flex-start') : 'flex-start',
-                    gap: child && child.type === 'container' ? `${(child.gap ?? 0) * 0.25}rem` : '0rem',
+                    gap: child && child.type === 'container' ? (child.gap || '0px') : '0px',
                     gridTemplateColumns: child && child.type === 'container' && child.display === 'grid' ?
                         `repeat(${child.gridColumns || 3}, auto)` : undefined,
-                    paddingTop: child?.paddingTop !== undefined ? `${child.paddingTop * 0.25}rem` : undefined,
-                    paddingRight: child?.paddingRight !== undefined ? `${child.paddingRight * 0.25}rem` : undefined,
-                    paddingBottom: child?.paddingBottom !== undefined ? `${child.paddingBottom * 0.25}rem` : undefined,
-                    paddingLeft: child?.paddingLeft !== undefined ? `${child.paddingLeft * 0.25}rem` : undefined
+                    paddingTop: child?.paddingTop !== undefined ? child.paddingTop : undefined,
+                    paddingRight: child?.paddingRight !== undefined ? child.paddingRight : undefined,
+                    paddingBottom: child?.paddingBottom !== undefined ? child.paddingBottom : undefined,
+                    paddingLeft: child?.paddingLeft !== undefined ? child.paddingLeft : undefined
                 }}
             >
                 {child && child.type === 'container' ? (
@@ -495,7 +495,7 @@ const RowDropZone: React.FC<RowDropZoneProps> = ({ element, index, child, cellEd
                                     parentId={child.id}
                                 />
                             ))}
-                            <RowCellEndDropZone containerId={child.id} gap={element.gap ?? 0} />
+                            <RowCellEndDropZone containerId={child.id} gap={parseInt(element.gap || '0', 10)} />
                         </>
                     ) : (
                         // Empty row cell container - show drop zone
@@ -601,7 +601,7 @@ const ContainerContent: React.FC<{ element: FormElement }> = ({ element }) => {
                         alignItems: (element.display === 'flex' || element.display === 'grid' || element.type === 'rows' || element.type === 'columns' || element.type === 'menu') ? element.alignItems : undefined,
                         alignContent: (element.type === 'rows' || element.type === 'columns' || element.type === 'menu' || element.display === 'flex') ? (element.alignContent || 'flex-start') : 'start',
                         gridTemplateColumns: (element.display === 'grid' || element.type === 'grid') && element.type !== 'rows' ? `repeat(${element.gridColumns || 3}, auto)` : undefined,
-                        gap: (element.display !== 'block' || element.type === 'rows' || element.type === 'grid' || element.type === 'menu') && element.type !== 'columns' ? `${(element.gap || 0) * 0.25}rem` : undefined,
+                        gap: (element.display !== 'block' || element.type === 'rows' || element.type === 'grid' || element.type === 'menu') && element.type !== 'columns' ? (element.gap || '0px') : undefined,
                         // Add minimum height only when needed for spacing to work in column direction
                         minHeight: (element.display === 'flex' && element.flexDirection === 'column') ||
                             element.type === 'rows' ||
@@ -719,7 +719,7 @@ const ColumnsContent: React.FC<{ element: FormElement }> = ({ element }) => {
                     gridTemplateColumns: (element.display === 'grid' || element.type === 'grid') && element.type !== 'columns' && element.type !== 'rows' ?
                         (isMobile ? '1fr' : `repeat(${element.gridColumns || element.columnCount || 3}, 1fr)`) : undefined,
                     gap: (element.display !== 'block' || element.type === 'rows' || element.type === 'grid') && element.type !== 'columns' ?
-                        `${(element.gap ?? 0) * 0.25}rem` : undefined
+                        (element.gap || '0px') : undefined
                 }}
             >
                 {(element.type === 'columns') ? (
@@ -757,7 +757,7 @@ const ColumnsContent: React.FC<{ element: FormElement }> = ({ element }) => {
                             name: `placeholder - ${index}`,
                             placeholder: 'Drop element here',
                             required: false,
-                            width: 12,
+                            width: "12",
                             isPlaceholder: true // Mark this as a placeholder
                         };
 
@@ -861,14 +861,14 @@ const RowsContent: React.FC<{ element: FormElement }> = ({ element }) => {
             )}
             style={{
                 backgroundColor: element.backgroundColor || 'transparent',
-                paddingTop: element.paddingTop !== undefined ? `${element.paddingTop * 0.25}rem` : undefined,
-                paddingRight: element.paddingRight !== undefined ? `${element.paddingRight * 0.25}rem` : undefined,
-                paddingBottom: element.paddingBottom !== undefined ? `${element.paddingBottom * 0.25}rem` : undefined,
-                paddingLeft: element.paddingLeft !== undefined ? `${element.paddingLeft * 0.25}rem` : undefined,
-                marginTop: element.marginTop !== undefined ? `${element.marginTop * 0.25}rem` : undefined,
-                marginRight: element.marginRight !== undefined ? `${element.marginRight * 0.25}rem` : undefined,
-                marginBottom: element.marginBottom !== undefined ? `${element.marginBottom * 0.25}rem` : undefined,
-                marginLeft: element.marginLeft !== undefined ? `${element.marginLeft * 0.25}rem` : undefined
+                paddingTop: element.paddingTop !== undefined ? element.paddingTop : undefined,
+                paddingRight: element.paddingRight !== undefined ? element.paddingRight : undefined,
+                paddingBottom: element.paddingBottom !== undefined ? element.paddingBottom : undefined,
+                paddingLeft: element.paddingLeft !== undefined ? element.paddingLeft : undefined,
+                marginTop: element.marginTop !== undefined ? element.marginTop : undefined,
+                marginRight: element.marginRight !== undefined ? element.marginRight : undefined,
+                marginBottom: element.marginBottom !== undefined ? element.marginBottom : undefined,
+                marginLeft: element.marginLeft !== undefined ? element.marginLeft : undefined
             }}
         >
             {cellEditMode && (
@@ -885,7 +885,7 @@ const RowsContent: React.FC<{ element: FormElement }> = ({ element }) => {
                     justifyContent: element.justifyContent || 'flex-start',
                     alignItems: element.alignItems || 'stretch',
                     alignContent: element.alignContent || 'flex-start',
-                    gap: `${(element.gap ?? 0) * 0.25}rem`
+                    gap: (element.gap || '0px')
                 }}
             >
                 {/* For rows, use individual drop zones for each row */}
@@ -1036,7 +1036,7 @@ const SortableElement: React.FC<SortableElementProps> = ({ element, parentId }) 
 
         // Store initial state
         const startX = e.clientX;
-        const startWidth = element.width || 12;
+        const startWidth = parseInt(String(element.width || 12), 10);
 
         console.log('Resize started:', { direction, startX, startWidth, parentId, elementId: element.id });
 
@@ -1061,8 +1061,8 @@ const SortableElement: React.FC<SortableElementProps> = ({ element, parentId }) 
 
             console.log('Resize move:', { deltaX, columnDelta, newWidth, currentWidth: element.width, inContainer: !!parentId });
 
-            if (newWidth !== element.width) {
-                updateElement(element.id, { width: newWidth });
+            if (String(newWidth) !== element.width) {
+                updateElement(element.id, { width: String(newWidth) });
             }
         };
 
@@ -1091,7 +1091,7 @@ const SortableElement: React.FC<SortableElementProps> = ({ element, parentId }) 
 
         // Store initial state
         const startX = e.clientX;
-        const startWidth = element.width || 2; // Default ~17% (2 of 12 columns)
+        const startWidth = parseInt(String(element.width || 2), 10); // Default ~17% (2 of 12 columns)
 
         const handleMouseMove = (moveEvent: MouseEvent) => {
             moveEvent.preventDefault();
@@ -1107,8 +1107,8 @@ const SortableElement: React.FC<SortableElementProps> = ({ element, parentId }) 
 
             const newWidth = Math.max(1, Math.min(12, startWidth + columnDelta));
 
-            if (newWidth !== element.width) {
-                updateElement(element.id, { width: newWidth });
+            if (String(newWidth) !== element.width) {
+                updateElement(element.id, { width: String(newWidth) });
             }
         };
 
@@ -1172,12 +1172,12 @@ const SortableElement: React.FC<SortableElementProps> = ({ element, parentId }) 
                     (parentInfo?.parent?.type === 'menu' ?
                         // For menu items, remove fixed width and let flex container control layout
                         { flex: '0 0 auto', alignSelf: 'stretch' } :
-                        { width: `${(element.width || (element.type === 'image' ? 2 : 12)) / 12 * 100}%` }) : {}),
+                        { width: `${(parseInt(String(element.width || (element.type === 'image' ? 2 : 12)), 10)) / 12 * 100}%` }) : {}),
                 // Apply margins
-                marginTop: `${(element.marginTop ?? 0) * 0.25}rem`,
-                marginRight: `${(element.marginRight ?? 0) * 0.25}rem`,
-                marginBottom: `${(element.marginBottom ?? 0) * 0.25}rem`,
-                marginLeft: `${(element.marginLeft ?? 0) * 0.25}rem`,
+                marginTop: element.marginTop || '0px',
+                marginRight: element.marginRight || '0px',
+                marginBottom: element.marginBottom || '0px',
+                marginLeft: element.marginLeft || '0px',
                 // Apply horizontal alignment for non-containers
                 ...(element.horizontalAlign === 'center' && !['container', 'columns', 'rows', 'grid'].includes(element.type) ?
                     { marginLeft: 'auto', marginRight: 'auto' } : {}),
@@ -1332,16 +1332,16 @@ const SortableElement: React.FC<SortableElementProps> = ({ element, parentId }) 
                 style={{
                     backgroundColor: element.type === 'button' ? undefined : (element.backgroundColor || undefined),
                     // Only apply padding for container, columns, rows, grid, and menu - regular elements handle their own spacing
-                    paddingTop: ['container', 'columns', 'rows', 'grid', 'menu'].includes(element.type) ? `${(element.paddingTop ?? 0) * 0.25}rem` : undefined,
-                    paddingRight: ['container', 'columns', 'rows', 'grid', 'menu'].includes(element.type) ? `${(element.paddingRight ?? 0) * 0.25}rem` : undefined,
-                    paddingBottom: ['container', 'columns', 'rows', 'grid', 'menu'].includes(element.type) ? `${(element.paddingBottom ?? 0) * 0.25}rem` : undefined,
-                    paddingLeft: ['container', 'columns', 'rows', 'grid', 'menu'].includes(element.type) ? `${(element.paddingLeft ?? 0) * 0.25}rem` : undefined
+                    paddingTop: ['container', 'columns', 'rows', 'grid', 'menu'].includes(element.type) ? (element.paddingTop || '0px') : undefined,
+                    paddingRight: ['container', 'columns', 'rows', 'grid', 'menu'].includes(element.type) ? (element.paddingRight || '0px') : undefined,
+                    paddingBottom: ['container', 'columns', 'rows', 'grid', 'menu'].includes(element.type) ? (element.paddingBottom || '0px') : undefined,
+                    paddingLeft: ['container', 'columns', 'rows', 'grid', 'menu'].includes(element.type) ? (element.paddingLeft || '0px') : undefined
                 }}
             >
                 {isFormProject && !['hidden', 'rich-text', 'container', 'columns', 'rows', 'grid', 'menu'].includes(element.type) && element.label && element.label.trim() && (
                     <div
                         className="flex justify-between items-start"
-                        style={{ marginBottom: element.labelGap !== undefined ? `${element.labelGap * 0.25}rem` : '0.75rem' }}
+                        style={{ marginBottom: element.labelGap !== undefined ? element.labelGap : '0.75rem' }}
                     >
                         <div>
                             <label className={clsx(
@@ -1373,7 +1373,7 @@ const SortableElement: React.FC<SortableElementProps> = ({ element, parentId }) 
                 {isFormProject && ['container', 'columns', 'rows', 'grid', 'menu'].includes(element.type) && element.label && element.label.trim() && (
                     <div
                         className="flex justify-between items-start"
-                        style={{ marginBottom: element.labelGap !== undefined ? `${element.labelGap * 0.25}rem` : '0.75rem' }}
+                        style={{ marginBottom: element.labelGap !== undefined ? element.labelGap : '0.75rem' }}
                     >
                         <div>
                             <label
@@ -1606,14 +1606,14 @@ const SortableElement: React.FC<SortableElementProps> = ({ element, parentId }) 
                                     style={{
                                         backgroundColor: element.backgroundColor && element.buttonStyle !== 'text' && element.buttonStyle !== 'outline' && element.buttonStyle !== 'link' ?
                                             element.backgroundColor : undefined,
-                                        paddingTop: element.paddingTop !== undefined ? `${element.paddingTop}px` : undefined,
-                                        paddingRight: element.paddingRight !== undefined ? `${element.paddingRight}px` : undefined,
-                                        paddingBottom: element.paddingBottom !== undefined ? `${element.paddingBottom}px` : undefined,
-                                        paddingLeft: element.paddingLeft !== undefined ? `${element.paddingLeft}px` : undefined,
-                                        marginTop: element.marginTop !== undefined ? `${element.marginTop}px` : undefined,
-                                        marginRight: element.marginRight !== undefined ? `${element.marginRight}px` : undefined,
-                                        marginBottom: element.marginBottom !== undefined ? `${element.marginBottom}px` : undefined,
-                                        marginLeft: element.marginLeft !== undefined ? `${element.marginLeft}px` : undefined,
+                                        paddingTop: element.paddingTop !== undefined ? element.paddingTop : undefined,
+                                        paddingRight: element.paddingRight !== undefined ? element.paddingRight : undefined,
+                                        paddingBottom: element.paddingBottom !== undefined ? element.paddingBottom : undefined,
+                                        paddingLeft: element.paddingLeft !== undefined ? element.paddingLeft : undefined,
+                                        marginTop: element.marginTop !== undefined ? element.marginTop : undefined,
+                                        marginRight: element.marginRight !== undefined ? element.marginRight : undefined,
+                                        marginBottom: element.marginBottom !== undefined ? element.marginBottom : undefined,
+                                        marginLeft: element.marginLeft !== undefined ? element.marginLeft : undefined,
                                         boxSizing: 'border-box',
                                         lineHeight: 'normal',
                                         minHeight: 'unset',
@@ -1774,7 +1774,7 @@ const SortableElement: React.FC<SortableElementProps> = ({ element, parentId }) 
                                             justifyContent: element.justifyContent || 'flex-start',
                                             alignItems: element.alignItems || 'center',
                                             alignContent: element.alignContent || 'flex-start',
-                                            gap: `${(element.gap || 0) * 0.25}rem`
+                                            gap: element.gap || '0px'
                                         }}
                                     >
                                         {element.children && element.children.length > 0 ? (
@@ -1799,10 +1799,10 @@ const SortableElement: React.FC<SortableElementProps> = ({ element, parentId }) 
                                 isFormProject && "border border-slate-200"
                             )} style={{
                                 backgroundColor: element.backgroundColor,
-                                paddingTop: element.paddingTop !== undefined ? `${element.paddingTop * 0.25}rem` : undefined,
-                                paddingRight: element.paddingRight !== undefined ? `${element.paddingRight * 0.25}rem` : undefined,
-                                paddingBottom: element.paddingBottom !== undefined ? `${element.paddingBottom * 0.25}rem` : undefined,
-                                paddingLeft: element.paddingLeft !== undefined ? `${element.paddingLeft * 0.25}rem` : undefined
+                                paddingTop: element.paddingTop !== undefined ? element.paddingTop : undefined,
+                                paddingRight: element.paddingRight !== undefined ? element.paddingRight : undefined,
+                                paddingBottom: element.paddingBottom !== undefined ? element.paddingBottom : undefined,
+                                paddingLeft: element.paddingLeft !== undefined ? element.paddingLeft : undefined
                             }}>
                                 <div className={clsx(
                                     "flex gap-3",
@@ -1888,10 +1888,10 @@ const SortableElement: React.FC<SortableElementProps> = ({ element, parentId }) 
                                 )}
                                 style={{
                                     backgroundColor: element.backgroundColor,
-                                    paddingTop: element.paddingTop !== undefined ? `${element.paddingTop * 0.25}rem` : undefined,
-                                    paddingRight: element.paddingRight !== undefined ? `${element.paddingRight * 0.25}rem` : undefined,
-                                    paddingBottom: element.paddingBottom !== undefined ? `${element.paddingBottom * 0.25}rem` : undefined,
-                                    paddingLeft: element.paddingLeft !== undefined ? `${element.paddingLeft * 0.25}rem` : undefined
+                                    paddingTop: element.paddingTop !== undefined ? element.paddingTop : undefined,
+                                    paddingRight: element.paddingRight !== undefined ? element.paddingRight : undefined,
+                                    paddingBottom: element.paddingBottom !== undefined ? element.paddingBottom : undefined,
+                                    paddingLeft: element.paddingLeft !== undefined ? element.paddingLeft : undefined
                                 }}
                                 placeholder={element.placeholder}
                                 readOnly
@@ -2017,6 +2017,7 @@ export const Canvas: React.FC = () => {
                         backgroundColor: settings.formBackground || (
                             settings.canvasTheme === 'dark' ? '#111827' : '#ffffff'
                         ),
+                        color: settings.textColor || undefined,
                         width: settings.contentWidth ? `${settings.contentWidth}px` : '100%',
                         maxWidth: settings.contentWidth ? `${settings.contentWidth}px` : 'none',
                         // Ensure padding for empty state

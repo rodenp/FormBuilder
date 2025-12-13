@@ -4,7 +4,8 @@ import type { FormElement } from '../../../../types';
 import { ComponentWrapper } from '../../../builder/ComponentWrapper';
 import { clsx } from 'clsx';
 import { useStore } from '../../../../store/useStore';
-import { defaultSettings } from './config';
+import { defaultSettings as localDefaultSettings } from './config';
+import { defaultSettings } from '../../../../settings/defaultSettings';
 
 export const Component: React.FC<{ element: FormElement }> = ({ element }) => {
     const isFormProject = useStore.getState().currentProject?.type === 'form';
@@ -20,10 +21,10 @@ export const Component: React.FC<{ element: FormElement }> = ({ element }) => {
 
     // Force zero padding on wrapper to prevent defaults
     const wrapperSettings = {
-        paddingTop: 0,
-        paddingRight: 0,
-        paddingBottom: 0,
-        paddingLeft: 0
+        paddingTop: "0px",
+        paddingRight: "0px",
+        paddingBottom: "0px",
+        paddingLeft: "0px"
     };
 
     return (
@@ -35,10 +36,10 @@ export const Component: React.FC<{ element: FormElement }> = ({ element }) => {
                 )}
                 style={{
                     backgroundColor: element.backgroundColor,
-                    paddingTop: `${(element.paddingTop ?? defaultSettings.paddingTop ?? 12)}px`,
-                    paddingRight: `${(element.paddingRight ?? defaultSettings.paddingRight ?? 12)}px`,
-                    paddingBottom: `${(element.paddingBottom ?? defaultSettings.paddingBottom ?? 12)}px`,
-                    paddingLeft: `${(element.paddingLeft ?? defaultSettings.paddingLeft ?? 12)}px`
+                    paddingTop: element.paddingTop || (defaultSettings.types.textarea?.paddingTop || '16px'),
+                    paddingRight: element.paddingRight || (defaultSettings.types.textarea?.paddingRight || '16px'),
+                    paddingBottom: element.paddingBottom || (defaultSettings.types.textarea?.paddingBottom || '16px'),
+                    paddingLeft: element.paddingLeft || (defaultSettings.types.textarea?.paddingLeft || '16px')
                 }}
                 placeholder={element.placeholder}
                 rows={3}

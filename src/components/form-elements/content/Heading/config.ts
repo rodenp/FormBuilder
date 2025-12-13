@@ -11,10 +11,12 @@ export const config: ComponentConfig = {
 export const defaultSettings = {
     headingLevel: 1,
     textAlign: 'left',
-    marginTop: 4,
-    marginBottom: 4,
-    paddingTop: 4,
-    paddingBottom: 4,
-    paddingLeft: 4,
-    paddingRight: 4
+    marginTop: "16px",
+    marginBottom: "16px",
+    paddingTop: "16px",
+    paddingBottom: "16px",
+    paddingLeft: "16px",
+    paddingRight: "16px",
+    lineHeight: "100%",
+    letterSpacing: "0px"
 };

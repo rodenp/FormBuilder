@@ -5,14 +5,14 @@ import { getComponentHtml } from '../../../../utils/componentHtml';
 export const Component: React.FC<{ element: FormElement }> = ({ element }) => {
     // Replicating logic from componentHtml.tsx getColumnsHtml for backward compatibility
     const columnCount = element.columnCount || 2;
-    const gap = element.columnGap || element.gap || 12;
+    const gap = element.columnGap || element.gap || '12px';
 
     return (
         <div
             style={{
                 display: 'grid',
                 gridTemplateColumns: `repeat(${columnCount}, 1fr)`,
-                gap: `${gap}px`,
+                gap: gap,
                 // Allow style overrides
                 ...((element.display === 'flex') ? { display: 'flex' } : {})
             }}
