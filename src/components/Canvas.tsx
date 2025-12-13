@@ -1998,14 +1998,15 @@ export const Canvas: React.FC = () => {
                 className="form-builder-canvas-inner flex-1 overflow-y-auto overflow-x-hidden p-4 sm:p-8"
                 style={{
                     display: 'flex',
-                    justifyContent: settings.contentAlignment === 'center' ? 'center' :
+                    flexDirection: 'column',
+                    alignItems: settings.contentAlignment === 'center' ? 'center' :
                         settings.contentAlignment === 'right' ? 'flex-end' : 'flex-start'
                 }}
             >
                 <div
                     ref={setNodeRef}
                     className={clsx(
-                        "min-h-[800px] rounded-2xl shadow-card transition-colors duration-300",
+                        "flex-1 rounded-2xl shadow-card transition-colors duration-300",
                         currentProject?.type !== 'form' && "pt-0",
                         currentProject?.type === 'form' && "pt-8",
                         // Empty state alignment
